@@ -15,7 +15,14 @@ a, a:link, a:visited, a:hover, a:active {
     margin-bottom: 20px;
 }
 
+.card-base:hover {
+    transform: scale(1.05);
+}
+
 .card-base {
+    transition-property: transform;
+    transition-duration: 200ms;
+    position: relative;
     width: 128px;
     margin: 5px;
     padding: 6px;
@@ -24,7 +31,18 @@ a, a:link, a:visited, a:hover, a:active {
     font-family: 'Arial';
 }
 
+.card-id {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    font-size: x-small;
+}
+
 .card-container {
     display: flex;
     flex-wrap: wrap;
+}
+
+.default-container {
+    padding-left: 20px;
 }

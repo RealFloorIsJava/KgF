@@ -30,3 +30,11 @@ a, a:link, a:visited, a:hover, a:active {
     color: #000011;
     background-color: #bbbbaa;
 }
+
+.object-card a, .object-card a:link, .object-card a:visited, .object-card a:hover, .object-card a:active {
+    color: #444411;
+}
+
+.verb-card a, .verb-card a:link, .verb-card a:visited, .verb-card a:hover, .verb-card a:active {
+    color: #444411;
+}

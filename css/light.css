@@ -21,6 +21,10 @@ a, a:link, a:visited, a:hover, a:active {
     background-color: #0a0a0a;
 }
 
+.statement-card a, .statement-card a:link, .statement-card a:visited, .statement-card a:hover, .statement-card a:active {
+    color: #aaaadd;
+}
+
 .object-card {
     color: #001111;
     background-color: #dd9999;
