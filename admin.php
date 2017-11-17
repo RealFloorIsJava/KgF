@@ -9,9 +9,14 @@
         $subpage = $_GET['s'];
     }
     
+    $status = "";
+    $success = true;
+    
     if (isset($_GET['delete_card'])) {
         $id = $_GET['delete_card'];
         db_delete_card($id);
+        $status = "Card #".$id." successfully deleted!";
+        $success = true;
     }
 ?>
 <!DOCTYPE html>
@@ -32,6 +37,14 @@
             <div style="clear: both;"></div>
         </div>
         <?php
+            if ($status != "") {
+                if ($success) {
+                    echo '<div class="status-box success-box">'.$status.'</div>';
+                } else {
+                    echo '<div class="status-box failure-box">'.$status.'</div>';
+                }
+            }
+            
             if ($subpage == "list") {
         ?>
         <div class="card-container">

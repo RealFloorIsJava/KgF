@@ -53,7 +53,7 @@
         $res .= expand_underscores($card["card_text"]);
         $res .= '<div class="card-id">';
         if ($with_opts) {
-            $res .= '<a href="/admin.php?delete_card='.$card["card_id"].'">Delete</a> - ';
+            $res .= '<a href="/admin.php?s=list&delete_card='.$card["card_id"].'">Delete</a> - ';
         }
         $res .= '#';
         $res .= $card["card_id"];

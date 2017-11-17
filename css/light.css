@@ -12,6 +12,16 @@ a, a:link, a:visited, a:hover, a:active {
     border-bottom: 1px solid gray;
 }
 
+.success-box {
+    border: 1px solid #00840A;
+    background-color: #80D886;
+}
+
+.failure-box {
+    border: 1px solid #9D000E;
+    background-color: #F67382;
+}
+
 .card-base {
     box-shadow: 2px 2px 6px -3px #222222;
 }

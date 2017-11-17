@@ -8,6 +8,15 @@ a, a:link, a:visited, a:hover, a:active {
     text-decoration: underline;
 }
 
+.status-box {
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 10px;
+    padding-left: 20px;
+}
+
 .cupboard {
     padding-left: 20px;
     padding-top: 15px;
