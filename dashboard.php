@@ -1,9 +1,8 @@
 <?php
-    require "includes/session_check.php";
+    require "includes/toolbox.php";
+    require_login_or_logout();
+    initialize_user();
     require "includes/pdo.php";
-    require "includes/user_state.php";
-
-    require "includes/card_tools.php";
 ?>
 <!DOCTYPE html>
 <html>
