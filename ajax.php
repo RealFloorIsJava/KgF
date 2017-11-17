@@ -16,13 +16,13 @@
         if ($name != "" && strlen($name) < 64) {
             $_SESSION['nickname'] = htmlspecialchars($_POST['name']);
         }
-        exit();
+    } else if ($action == "theme" && isset($_POST['selection'])) {
+        $_SESSION['theme'] = $_POST['selection'];
     } else if ($action == "escalate" && isset($_POST['token'])) {
         $token = sha1($_POST['token']);
         $correct_token = trim(file_get_contents("config/mgr_password"));
         if ($token == $correct_token) {
             $_SESSION['admin'] = true;
         }
-        exit();
     }
 ?>

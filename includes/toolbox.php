@@ -28,6 +28,7 @@
         $req = array(
             "id" => uniqid(),
             "admin" => false,
+            "theme" => "dark",
             "nickname" => "Meme".rand(10000,99999)
         );
         

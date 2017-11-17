@@ -41,7 +41,7 @@
     <head>
         <title>Admin CP</title>
         <link rel="stylesheet" type="text/css" href="/css/main.css">
-        <link rel="stylesheet" type="text/css" href="/css/dark.css" id="theme">
+        <link rel="stylesheet" type="text/css" href="/css/<?= $_SESSION['theme'] ?>.css" id="theme">
     </head>
     <body>
         <div class="cupboard">
@@ -49,7 +49,7 @@
             <div style="float: right;">
                 <a href="/admin.php">Admin CP tool selection</a> &mdash;
                 <a href="/dashboard.php">Dashboard</a> &mdash;
-                <a href="#" onclick="toggleLights()" id="lightLabel">Lights on</a>
+                <a href="#" onclick="toggleLights()" id="lightLabel">Lights <?php echo ($_SESSION['theme'] == 'dark') ? "on" : "off"; ?></a>
             </div>
             <div style="clear: both;"></div>
         </div>
@@ -82,6 +82,9 @@
             }
         ?>
         <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            var lightsOn = <?php echo ($_SESSION['theme'] == 'dark') ? "false" : "true"; ?>;
+        </script>
         <script type="text/javascript" src="/js/theme.js"></script>
     </body>
 </html>
