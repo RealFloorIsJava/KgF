@@ -4,16 +4,16 @@ function enterACP(skip) {
         if (pw != null) {
             $.ajax({
                 method: "POST",
-                url: "/ajax.php?action=escalate",
+                url: "/global.php?page=ajax&action=escalate",
                 data: {
                     token: pw
                 }
             }).done(function(msg) {
-                window.location.assign("/admin.php");
+                window.location.assign("/global.php?page=admin");
             });
         }
     } else {
-        window.location.assign("/admin.php");
+        window.location.assign("/global.php?page=admin");
     }
 }
 
@@ -22,7 +22,7 @@ function changeName() {
     if (newName != null && newName != "") {
         $.ajax({
             method: "POST",
-            url: "/ajax.php?action=rename",
+            url: "/global.php?page=ajax&action=rename",
             data: {
                 name: newName
             }
