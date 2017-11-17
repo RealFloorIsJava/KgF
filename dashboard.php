@@ -8,10 +8,13 @@
     <head>
         <title>Karten gegen Flops</title>
         <link rel="stylesheet" type="text/css" href="/css/main.css">
+        <link rel="stylesheet" type="text/css" href="/css/dark.css" id="theme">
     </head>
     <body>
         <div class="cupboard">
-            <a href="?logout">Log Out</a> &mdash; You are known as <?= $_SESSION['nickname'] ?>
+            <a href="?logout">Log Out</a> &mdash;
+            You are known as <?= $_SESSION['nickname'] ?>
+            <div style="float: right;"><a href="#" onclick="toggleLights()" id="lightLabel">Lights on</a></div><div style="clear: both;"></div>
         </div>
         
         <div class="card-container">
@@ -37,5 +40,7 @@
                 }
             ?>
         </div>
+        
+        <script type="text/javascript" src="/js/main.js"></script>
     </body>
 </html>

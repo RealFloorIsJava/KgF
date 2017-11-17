@@ -1,21 +1,17 @@
 body {
-    background-color: #333333;
-    color: #dddddd;
     margin: 0px;
     padding: 0px;
 }
 
 a, a:link, a:visited, a:hover, a:active {
-    color: #aaaadd;
     text-decoration: underline;
 }
 
 .cupboard {
-    background-color: #3f3f3f;
-    border-bottom: 1px solid gray;
     padding-left: 20px;
     padding-top: 15px;
     padding-bottom: 15px;
+    padding-right: 20px;
     margin-bottom: 20px;
 }
 

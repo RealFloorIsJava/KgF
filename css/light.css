@@ -1,0 +1,31 @@
+body {
+    background-color: #eeeeee;
+    color: #333333;
+}
+
+a, a:link, a:visited, a:hover, a:active {
+    color: #444411;
+}
+
+.cupboard {
+    background-color: #dfdfdf;
+    border-bottom: 1px solid gray;
+}
+
+.statement-card {
+    border: 1px solid grey;
+    color: #fafafa;
+    background-color: #0a0a0a;
+}
+
+.object-card {
+    border: 1px solid #dd7777;
+    color: #001111;
+    background-color: #dd9999;
+}
+
+.verb-card {
+    border: 1px solid #dddd77;
+    color: #000011;
+    background-color: #dddd99;
+}
