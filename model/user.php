@@ -27,6 +27,9 @@
             $this->nickname = "Meme".rand(10000, 99999);
         }
         
+        /**
+         * Fetches the theme loader, HTML that will initialize the user's theme
+         */
         public function get_theme_loader() {
             return '<link rel="stylesheet" type="text/css" href="/css/'.$this->theme.'.css" id="theme"><script type="text/javascript">var theme = "'.$this->theme.'";</script>';
         }
@@ -35,6 +38,9 @@
             $this->theme = $theme;
         }
         
+        /**
+         * Makes this user an admin
+         */
         public function escalate_privileges() {
             $this->admin = true;
         }
