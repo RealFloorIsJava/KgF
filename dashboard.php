@@ -1,5 +1,6 @@
 <?php
     require "includes/session_check.php";
+    require "includes/pdo.php";
 ?>
 <!DOCTYPE html>
 <html>
@@ -12,6 +13,6 @@
         </style>
     </head>
     <body>
-        Halo I bims
+        <a href="?logout">Log Out</a>
     </body>
 </html>
