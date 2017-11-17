@@ -15,34 +15,13 @@ a, a:link, a:visited, a:hover, a:active {
     margin-bottom: 20px;
 }
 
-.statement-card {
+.card-base {
     width: 128px;
-    height: 128px;
-    border: 1px solid grey;
-    color: #eeeeee;
-    background-color: #111111;
-    padding: 3px;
-    margin: 3px;
-}
-
-.object-card {
-    width: 128px;
-    height: 128px;
-    border: 1px solid #dd7777;
-    color: #001111;
-    background-color: #bbaaaa;
-    padding: 3px;
-    margin: 3px;
-}
-
-.verb-card {
-    width: 128px;
-    height: 128px;
-    border: 1px solid #dddd77;
-    color: #000011;
-    background-color: #bbbbaa;
-    padding: 3px;
-    margin: 3px;
+    margin: 5px;
+    padding: 6px;
+    border-radius: 5px;
+    height: 150px;
+    font-family: 'Arial';
 }
 
 .card-container {

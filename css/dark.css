@@ -12,20 +12,21 @@ a, a:link, a:visited, a:hover, a:active {
     border-bottom: 1px solid gray;
 }
 
+.card-base {
+    box-shadow: 2px 2px 6px -3px #aaaaaa;
+}
+
 .statement-card {
-    border: 1px solid grey;
     color: #eeeeee;
     background-color: #111111;
 }
 
 .object-card {
-    border: 1px solid #dd7777;
     color: #001111;
     background-color: #bbaaaa;
 }
 
 .verb-card {
-    border: 1px solid #dddd77;
     color: #000011;
     background-color: #bbbbaa;
 }

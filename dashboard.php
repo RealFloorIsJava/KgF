@@ -20,7 +20,7 @@
         <div class="card-container">
             <?php
                 foreach ($db_handle->query("SELECT `card_text` FROM `kgf_cards` WHERE `card_type` = 'STATEMENT'") as $row) {
-                    echo '<div class="statement-card">'.$row["card_text"].'</div>';
+                    echo '<div class="statement-card card-base">'.$row["card_text"].'</div>';
                 }
             ?>
         </div><br>
@@ -28,7 +28,7 @@
         <div class="card-container">
             <?php
                 foreach ($db_handle->query("SELECT `card_text` FROM `kgf_cards` WHERE `card_type` = 'OBJECT'") as $row) {
-                    echo '<div class="object-card">'.$row["card_text"].'</div>';
+                    echo '<div class="object-card card-base">'.$row["card_text"].'</div>';
                 }
             ?>
         </div><br>
@@ -36,7 +36,7 @@
         <div class="card-container">
             <?php
                 foreach ($db_handle->query("SELECT `card_text` FROM `kgf_cards` WHERE `card_type` = 'VERB'") as $row) {
-                    echo '<div class="verb-card">'.$row["card_text"].'</div>';
+                    echo '<div class="verb-card card-base">'.$row["card_text"].'</div>';
                 }
             ?>
         </div>
