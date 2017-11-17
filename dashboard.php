@@ -13,7 +13,7 @@
     <body>
         <div class="cupboard">
             <a href="?logout">Log Out</a> &mdash;
-            You are known as <?= $_SESSION['nickname'] ?>
+            You are known as <span id="username"><?= $_SESSION['nickname'] ?></span> (<a href="#" onclick="changeName()">Change</a>)
             <div style="float: right;"><a href="#" onclick="toggleLights()" id="lightLabel">Lights on</a></div><div style="clear: both;"></div>
         </div>
         
@@ -41,6 +41,7 @@
             ?>
         </div>
         
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
         <script type="text/javascript" src="/js/main.js"></script>
     </body>
 </html>
