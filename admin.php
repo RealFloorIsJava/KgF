@@ -3,11 +3,15 @@
     require_login_or_logout();
     initialize_user();
     check_admin();
-    require "includes/pdo.php";
     
     $subpage = "";
     if (isset($_GET['s'])) {
         $subpage = $_GET['s'];
+    }
+    
+    if (isset($_GET['delete_card'])) {
+        $id = $_GET['delete_card'];
+        db_delete_card($id);
     }
 ?>
 <!DOCTYPE html>
@@ -32,8 +36,9 @@
         ?>
         <div class="card-container">
             <?php
-                foreach ($db_handle->query("SELECT * FROM `kgf_cards`") as $row) {
-                    echo format_card($row, true);
+                $cards = db_all_cards();
+                foreach ($cards as $card) {
+                    echo format_card($card, true);
                 }
             ?>
         </div>

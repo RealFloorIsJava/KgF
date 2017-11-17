@@ -2,7 +2,6 @@
     require "includes/toolbox.php";
     require_login_or_logout();
     initialize_user();
-    require "includes/pdo.php";
 ?>
 <!DOCTYPE html>
 <html>
