@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Das Eingangsdoor vong KgF</title>
+        <title>Karten gegen Flops</title>
         <style type="text/css">
             .floating-center {
                 position: absolute;
