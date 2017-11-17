@@ -17,6 +17,23 @@
         db_delete_card($id);
         $status = "Card #".$id." successfully deleted!";
         $success = true;
+    } else if (isset($_GET['mode'], $_GET['card'])) {
+        $mode = $_GET['mode'];
+        $id = $_GET['card'];
+        $success = true;
+        if ($mode == "s") {
+            db_modify_card_mode($id, "STATEMENT");
+        $status = "Card #".$id." is now a black card.";
+        } else if ($mode == "o") {
+            db_modify_card_mode($id, "OBJECT");
+        $status = "Card #".$id." is now a red card.";
+        } else if ($mode == "v") {
+            db_modify_card_mode($id, "VERB");
+        $status = "Card #".$id." is now a yellow card.";
+        } else {
+            $success = false;
+            $status = "Illegal mode";
+        }
     }
 ?>
 <!DOCTYPE html>

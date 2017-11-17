@@ -44,6 +44,14 @@
         return preg_replace("/_/", "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>", $text);
     }
     
+    function admin_card_options($id) {
+        $res = '<a href="/admin.php?s=list&mode=s&card='.$id.'" class="knob-statement">&nbsp;&nbsp;&nbsp;&nbsp;</a> - ';
+        $res .= '<a href="/admin.php?s=list&mode=o&card='.$id.'" class="knob-object">&nbsp;&nbsp;&nbsp;&nbsp;</a> - ';
+        $res .= '<a href="/admin.php?s=list&mode=v&card='.$id.'" class="knob-verb">&nbsp;&nbsp;&nbsp;&nbsp;</a> - ';
+        $res .= '<a href="/admin.php?s=list&delete_card='.$id.'">Delete</a> - ';
+        return $res;
+    }
+    
     function format_card($card, $with_opts=false) {
         $res = '<div class="card-base ';
         if ($card["card_type"] == "STATEMENT") { $res .= "statement-card"; }
@@ -53,10 +61,9 @@
         $res .= expand_underscores($card["card_text"]);
         $res .= '<div class="card-id">';
         if ($with_opts) {
-            $res .= '<a href="/admin.php?s=list&delete_card='.$card["card_id"].'">Delete</a> - ';
+            $res .= admin_card_options($card["card_id"]);
         }
-        $res .= '#';
-        $res .= $card["card_id"];
+        $res .= '#'.$card["card_id"];
         $res .= '</div></div>';
         return $res;
     }
@@ -65,7 +72,8 @@
     
     $sql_queries = array(
         "all_cards" => $db_handle->prepare("SELECT * FROM `kgf_cards`"),
-        "delete_card" => $db_handle->prepare("DELETE FROM `kgf_cards` WHERE `card_id` = :cardid")
+        "delete_card" => $db_handle->prepare("DELETE FROM `kgf_cards` WHERE `card_id` = :cardid"),
+        "set_card_mode" => $db_handle->prepare("UPDATE `kgf_cards` SET `card_type` = :cardtype WHERE `card_id` = :cardid")
     );
     
     function db_all_cards() {
@@ -78,5 +86,12 @@
         global $sql_queries;
         $sql_queries["delete_card"]->bindValue(":cardid", $id, PDO::PARAM_INT);
         $sql_queries["delete_card"]->execute();
+    }
+    
+    function db_modify_card_mode($id, $type) {
+        global $sql_queries;
+        $sql_queries["set_card_mode"]->bindValue(":cardid", $id, PDO::PARAM_INT);
+        $sql_queries["set_card_mode"]->bindValue(":cardtype", $type, PDO::PARAM_STR);
+        $sql_queries["set_card_mode"]->execute();
     }
 ?>

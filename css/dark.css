@@ -12,6 +12,21 @@ a, a:link, a:visited, a:hover, a:active {
     border-bottom: 1px solid gray;
 }
 
+.knob-statement {
+    text-decoration: none !important;
+    background-color: #000000;
+}
+
+.knob-object {
+    text-decoration: none !important;
+    background-color: #AD0021;
+}
+
+.knob-verb {
+    text-decoration: none !important;
+    background-color: #D4BD4B;
+}
+
 .success-box {
     border: 1px solid #00840A;
     background-color: #4F8853;
