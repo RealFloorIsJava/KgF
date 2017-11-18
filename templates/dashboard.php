@@ -31,7 +31,7 @@
         
         <div class="match-box">
             <div style="float: right;">
-                <button style="font-size: large;">Create new match</button>
+                <button style="font-size: large;" onclick="createMatch()">Create new match</button>
             </div>
             <div style="clear: both;"></div>
         </div>

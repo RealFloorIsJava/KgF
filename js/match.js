@@ -34,4 +34,8 @@ function loadMatches() {
     });
 }
 
+function createMatch() {
+    window.location.assign("/global.php?page=match&action=create");
+}
+
 setInterval(loadMatches, 900);

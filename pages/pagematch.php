@@ -22,7 +22,7 @@
             $this->process_action();
             
             if ($this->subpage == "view") {
-                //$this->show_template("templates/match.php");
+                $this->show_template("templates/match.php");
             }
         }
         
