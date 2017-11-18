@@ -21,7 +21,7 @@
         private $nickname;
         
         public function __construct() {
-            $this->id = uniqid();
+            $this->id = uniqid("p", true);
             $this->admin = false;
             $this->theme = "dark";
             $this->nickname = "Meme".rand(10000, 99999);
