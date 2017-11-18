@@ -51,6 +51,7 @@ a, a:link, a:visited, a:hover, a:active {
 .card-container {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .default-container {

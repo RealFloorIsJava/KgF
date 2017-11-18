@@ -9,7 +9,7 @@ a, a:link, a:visited, a:hover, a:active {
 
 .cupboard {
     background-color: #dfdfdf;
-    border-bottom: 1px solid gray;
+    box-shadow: 0px 0px 10px -1px #222222;
 }
 
 .knob-statement {
