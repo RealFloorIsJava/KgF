@@ -35,7 +35,7 @@ ALTER TABLE `kgf_match_participant`
 ALTER TABLE `kgf_match_participant`
   MODIFY `mp_id` int(12) UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE `kgf_match_participant`
-  ADD CONSTRAINT `kgf_match_participant_ibfk_1` FOREIGN KEY (`mp_match`) REFERENCES `kgf_match` (`match_id`);
+  ADD CONSTRAINT `kgf_match_participant_ibfk_1` FOREIGN KEY (`mp_match`) REFERENCES `kgf_match` (`match_id`) ON DELETE CASCADE ON UPDATE RESTRICT;
 
 CREATE TABLE `kgf_hand` (
   `hand_id` int(12) UNSIGNED NOT NULL,
@@ -49,5 +49,5 @@ ALTER TABLE `kgf_hand`
 ALTER TABLE `kgf_hand`
   MODIFY `hand_id` int(12) UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE `kgf_hand`
-  ADD CONSTRAINT `kgf_hand_ibfk_1` FOREIGN KEY (`hand_participant`) REFERENCES `kgf_match_participant` (`mp_id`),
+  ADD CONSTRAINT `kgf_hand_ibfk_1` FOREIGN KEY (`hand_participant`) REFERENCES `kgf_match_participant` (`mp_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   ADD CONSTRAINT `kgf_hand_ibfk_2` FOREIGN KEY (`hand_card`) REFERENCES `kgf_cards` (`card_id`);

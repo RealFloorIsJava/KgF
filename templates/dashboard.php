@@ -23,34 +23,11 @@
         </div>
         <?= $this->get_status_format() ?>
 
-        <?php
-            $matches = Match::get_all_matches();
-            foreach ($matches as $match) {
-        ?>
-        <div class="match-box">
-            <b><?= $match->get_owner_name() ?></b>'s match &mdash;
-            <b><?= $match->get_participant_count() ?></b> participants
-            <?php
-                if ($match->has_started()) {
-            ?>
-            <div style="float: right;">
-                <button disabled>Match in progress</button>
+        <div id="matchlist">
+            <div class="match-box">
+                Please wait while matches are being loaded...
             </div>
-            <?php
-                } else {
-            ?>
-            &mdash; Starting in <b><?= $match->get_seconds_to_start() ?></b> seconds...
-            <div style="float: right;">
-                <button>Join match</button>
-            </div>
-            <?php
-                }
-            ?>
-            <div style="clear: both;"></div>
         </div>
-        <?php
-            }
-        ?>
         
         <div class="match-box">
             <div style="float: right;">
@@ -61,6 +38,7 @@
 
         <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
         <script type="text/javascript" src="/js/main.js"></script>
+        <script type="text/javascript" src="/js/match.js"></script>
         <script type="text/javascript" src="/js/theme.js"></script>
     </body>
 </html>

@@ -52,8 +52,8 @@
         }
         
         public function __construct($id, $start, $card) {
-            $this->id = $id;
-            $this->start_time = $start;
+            $this->id = intval($id);
+            $this->start_time = intval($start);
             $this->current_card = $card;
             $this->participants = Participant::load_for_match($this);
         }
@@ -138,17 +138,17 @@
             $rows = self::$sql_queries["all_for_match"]->fetchAll();
             $parts = array();
             foreach ($rows as $part) {
-                $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], $part["mp_picking"] != 0);
+                $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0);
             }
             return $parts;
         }
         
         public function __construct($id, $player_id, $name, $match, $score, $picking) {
-            $this->id = $id;
+            $this->id = intval($id);
             $this->player_id = $player_id;
             $this->player_name = $name;
             $this->match = $match;
-            $this->score = $score;
+            $this->score = intval($score);
             $this->picking = $picking;
         }
         

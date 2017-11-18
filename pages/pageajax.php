@@ -18,7 +18,6 @@
             
             // No display for now. Might be needed in the future
             // for two way communication
-            echo "0";
         }
         
         private function process_action() {
@@ -28,7 +27,24 @@
                 $this->action_escalate();
             } else if ($this->action == "rename") {
                 $this->action_rename();
+            } else if ($this->action == "matchlist") {
+                $this->action_matchlist();
             }
+        }
+        
+        private function action_matchlist() {
+            $matches = Match::get_all_matches();
+            $tojson = array();
+            foreach ($matches as $match) {
+                $tojson[] = array(
+                    "id" => $match->get_id(),
+                    "owner" => $match->get_owner_name(),
+                    "participants" => $match->get_participant_count(),
+                    "started" => $match->has_started(),
+                    "seconds" => $match->get_seconds_to_start()
+                );
+            }
+            echo json_encode($tojson);
         }
         
         private function action_rename() {

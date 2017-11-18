@@ -73,7 +73,7 @@
         }
         
         public function __construct($id, $text, $type) {
-            $this->id = $id;
+            $this->id = intval($id);
             $this->text = $text;
             $this->type = $type;
         }
