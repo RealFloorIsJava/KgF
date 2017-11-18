@@ -12,13 +12,18 @@
          */
         private $id;
         /**
-         * The timestamp when this match will begin
+         * The timestamp when this match state ends
          */
-        private $start_time;
+        private $timer;
         /**
          * The current black card
          */
         private $current_card;
+        /**
+         * The state of this match
+         * One of PENDING CHOOSING PICKING COOLDOWN
+         */
+        private $state;
         /**
          * The participants of this match
          */
@@ -30,15 +35,15 @@
         public static function provideDB($dbh) {
             self::$sql_queries = array(
                 "all_matches" => $dbh->prepare(
-                    "SELECT `match_id`, `match_start`, `match_card_id` ".
+                    "SELECT * ".
                     "FROM `kgf_match` ".
-                    "ORDER BY (`match_start` < UNIX_TIMESTAMP()) ASC, ".
-                        "`match_start` ASC"
+                    "ORDER BY (`match_state` = 'PENDING') DESC, ".
+                        "`match_timer` ASC"
                 ),
                 "create_empty" => $dbh->prepare(
                     "INSERT INTO `kgf_match` ".
-                    "(`match_id`, `match_start`, `match_card_id`) ".
-                    "VALUES (NULL, :starttime, :cardid)"
+                    "(`match_id`, `match_timer`, `match_card_id`, `match_state`) ".
+                    "VALUES (NULL, :timer, :cardid, 'PENDING')"
                 ),
                 "fetch_latest" => $dbh->prepare(
                     "SELECT * ".
@@ -58,7 +63,7 @@
             $rows = $q->fetchAll();
             $matches = array();
             foreach ($rows as $match) {
-                $matches[] = new Match($match["match_id"], $match["match_start"], Card::get_card($match["match_card_id"]));
+                $matches[] = new Match($match["match_id"], $match["match_timer"], Card::get_card($match["match_card_id"]), $match["match_state"]);
             }
             return $matches;
         }
@@ -68,7 +73,7 @@
          */
         public static function create_empty($starttime, $card) {
             $q = self::$sql_queries["create_empty"];
-            $q->bindValue(":starttime", $starttime, PDO::PARAM_INT);
+            $q->bindValue(":timer", $starttime, PDO::PARAM_INT);
             $q->bindValue(":cardid", $card->get_id(), PDO::PARAM_INT);
             $q->execute();
             
@@ -77,15 +82,16 @@
             $q->execute();
             $rows = $q->fetchAll();
             foreach ($rows as $row) {
-                return new Match($row["match_id"], $row["match_start"], $card);
+                return new Match($row["match_id"], $row["match_timer"], $card, $row["match_state"]);
             }
             return null;
         }
         
-        private function __construct($id, $start, $card) {
+        private function __construct($id, $timer, $card, $state) {
             $this->id = intval($id);
-            $this->start_time = intval($start);
+            $this->timer = intval($timer);
             $this->current_card = $card;
+            $this->state = $state;
             $this->participants = Participant::load_for_match($this);
         }
         
@@ -93,7 +99,7 @@
          * Returns whether this match has already started
          */
         public function has_started() {
-            return $this->start_time <= time();
+            return $this->state != "PENDING";
         }
         
         /**
@@ -103,11 +109,14 @@
             $this->participants[] = $participant;
         }
         
-        public function get_seconds_to_start() {
-            return $this->start_time - time();
+        public function get_seconds_to_next_phase() {
+            return $this->timer - time();
         }
         
         public function get_owner_name() {
+            if (count($this->participants) < 1) {
+                return "[unknown]";
+            }
             return $this->participants[0]->get_name();
         }
         

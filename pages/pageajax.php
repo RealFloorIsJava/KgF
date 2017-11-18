@@ -41,7 +41,7 @@
                     "owner" => $match->get_owner_name(),
                     "participants" => $match->get_participant_count(),
                     "started" => $match->has_started(),
-                    "seconds" => $match->get_seconds_to_start()
+                    "seconds" => $match->get_seconds_to_next_phase()
                 );
             }
             echo json_encode($tojson);

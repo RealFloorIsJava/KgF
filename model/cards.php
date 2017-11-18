@@ -17,6 +17,7 @@
         private $text;
         /**
          * The type of this card
+         * One of STATEMENT VERB OBJECT
          */
         private $type;
         
