@@ -42,7 +42,7 @@
             
             $statement = Card::random_card("STATEMENT");
             $match = Match::create_empty(time() + 60, $statement);
-            Participant::add_user_to_match($this->user, $match);
+            $match->add_user($this->user);
             
             header("Location: /global.php?page=match&sub=view");
             exit();

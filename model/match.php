@@ -116,11 +116,11 @@
             return $this->state != "PENDING";
         }
         
-        /**
-         * Adds the given participant to the cached list of participants
+        /*+
+         * Adds this user to this match
          */
-        public function add_participant($participant) {
-            $this->participants[] = $participant;
+        public function add_user($user) {
+            $this->participants[] = Participant::from_user_and_match($user, $this);
         }
         
         public function get_seconds_to_next_phase() {
@@ -249,9 +249,9 @@
         }
         
         /**
-         * Adds the user as a participant to the given match
+         * Creates a participant from an User and a Match
          */
-        public static function add_user_to_match($user, $match) {
+        public static function from_user_and_match($user, $match) {
             $q = self::$sql_queries["add_participant"];
             $q->bindValue(":playerid", $user->get_id(), PDO::PARAM_STR);
             $q->bindValue(":playername", $user->get_nickname(), PDO::PARAM_STR);
@@ -268,7 +268,7 @@
                 break;
             }
             
-            $match->add_participant($part);
+            return $part;
         }
         
         private function __construct($id, $player_id, $name, $match, $score, $picking) {
