@@ -28,7 +28,8 @@ CREATE TABLE `kgf_match_participant` (
   `mp_name` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
   `mp_match` int(12) UNSIGNED NOT NULL,
   `mp_score` int(12) UNSIGNED NOT NULL,
-  `mp_picking` tinyint(1) UNSIGNED NOT NULL
+  `mp_picking` tinyint(1) UNSIGNED NOT NULL,
+  `mp_timeout` bigint(12) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 ALTER TABLE `kgf_match_participant`
   ADD PRIMARY KEY (`mp_id`),

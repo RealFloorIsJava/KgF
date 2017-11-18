@@ -119,8 +119,8 @@
         /*+
          * Adds this user to this match
          */
-        public function add_user($user) {
-            $this->participants[] = Participant::from_user_and_match($user, $this);
+        public function add_user($user, $timeout) {
+            $this->participants[] = Participant::from_user_and_match($user, $this, $timeout);
         }
         
         public function get_seconds_to_next_phase() {
@@ -175,12 +175,20 @@
          * Whether this participant is currently picking
          */
         private $picking;
+        /**
+         * The point in time when this participant will be kicked due to timeout
+         */
+        private $timeout;
         
         /**
          * Used to provide a DB handle and to initialize all the queries
          */
         public static function provideDB($dbh) {
             self::$sql_queries = array(
+                "housekeeping" => $dbh->prepare(
+                    "DELETE FROM `kgf_match_participant` ".
+                    "WHERE `mp_timeout` <= UNIX_TIMESTAMP()"
+                ),
                 "all_for_match" => $dbh->prepare(
                     "SELECT * ".
                     "FROM `kgf_match_participant` ".
@@ -194,8 +202,8 @@
                 ),
                 "add_participant" => $dbh->prepare(
                     "INSERT INTO `kgf_match_participant` ".
-                    "(`mp_id`, `mp_player`, `mp_name`, `mp_match`, `mp_score`, `mp_picking`) ".
-                    "VALUES (NULL, :playerid, :playername, :matchid, 0, 0)"
+                    "(`mp_id`, `mp_player`, `mp_name`, `mp_match`, `mp_score`, `mp_picking`, `mp_timeout`) ".
+                    "VALUES (NULL, :playerid, :playername, :matchid, 0, 0, :timeout)"
                 ),
                 "fetch_latest" => $dbh->prepare(
                     "SELECT * ".
@@ -220,7 +228,7 @@
             $rows = $q->fetchAll();
             $parts = array();
             foreach ($rows as $part) {
-                $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0);
+                $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0, intval($part["mp_timeout"]));
             }
             return $parts;
         }
@@ -251,11 +259,12 @@
         /**
          * Creates a participant from an User and a Match
          */
-        public static function from_user_and_match($user, $match) {
+        public static function from_user_and_match($user, $match, $timeout) {
             $q = self::$sql_queries["add_participant"];
             $q->bindValue(":playerid", $user->get_id(), PDO::PARAM_STR);
             $q->bindValue(":playername", $user->get_nickname(), PDO::PARAM_STR);
             $q->bindValue(":matchid", $match->get_id(), PDO::PARAM_INT);
+            $q->bindValue(":timeout", $timeout, PDO::PARAM_INT);
             $q->execute();
             
             // We're in a transaction, so this should be the one we just created
@@ -264,20 +273,29 @@
             $rows = $q->fetchAll();
             $part = null;
             foreach ($rows as $row) {
-                $part = new Participant($row["mp_id"], $row["mp_player"], $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0);
+                $part = new Participant($row["mp_id"], $row["mp_player"], $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
                 break;
             }
             
             return $part;
         }
         
-        private function __construct($id, $player_id, $name, $match, $score, $picking) {
+        /**
+         * Performs housekeeping tasks
+         */
+        public static function perform_housekeeping() {
+            $q = self::$sql_queries["housekeeping"];
+            $q->execute();
+        }
+        
+        private function __construct($id, $player_id, $name, $match, $score, $picking, $timeout) {
             $this->id = intval($id);
             $this->player_id = $player_id;
             $this->player_name = $name;
             $this->match = $match;
             $this->score = intval($score);
             $this->picking = $picking;
+            $this->timeout = $timeout;
         }
         
         public function get_name() {

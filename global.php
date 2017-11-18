@@ -56,6 +56,7 @@
     Participant::provideDB($db_handle);
     Card::provideDB($db_handle);
     
+    Participant::perform_housekeeping();
     Match::perform_housekeeping();
     
     // Display the page
