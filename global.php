@@ -52,6 +52,7 @@
     
     // Initialize stuff
     Cards::provideDB($db_handle);
+    Card::provideDB($db_handle);
     
     // Display the page
     $pageclass = "Page".ucfirst($page);

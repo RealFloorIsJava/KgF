@@ -20,7 +20,18 @@
             <?php
                 $cards = Cards::get_all_cards();
                 foreach ($cards as $card) {
-                    echo Cards::format_card($card, true);
+            ?>
+            <div class="card-base <?= $card->get_type_class() ?>">
+                <?= $card->get_formatted_text() ?>
+                <div class="card-id">
+                    <a href="/global.php?page=admin&sub=list&action=mode-s&card=<?= $card->get_id() ?>" class="knob-statement">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+                    <a href="/global.php?page=admin&sub=list&action=mode-o&card=<?= $card->get_id() ?>" class="knob-object">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+                    <a href="/global.php?page=admin&sub=list&action=mode-v&card=<?= $card->get_id() ?>" class="knob-verb">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+                    <a href="/global.php?page=admin&sub=list&action=delete&card=<?= $card->get_id() ?>">Delete</a> -
+                    #<?= $card->get_id() ?>
+                </div>
+            </div>
+            <?php
                 }
             ?>
         </div>

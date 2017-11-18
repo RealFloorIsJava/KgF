@@ -45,15 +45,25 @@
         
         private function action_delete() {
             if (isset($_GET["card"])) {
-                Cards::delete_card($_GET["card"]);
-                $this->report_status("Card #".$_GET["card"]." deleted!", true);
+                $card = Cards::get_card($_GET["card"]);
+                if ($card !== null) {
+                    $card->delete_card();
+                    $this->report_status("Card #".$_GET["card"]." deleted!", true);
+                } else {
+                    $this->report_status("Card #".$_GET["card"]." does not exist!", false);
+                }
             }
         }
         
         private function action_mode($mode) {
             if (isset($_GET["card"])) {
-                Cards::set_mode($_GET["card"], $mode);
-                $this->report_status("Card #".$_GET["card"]."'s mode was changed!", true);
+                $card = Cards::get_card($_GET["card"]);
+                if ($card !== null) {
+                    $card->set_mode($mode);
+                    $this->report_status("Card #".$_GET["card"]."'s mode was changed!", true);
+                } else {
+                    $this->report_status("Card #".$_GET["card"]." does not exist!", false);
+                }
             }
         }
     }
