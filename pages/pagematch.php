@@ -19,6 +19,15 @@
         }
         
         public function display() {
+            if ($this->action == "create") {
+                $this->action_create();
+            }
+            
+            // If the user has not created a match, they have to be in a match from this point on
+            if (!Participant::is_in_match($this->user->get_id())) {
+                $this->fail_permission_check();
+            }
+            
             $this->process_action();
             
             if ($this->subpage == "view") {
@@ -40,8 +49,10 @@
         }
         
         private function process_action() {
-            if ($this->action == "create") {
-                $this->action_create();
+            if ($this->action == "abandon") {
+                Participant::leave_matches($this->user->get_id());
+                header("Location: /global.php?page=dashboard");
+                exit();
             }
         }
     }

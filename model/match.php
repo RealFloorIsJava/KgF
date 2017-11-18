@@ -202,6 +202,10 @@
                     "FROM `kgf_match_participant` ".
                     "ORDER BY `mp_id` DESC ".
                     "LIMIT 1"
+                ),
+                "abandon" => $dbh->prepare(
+                    "DELETE FROM `kgf_match_participant` ".
+                    "WHERE `mp_player` = :playerid"
                 )
             );
         }
@@ -233,6 +237,15 @@
                 return intval($row["count"]) != 0;
             }
             die("Count of matches could not be retrieved");
+        }
+        
+        /**
+         * Leaves all matches this user participates in
+         */
+        public static function leave_matches($player) {
+            $q = self::$sql_queries["abandon"];
+            $q->bindValue(":playerid", $player, PDO::PARAM_STR);
+            $q->execute();
         }
         
         /**
