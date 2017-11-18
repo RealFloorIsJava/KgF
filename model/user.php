@@ -53,6 +53,10 @@
             return $this->nickname;
         }
         
+        public function get_id() {
+            return $this->id;
+        }
+        
         public function is_admin() {
             return $this->admin;
         }

@@ -34,6 +34,17 @@
                     "FROM `kgf_match` ".
                     "ORDER BY (`match_start` < UNIX_TIMESTAMP()) ASC, ".
                         "`match_start` ASC"
+                ),
+                "create_empty" => $dbh->prepare(
+                    "INSERT INTO `kgf_match` ".
+                    "(`match_id`, `match_start`, `match_card_id`) ".
+                    "VALUES (NULL, :starttime, :cardid)"
+                ),
+                "fetch_latest" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_match` ".
+                    "ORDER BY `match_id` DESC ".
+                    "LIMIT 1"
                 )
             );
         }
@@ -52,7 +63,26 @@
             return $matches;
         }
         
-        public function __construct($id, $start, $card) {
+        /**
+         * Creates an empty match
+         */
+        public static function create_empty($starttime, $card) {
+            $q = self::$sql_queries["create_empty"];
+            $q->bindValue(":starttime", $starttime, PDO::PARAM_INT);
+            $q->bindValue(":cardid", $card->get_id(), PDO::PARAM_INT);
+            $q->execute();
+            
+            // We're in a transaction, so this should be the one we just created
+            $q = self::$sql_queries["fetch_latest"];
+            $q->execute();
+            $rows = $q->fetchAll();
+            foreach ($rows as $row) {
+                return new Match($row["match_id"], $row["match_start"], $card);
+            }
+            return null;
+        }
+        
+        private function __construct($id, $start, $card) {
             $this->id = intval($id);
             $this->start_time = intval($start);
             $this->current_card = $card;
@@ -64,6 +94,13 @@
          */
         public function has_started() {
             return $this->start_time <= time();
+        }
+        
+        /**
+         * Adds the given participant to the cached list of participants
+         */
+        public function add_participant($participant) {
+            $this->participants[] = $participant;
         }
         
         public function get_seconds_to_start() {
@@ -126,6 +163,22 @@
                     "FROM `kgf_match_participant` ".
                     "WHERE `mp_match` = :matchid ".
                     "ORDER BY `mp_id` ASC"
+                ),
+                "is_in_match" => $dbh->prepare(
+                    "SELECT COUNT(*) AS `count` ".
+                    "FROM `kgf_match_participant` ".
+                    "WHERE `mp_player` = :playerid"
+                ),
+                "add_participant" => $dbh->prepare(
+                    "INSERT INTO `kgf_match_participant` ".
+                    "(`mp_id`, `mp_player`, `mp_name`, `mp_match`, `mp_score`, `mp_picking`) ".
+                    "VALUES (NULL, :playerid, :playername, :matchid, 0, 0)"
+                ),
+                "fetch_latest" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_match_participant` ".
+                    "ORDER BY `mp_id` DESC ".
+                    "LIMIT 1"
                 )
             );
         }
@@ -145,7 +198,44 @@
             return $parts;
         }
         
-        public function __construct($id, $player_id, $name, $match, $score, $picking) {
+        /**
+         * Checks whether the given player is in a match
+         */
+        public static function is_in_match($player) {
+            $q = self::$sql_queries["is_in_match"];
+            $q->bindValue(":playerid", $player, PDO::PARAM_STR);
+            $q->execute();
+            $rows = $q->fetchAll();
+            foreach ($rows as $row) {
+                return intval($row["count"]) != 0;
+            }
+            die("Count of matches could not be retrieved");
+        }
+        
+        /**
+         * Adds the user as a participant to the given match
+         */
+        public static function add_user_to_match($user, $match) {
+            $q = self::$sql_queries["add_participant"];
+            $q->bindValue(":playerid", $user->get_id(), PDO::PARAM_STR);
+            $q->bindValue(":playername", $user->get_nickname(), PDO::PARAM_STR);
+            $q->bindValue(":matchid", $match->get_id(), PDO::PARAM_INT);
+            $q->execute();
+            
+            // We're in a transaction, so this should be the one we just created
+            $q = self::$sql_queries["fetch_latest"];
+            $q->execute();
+            $rows = $q->fetchAll();
+            $part = null;
+            foreach ($rows as $row) {
+                $part = new Participant($row["mp_id"], $row["mp_player"], $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0);
+                break;
+            }
+            
+            $match->add_participant($part);
+        }
+        
+        private function __construct($id, $player_id, $name, $match, $score, $picking) {
             $this->id = intval($id);
             $this->player_id = $player_id;
             $this->player_name = $name;

@@ -42,6 +42,13 @@
                     "UPDATE `kgf_cards` ".
                     "SET `card_type` = :cardtype ".
                     "WHERE `card_id` = :cardid"
+                ),
+                "random_card" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_cards` ".
+                    "WHERE `card_type` = :cardtype ".
+                    "ORDER BY RAND() ".
+                    "LIMIT 1"
                 )
             );
         }
@@ -74,7 +81,21 @@
             return null;
         }
         
-        public function __construct($id, $text, $type) {
+        /**
+         * Returns a random card of the given type
+         */
+        public static function random_card($type) {
+            $q = self::$sql_queries["random_card"];
+            $q->bindValue(":cardtype", $type, PDO::PARAM_STR);
+            $q->execute();
+            $rows = $q->fetchAll();
+            foreach ($rows as $row) {
+                return new Card($row["card_id"], $row["card_text"], $row["card_type"]);
+            }
+            return null;
+        }
+        
+        private function __construct($id, $text, $type) {
             $this->id = intval($id);
             $this->text = $text;
             $this->type = $type;
