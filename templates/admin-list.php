@@ -18,7 +18,7 @@
         <?= $this->get_status_format() ?>
         <div class="card-container">
             <?php
-                $cards = Cards::get_all_cards();
+                $cards = Card::get_all_cards();
                 foreach ($cards as $card) {
             ?>
             <div class="card-base <?= $card->get_type_class() ?>">

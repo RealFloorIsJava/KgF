@@ -19,7 +19,7 @@ function enterACP(skip) {
 
 function changeName() {
     var newName = prompt("What name would you like to have?");
-    if (newName != null && newName != "") {
+    if (newName != null && newName != "" && newName.length < 32) {
         $.ajax({
             method: "POST",
             url: "/global.php?page=ajax&action=rename",
@@ -29,5 +29,7 @@ function changeName() {
         }).done(function(msg) {
             document.getElementById("username").innerHTML = newName;
         });
+    } else {
+        alert("Invalid name!");
     }
 }

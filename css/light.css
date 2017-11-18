@@ -7,6 +7,11 @@ a, a:link, a:visited, a:hover, a:active {
     color: #444411;
 }
 
+.match-box {
+    background-color: #cfcfcf;
+    box-shadow: 7px 7px 7px -3px #222222;
+}
+
 .cupboard {
     background-color: #dfdfdf;
     box-shadow: 0px 0px 10px -1px #222222;

@@ -45,7 +45,7 @@
         
         private function action_delete() {
             if (isset($_GET["card"])) {
-                $card = Cards::get_card($_GET["card"]);
+                $card = Card::get_card($_GET["card"]);
                 if ($card !== null) {
                     $card->delete_card();
                     $this->report_status("Card #".$_GET["card"]." deleted!", true);
@@ -57,7 +57,7 @@
         
         private function action_mode($mode) {
             if (isset($_GET["card"])) {
-                $card = Cards::get_card($_GET["card"]);
+                $card = Card::get_card($_GET["card"]);
                 if ($card !== null) {
                     $card->set_mode($mode);
                     $this->report_status("Card #".$_GET["card"]."'s mode was changed!", true);

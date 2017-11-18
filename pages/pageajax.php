@@ -34,7 +34,7 @@
         private function action_rename() {
             if (isset($_POST['name'])) {
                 $name = htmlspecialchars($_POST['name']);
-                if ($name != "" && strlen($name) < 64) {
+                if ($name != "" && strlen($name) < 32) {
                     $this->user->set_nickname($name);
                 }
             }

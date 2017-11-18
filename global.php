@@ -49,9 +49,11 @@
     
     // Load more stuff that might be needed for the page
     require "model/cards.php";
+    require "model/match.php";
     
     // Initialize stuff
-    Cards::provideDB($db_handle);
+    Match::provideDB($db_handle);
+    Participant::provideDB($db_handle);
     Card::provideDB($db_handle);
     
     // Display the page

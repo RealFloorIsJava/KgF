@@ -1,20 +1,48 @@
 <?php
     /**
-     * Models the card storage
+     * Models one specific card
      */
-    class Cards {
+    class Card {
         /**
          * Prepared SQL queries
          */
         private static $sql_queries;
+        /**
+         * The ID of this card
+         */
+        private $id;
+        /**
+         * The text on this card
+         */
+        private $text;
+        /**
+         * The type of this card
+         */
+        private $type;
         
         /**
          * Used to provide a DB handle and to initialize all the queries
          */
         public static function provideDB($dbh) {
             self::$sql_queries = array(
-                "all_cards" => $dbh->prepare("SELECT * FROM `kgf_cards`"),
-                "get_card" => $dbh->prepare("SELECT * FROM `kgf_cards` WHERE `card_id` = :cardid")
+                "all_cards" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_cards`"
+                ),
+                "get_card" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_cards` ".
+                    "WHERE `card_id` = :cardid"
+                ),
+                "delete_card" => $dbh->prepare(
+                    "DELETE FROM `kgf_cards` ".
+                    "WHERE `card_id` = :cardid"
+                ),
+                "set_card_mode" => $dbh->prepare(
+                    "UPDATE `kgf_cards` ".
+                    "SET `card_type` = :cardtype ".
+                    "WHERE `card_id` = :cardid"
+                )
             );
         }
         
@@ -42,38 +70,6 @@
                 return new Card($card["card_id"], $card["card_text"], $card["card_type"]);
             }
             return null;
-        }
-    }
-    
-    /**
-     * Models one specific card
-     */
-    class Card {
-        /**
-         * Prepared SQL queries
-         */
-        private static $sql_queries;
-        /**
-         * The ID of this card
-         */
-        private $id;
-        /**
-         * The text on this card
-         */
-        private $text;
-        /**
-         * The type of this card
-         */
-        private $type;
-        
-        /**
-         * Used to provide a DB handle and to initialize all the queries
-         */
-        public static function provideDB($dbh) {
-            self::$sql_queries = array(
-                "delete_card" => $dbh->prepare("DELETE FROM `kgf_cards` WHERE `card_id` = :cardid"),
-                "set_card_mode" => $dbh->prepare("UPDATE `kgf_cards` SET `card_type` = :cardtype WHERE `card_id` = :cardid")
-            );
         }
         
         public function __construct($id, $text, $type) {
@@ -114,6 +110,9 @@
             return "unknown";
         }
         
+        /**
+         * Returns the HTML-formatted text of the card
+         */
         public function get_formatted_text() {
             return preg_replace("/_/", "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>", $this->text);
         }
