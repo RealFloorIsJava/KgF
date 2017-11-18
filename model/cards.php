@@ -50,8 +50,9 @@
          * Fetches all cards in the DB
          */
         public static function get_all_cards() {
-            self::$sql_queries["all_cards"]->execute();
-            $rows = self::$sql_queries["all_cards"]->fetchAll();
+            $q = self::$sql_queries["all_cards"];
+            $q->execute();
+            $rows = $q->fetchAll();
             $cards = array();
             foreach ($rows as $card) {
                 $cards[$card["card_id"]] = new Card($card["card_id"], $card["card_text"], $card["card_type"]);
@@ -63,9 +64,10 @@
          * Fetches one card from the DB
          */
         public static function get_card($id) {
-            self::$sql_queries["get_card"]->bindValue(":cardid", $id, PDO::PARAM_INT);
-            self::$sql_queries["get_card"]->execute();
-            $rows = self::$sql_queries["get_card"]->fetchAll();
+            $q = self::$sql_queries["get_card"];
+            $q->bindValue(":cardid", $id, PDO::PARAM_INT);
+            $q->execute();
+            $rows = $q->fetchAll();
             foreach ($rows as $card) {
                 return new Card($card["card_id"], $card["card_text"], $card["card_type"]);
             }
@@ -81,9 +83,10 @@
         /**
          * Deletes this card
          */
-        public function delete_card() {            
-            self::$sql_queries["delete_card"]->bindValue(":cardid", $this->id, PDO::PARAM_INT);
-            self::$sql_queries["delete_card"]->execute();
+        public function delete_card() {
+            $q = self::$sql_queries["delete_card"];
+            $q->bindValue(":cardid", $this->id, PDO::PARAM_INT);
+            $q->execute();
         }
         
         /**
@@ -91,9 +94,10 @@
          */
         public function set_mode($type) {
             $this->type = $type;
-            self::$sql_queries["set_card_mode"]->bindValue(":cardid", $this->id, PDO::PARAM_INT);
-            self::$sql_queries["set_card_mode"]->bindValue(":cardtype", $this->type, PDO::PARAM_STR);
-            self::$sql_queries["set_card_mode"]->execute();
+            $q = self::$sql_queries["set_card_mode"];
+            $q->bindValue(":cardid", $this->id, PDO::PARAM_INT);
+            $q->bindValue(":cardtype", $this->type, PDO::PARAM_STR);
+            $q->execute();
         }
         
         /**

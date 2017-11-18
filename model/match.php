@@ -42,8 +42,9 @@
          * Fetches all matches in the DB
          */
         public static function get_all_matches() {
-            self::$sql_queries["all_matches"]->execute();
-            $rows = self::$sql_queries["all_matches"]->fetchAll();
+            $q = self::$sql_queries["all_matches"];
+            $q->execute();
+            $rows = $q->fetchAll();
             $matches = array();
             foreach ($rows as $match) {
                 $matches[] = new Match($match["match_id"], $match["match_start"], Card::get_card($match["match_card_id"]));
@@ -133,9 +134,10 @@
          * Loads the participants of the given match
          */
         public static function load_for_match($match) {
-            self::$sql_queries["all_for_match"]->bindValue(":matchid", $match->get_id(), PDO::PARAM_INT);
-            self::$sql_queries["all_for_match"]->execute();
-            $rows = self::$sql_queries["all_for_match"]->fetchAll();
+            $q = self::$sql_queries["all_for_match"];
+            $q->bindValue(":matchid", $match->get_id(), PDO::PARAM_INT);
+            $q->execute();
+            $rows = $q->fetchAll();
             $parts = array();
             foreach ($rows as $part) {
                 $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0);
