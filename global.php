@@ -56,6 +56,8 @@
     Participant::provideDB($db_handle);
     Card::provideDB($db_handle);
     
+    Match::perform_housekeeping();
+    
     // Display the page
     $pageclass = "Page".ucfirst($page);
     $page = new $pageclass($db_handle, $user);

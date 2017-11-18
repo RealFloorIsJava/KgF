@@ -34,6 +34,12 @@
          */
         public static function provideDB($dbh) {
             self::$sql_queries = array(
+                "housekeeping" => $dbh->prepare(
+                    "DELETE FROM `kgf_match` ".
+                    "WHERE ".
+                        "(SELECT COUNT(*) AS `count` FROM `kgf_match_participant` mp WHERE mp.`mp_match` = `match_id`) < 1 ".
+                        "OR ((SELECT COUNT(*) AS `count` FROM `kgf_match_participant` mp WHERE mp.`mp_match` = `match_id`) < 3 AND `match_state` != 'PENDING')"
+                ),
                 "all_matches" => $dbh->prepare(
                     "SELECT * ".
                     "FROM `kgf_match` ".
@@ -52,6 +58,14 @@
                     "LIMIT 1"
                 )
             );
+        }
+        
+        /**
+         * Performs housekeeping tasks
+         */
+        public static function perform_housekeeping() {
+            $q = self::$sql_queries["housekeeping"];
+            $q->execute();
         }
         
         /**
