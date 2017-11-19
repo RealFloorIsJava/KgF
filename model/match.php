@@ -181,6 +181,13 @@
         }
         
         /**
+         * Participant getter
+         */
+        public function get_participants() {
+            return $this->participants;
+        }
+        
+        /**
          * ID getter
          */
         public function get_id() {

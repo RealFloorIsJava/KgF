@@ -14,9 +14,10 @@ function loadMatches() {
                 var newElem = $("<div><div></div><div></div></div>");
                 matchResolver[match["id"]] = newElem;
                 
+                var btn = $("<button onclick=\"joinMatch(" + match["id"] + ")\"></button>").html("Join match");
                 newElem.addClass("match-box");
                 newElem.children("div").eq(0).append($("<b></b>'s match &mdash; <b></b> participants &mdash; Starting in <b></b> seconds...<span></span>"));
-                newElem.children("div").eq(0).append($("<div></div>").css("float", "right").append($("<button></button>").html("Join match"))).append($("<div></div>").css("clear", "both"));
+                newElem.children("div").eq(0).append($("<div></div>").css("float", "right").append(btn)).append($("<div></div>").css("clear", "both"));
                 newElem.children("div").eq(1).append($("<b></b>'s match &mdash; <b></b> participants<span></span>"));
                 newElem.children("div").eq(1).append($("<div></div>").css("float", "right").append($("<button></button>").prop("disabled", true).html("Match in progress"))).append($("<div></div>").css("clear", "both"));
             }
@@ -32,6 +33,10 @@ function loadMatches() {
         }
         list.empty().append(jdata);
     });
+}
+
+function joinMatch(id) {
+    window.location.assign("/global.php?page=match&action=join&match=" + id);
 }
 
 function createMatch() {

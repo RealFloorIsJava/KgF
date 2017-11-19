@@ -15,8 +15,17 @@
             <div style="clear: both;"></div>
         </div>
         <?= $this->get_status_format() ?>
+        
+        Participants: 
+        <?php
+            $parts = $this->match->get_participants();
+            foreach ($parts as $part) {
+                echo $part->get_name()." ";
+            }
+        ?>
 
         <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="/js/matchview.js"></script>
         <script type="text/javascript" src="/js/theme.js"></script>
     </body>
 </html>

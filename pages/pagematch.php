@@ -14,11 +14,11 @@
         /**
          * The participant object that describes the user
          */
-        private $participant;
+        protected $participant;
         /**
          * The match the user participates in
          */
-        private $match;
+        protected $match;
         
         public function __construct($dbh, $user) {
             parent::__construct($dbh, $user);
@@ -29,6 +29,8 @@
         public function display() {
             if ($this->action == "create") {
                 $this->action_create();
+            } else if ($this->action == "join") {
+                $this->action_join();
             }
             
             // The user has to participate in a match from this point on
@@ -46,6 +48,20 @@
             
             if ($this->subpage == "view") {
                 $this->show_template("templates/match.php");
+            }
+        }
+        
+        private function action_join() {
+            $part = Participant::get_participant($this->user->get_id());
+            if ($part !== null) {
+                $this->fail_permission_check();
+            }
+            if (isset($_GET["match"])) {
+                $id = $_GET["match"];
+                $match = Match::get_by_id($id);
+                $match->add_user($this->user, time() + 15);
+                header("Location: /global.php?page=match&sub=view");
+                exit();
             }
         }
         
