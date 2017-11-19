@@ -1,4 +1,7 @@
 <?php
+    // Initialize error logging
+    require "includes/error.php";
+
     // Already needed here because the session contains user objects
     require "model/user.php";
     session_start();
