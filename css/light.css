@@ -46,6 +46,22 @@ a, a:link, a:visited, a:hover, a:active {
     box-shadow: 2px 2px 6px -3px #222222;
 }
 
+.part {
+    background-color: #aaaaaa;
+    box-shadow: 7px 7px 7px -3px #222222;
+}
+
+.match-chat {
+    background-color: #dddddd;
+    box-shadow: -2px 0px 7px -3px #222222;
+}
+
+.chat-line {
+    box-shadow: 1px 0px 7px -1px #222222;
+    background-color: #eeeeee;
+    color: #333333;
+}
+
 .statement-card {
     color: #fafafa;
     background-color: #0a0a0a;

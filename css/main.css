@@ -1,7 +1,7 @@
 body {
     margin: 0px;
+    margin-bottom: 20px;
     padding: 0px;
-    padding-bottom: 20px;
 }
 
 a, a:link, a:visited, a:hover, a:active {
@@ -34,6 +34,7 @@ a, a:link, a:visited, a:hover, a:active {
     padding-bottom: 15px;
     padding-right: 20px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .card-base:hover {
@@ -63,6 +64,95 @@ a, a:link, a:visited, a:hover, a:active {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+}
+
+.match-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -20px;
+}
+
+.match-view {
+    margin-top: 20px;
+}
+
+.chat-svg {
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+.chat-msg {
+    vertical-align: middle;
+}
+
+.match-chat {
+    margin-bottom: -20px;
+    width: 20%;
+    min-width: 256px;
+    font-size: small;
+}
+
+.chat-messages {
+    padding: 5px 5px 0px 5px;
+}
+
+.chat-line {
+    border: 0px;
+    width: 100%;
+    padding-top: 7px;
+    padding: 5px 4px 3px 4px;
+    min-height: 15px;
+}
+
+.part-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.part {
+    margin: 3px 10px 15px 10px;
+    overflow: hidden;
+    position: relative;
+    width: 256px;
+    height: 48px;
+    border-radius: 5px;
+}
+
+.part-name {
+    position: absolute;
+    top: 5px;
+    left: 7px;
+    font-size: small;
+}
+
+.part-score {
+    position: absolute;
+    top: 5px;
+    right: 7px;
+    font-size: small;
+}
+
+.part-type {
+    position: absolute;
+    bottom: 5px;
+    right: 7px;
+    font-size: small;
+}
+
+.part-status {
+    position: absolute;
+    bottom: 5px;
+    left: 7px;
+    font-size: small;
+}
+
+.match-status {
+    text-align: center;
+    width: 100%;
+    margin: 5px 10px 15px 10px;
 }
 
 .default-container {

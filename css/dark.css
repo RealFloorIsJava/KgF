@@ -51,6 +51,22 @@ a, a:link, a:visited, a:hover, a:active {
     background-color: #111111;
 }
 
+.part {
+    background-color: #555555;
+    box-shadow: 7px 7px 7px -3px #222222;
+}
+
+.match-chat {
+    background-color: #444444;
+    box-shadow: -2px 0px 7px -3px #222222;
+}
+
+.chat-line {
+    box-shadow: 1px 0px 7px -1px #222222;
+    background-color: #333333;
+    color: #dddddd;
+}
+
 .object-card {
     color: #001111;
     background-color: #bbaaaa;

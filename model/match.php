@@ -408,5 +408,12 @@
         public function get_match() {
             return $this->match;
         }
+        
+        /**
+         * Score getter
+         */
+        public function get_score() {
+            return $this->score;
+        }
     }
 ?>
