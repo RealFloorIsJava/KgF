@@ -54,15 +54,16 @@
         private function action_join() {
             $part = Participant::get_participant($this->user->get_id());
             if ($part !== null) {
-                $this->fail_permission_check();
+                // Don't fail permissions, just move the user to their match
+            } else {
+                if (isset($_GET["match"])) {
+                    $id = $_GET["match"];
+                    $match = Match::get_by_id($id);
+                    $match->add_user($this->user, time() + 15);
+                }
             }
-            if (isset($_GET["match"])) {
-                $id = $_GET["match"];
-                $match = Match::get_by_id($id);
-                $match->add_user($this->user, time() + 15);
-                header("Location: /global.php?page=match&sub=view");
-                exit();
-            }
+            header("Location: /global.php?page=match&sub=view");
+            exit();
         }
         
         private function action_create() {
