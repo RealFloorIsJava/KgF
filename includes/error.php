@@ -1,12 +1,23 @@
 <?php
-    if (!is_dir("logs")) {
-        mkdir("logs");
-        file_put_contents("logs/.htaccess", "Deny from all");
-        file_put_contents("logs/err.log", "ERROR LOG\n");
+    if (!is_dir("./logs")) {
+        mkdir("./logs");
+        file_put_contents("./logs/.htaccess", "Deny from all");
+        file_put_contents("./logs/err.log", "");
+        chmod("./logs", 0777);
+        chmod("./logs/.htaccess", 0666);
+        chmod("./logs/err.log", 0666);
     }
+    // This is necessary as open_basedir checking does not quite work in the error handler
+    // (or the pwd is mangled)
+    $error_fn = realpath("./logs/err.log");
+    $error_tpl = realpath("./templates/err.html");
     
     function handle_errors($errno, $errstr, $errfile, $errline) {
-        error_log("Error #".$errno." - ".$errstr." in ".$errfile.":".$errline."\n", 3, "logs/err.log");
+        global $error_fn, $error_tpl;
+        $c = file_get_contents($error_fn);
+        $line = "Error #".$errno." - ".$errstr." in ".$errfile.":".$errline."\n";
+        file_put_contents($error_fn, $c.$line);
+        echo file_get_contents($error_tpl);
         exit();
     }
     
