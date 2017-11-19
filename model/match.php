@@ -8,6 +8,10 @@
          */
         private static $sql_queries;
         /**
+         * The ID->Match cache
+         */
+        private static $id_cache = array();
+        /**
          * The ID of this match
          */
         private $id;
@@ -75,9 +79,14 @@
             $q = self::$sql_queries["all_matches"];
             $q->execute();
             $rows = $q->fetchAll();
+            
             $matches = array();
             foreach ($rows as $match) {
-                $matches[] = new Match($match["match_id"], $match["match_timer"], Card::get_card($match["match_card_id"]), $match["match_state"]);
+                $id = $match["match_id"];
+                if (!isset(self::$id_cache[$id])) {
+                    self::$id_cache[$id] = new Match($match["match_id"], $match["match_timer"], Card::get_card($match["match_card_id"]), $match["match_state"]);
+                }
+                $matches[] = self::$id_cache[$id];
             }
             return $matches;
         }
@@ -94,13 +103,16 @@
             // We're in a transaction, so this should be the one we just created
             $q = self::$sql_queries["fetch_latest"];
             $q->execute();
-            $rows = $q->fetchAll();
-            foreach ($rows as $row) {
-                return new Match($row["match_id"], $row["match_timer"], $card, $row["match_state"]);
+            $match = $q->fetch();
+            if (!isset(self::$id_cache[$match["match_id"]])) {
+                self::$id_cache[$match["match_id"]] = new Match($match["match_id"], $match["match_timer"], $card, $match["match_state"]);
             }
-            return null;
+            return self::$id_cache[$match["match_id"]];
         }
         
+        /**
+         * Private constructor to prevent instance creation
+         */
         private function __construct($id, $timer, $card, $state) {
             $this->id = intval($id);
             $this->timer = intval($timer);
@@ -123,10 +135,16 @@
             $this->participants[] = Participant::from_user_and_match($user, $this, $timeout);
         }
         
+        /*+
+         * Returns the number of seconds that remain until the next match phase starts
+         */
         public function get_seconds_to_next_phase() {
             return $this->timer - time();
         }
         
+        /**
+         * Returns the name of the owner of this match, i.e. the first participant
+         */
         public function get_owner_name() {
             if (count($this->participants) < 1) {
                 return "[unknown]";
@@ -134,10 +152,16 @@
             return $this->participants[0]->get_name();
         }
         
+        /**
+         * Returns the number of participants
+         */
         public function get_participant_count() {
             return count($this->participants);
         }
         
+        /**
+         * ID getter
+         */
         public function get_id() {
             return $this->id;
         }
@@ -151,6 +175,14 @@
          * Prepared SQL queries
          */
         private static $sql_queries;
+        /**
+         * The ID->Participant cache
+         */
+        private static $id_cache;
+        /**
+         * The PlayerID->Participant cache
+         */
+        private static $player_cache;
         /**
          * The ID of this participant
          */
@@ -219,6 +251,14 @@
         }
         
         /**
+         * Performs housekeeping tasks
+         */
+        public static function perform_housekeeping() {
+            $q = self::$sql_queries["housekeeping"];
+            $q->execute();
+        }
+        
+        /**
          * Loads the participants of the given match
          */
         public static function load_for_match($match) {
@@ -226,9 +266,16 @@
             $q->bindValue(":matchid", $match->get_id(), PDO::PARAM_INT);
             $q->execute();
             $rows = $q->fetchAll();
+            
             $parts = array();
             foreach ($rows as $part) {
-                $parts[] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0, intval($part["mp_timeout"]));
+                $id = $part["mp_id"];
+                $pid = $part["mp_player"];
+                if (!isset(self::$id_cache[$id])) {
+                    self::$id_cache[$id] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0, intval($part["mp_timeout"]));
+                    self::$player_cache[$pid] = self::$id_cache[$id];
+                }
+                $parts[] = self::$id_cache[$id];
             }
             return $parts;
         }
@@ -240,11 +287,8 @@
             $q = self::$sql_queries["is_in_match"];
             $q->bindValue(":playerid", $player, PDO::PARAM_STR);
             $q->execute();
-            $rows = $q->fetchAll();
-            foreach ($rows as $row) {
-                return intval($row["count"]) != 0;
-            }
-            die("Count of matches could not be retrieved");
+            $row = $q->fetch();
+            return intval($row["count"]) != 0;
         }
         
         /**
@@ -270,24 +314,20 @@
             // We're in a transaction, so this should be the one we just created
             $q = self::$sql_queries["fetch_latest"];
             $q->execute();
-            $rows = $q->fetchAll();
-            $part = null;
-            foreach ($rows as $row) {
-                $part = new Participant($row["mp_id"], $row["mp_player"], $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
-                break;
-            }
             
-            return $part;
+            $row = $q->fetch();
+            $id = $row["mp_id"];
+            $pid = $row["mp_player"];
+            if (!isset(self::$id_cache[$id])) {
+                self::$id_cache[$id] = new Participant($id, $pid, $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
+                self::$player_cache[$pid] = self::$id_cache[$id];
+            }
+            return self::$id_cache[$id];
         }
         
         /**
-         * Performs housekeeping tasks
+         * Private constructor to prevent instance creation
          */
-        public static function perform_housekeeping() {
-            $q = self::$sql_queries["housekeeping"];
-            $q->execute();
-        }
-        
         private function __construct($id, $player_id, $name, $match, $score, $picking, $timeout) {
             $this->id = intval($id);
             $this->player_id = $player_id;
@@ -298,6 +338,9 @@
             $this->timeout = $timeout;
         }
         
+        /**
+         * Name getter
+         */
         public function get_name() {
             return $this->player_name;
         }
