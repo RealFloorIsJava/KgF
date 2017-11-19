@@ -11,6 +11,14 @@
          * The subpage that was requested
          */
         private $subpage;
+        /**
+         * The participant object that describes the user
+         */
+        private $participant;
+        /**
+         * The match the user participates in
+         */
+        private $match;
         
         public function __construct($dbh, $user) {
             parent::__construct($dbh, $user);
@@ -23,10 +31,16 @@
                 $this->action_create();
             }
             
-            // If the user has not created a match, they have to be in a match from this point on
-            if (!Participant::is_in_match($this->user->get_id())) {
+            // The user has to participate in a match from this point on
+            $part = Participant::get_participant($this->user->get_id());
+            if ($part === null) {
                 $this->fail_permission_check();
             }
+            $this->participant = $part;
+            $this->match = $part->get_match();
+            
+            // Register a heartbeat for this user
+            $this->participant->heartbeat(15);
             
             $this->process_action();
             
@@ -36,7 +50,8 @@
         }
         
         private function action_create() {
-            if (Participant::is_in_match($this->user->get_id())) {
+            $part = Participant::get_participant($this->user->get_id());
+            if ($part !== null) {
                 $this->fail_permission_check();
             }
             
@@ -48,11 +63,15 @@
             exit();
         }
         
+        private function action_abandon() {
+            $this->participant->leave_match();
+            header("Location: /global.php?page=dashboard");
+            exit();
+        }
+        
         private function process_action() {
             if ($this->action == "abandon") {
-                Participant::leave_matches($this->user->get_id());
-                header("Location: /global.php?page=dashboard");
-                exit();
+                $this->action_abandon();
             }
         }
     }

@@ -1,5 +1,4 @@
 <?php
-    
     if (!is_dir("logs")) {
         mkdir("logs");
         file_put_contents("logs/.htaccess", "Deny from all");

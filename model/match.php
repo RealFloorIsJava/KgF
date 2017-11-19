@@ -55,6 +55,11 @@
                     "(`match_id`, `match_timer`, `match_card_id`, `match_state`) ".
                     "VALUES (NULL, :timer, :cardid, 'PENDING')"
                 ),
+                "fetch_by_id" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_match` ".
+                    "WHERE `match_id` = :matchid"
+                ),
                 "fetch_latest" => $dbh->prepare(
                     "SELECT * ".
                     "FROM `kgf_match` ".
@@ -89,6 +94,22 @@
                 $matches[] = self::$id_cache[$id];
             }
             return $matches;
+        }
+        
+        /**
+         * Fetches a match by its ID
+         */
+        public static function get_by_id($id) {
+            if (isset(self::$id_cache[$id])) {
+                return self::$id_cache[$id];
+            }
+            
+            $q = self::$sql_queries["fetch_by_id"];
+            $q->bindValue(":matchid", $id, PDO::PARAM_INT);
+            $q->execute();
+            $row = $q->fetch();
+            self::$id_cache[$row["match_id"]] = new Match($row["match_id"], $row["match_timer"], Card::get_card($row["match_card_id"]), $row["match_state"]);
+            return self::$id_cache[$row["match_id"]];
         }
         
         /**
@@ -132,7 +153,7 @@
          * Adds this user to this match
          */
         public function add_user($user, $timeout) {
-            $this->participants[] = Participant::from_user_and_match($user, $this, $timeout);
+            $this->participants[] = Participant::create_from_user_and_match($user, $this, $timeout);
         }
         
         /*+
@@ -227,8 +248,8 @@
                     "WHERE `mp_match` = :matchid ".
                     "ORDER BY `mp_id` ASC"
                 ),
-                "is_in_match" => $dbh->prepare(
-                    "SELECT COUNT(*) AS `count` ".
+                "get_participant" => $dbh->prepare(
+                    "SELECT * ".
                     "FROM `kgf_match_participant` ".
                     "WHERE `mp_player` = :playerid"
                 ),
@@ -245,7 +266,12 @@
                 ),
                 "abandon" => $dbh->prepare(
                     "DELETE FROM `kgf_match_participant` ".
-                    "WHERE `mp_player` = :playerid"
+                    "WHERE `mp_id` = :partid"
+                ),
+                "heartbeat" => $dbh->prepare(
+                    "UPDATE `kgf_match_participant` ".
+                    "SET `mp_timeout` = :timeout ".
+                    "WHERE `mp_id` = :partid"
                 )
             );
         }
@@ -272,7 +298,7 @@
                 $id = $part["mp_id"];
                 $pid = $part["mp_player"];
                 if (!isset(self::$id_cache[$id])) {
-                    self::$id_cache[$id] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, $part["mp_score"], intval($part["mp_picking"]) != 0, intval($part["mp_timeout"]));
+                    self::$id_cache[$id] = new Participant($part["mp_id"], $part["mp_player"], $part["mp_name"], $match, intval($part["mp_score"]), intval($part["mp_picking"]) != 0, intval($part["mp_timeout"]));
                     self::$player_cache[$pid] = self::$id_cache[$id];
                 }
                 $parts[] = self::$id_cache[$id];
@@ -281,29 +307,32 @@
         }
         
         /**
-         * Checks whether the given player is in a match
+         * Fetches the participant for this player
          */
-        public static function is_in_match($player) {
-            $q = self::$sql_queries["is_in_match"];
+        public static function get_participant($player) {
+            if (isset(self::$player_cache[$player])) {
+                return self::$player_cache[$player];
+            }
+            
+            $q = self::$sql_queries["get_participant"];
             $q->bindValue(":playerid", $player, PDO::PARAM_STR);
             $q->execute();
             $row = $q->fetch();
-            return intval($row["count"]) != 0;
-        }
-        
-        /**
-         * Leaves all matches this user participates in
-         */
-        public static function leave_matches($player) {
-            $q = self::$sql_queries["abandon"];
-            $q->bindValue(":playerid", $player, PDO::PARAM_STR);
-            $q->execute();
+            if (!$row) {
+                return null;
+            }
+            
+            $id = $row["mp_id"];
+            $pid = $player;
+            self::$id_cache[$id] = new Participant($id, $pid, $row["mp_name"], Match::get_by_id($row["mp_match"]), intval($row["mp_score"]), intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]));
+            self::$player_cache[$pid] = self::$id_cache[$id];
+            return self::$id_cache[$id];
         }
         
         /**
          * Creates a participant from an User and a Match
          */
-        public static function from_user_and_match($user, $match, $timeout) {
+        public static function create_from_user_and_match($user, $match, $timeout) {
             $q = self::$sql_queries["add_participant"];
             $q->bindValue(":playerid", $user->get_id(), PDO::PARAM_STR);
             $q->bindValue(":playername", $user->get_nickname(), PDO::PARAM_STR);
@@ -339,10 +368,38 @@
         }
         
         /**
+         * Leaves the match (and thus destroys this participant)
+         */
+        public function leave_match() {
+            $q = self::$sql_queries["abandon"];
+            $q->bindValue(":partid", $this->id, PDO::PARAM_INT);
+            $q->execute();
+            unset(self::$id_cache[$this->id]);
+            unset(self::$player_cache[$this->player_id]);
+        }
+        
+        /**
+         * Registers a heartbeat (i.e. the timeout will be reset) for the given amount of seconds
+         */
+        public function heartbeat($seconds) {
+            $q = self::$sql_queries["heartbeat"];
+            $q->bindValue(":timeout", time() + $seconds, PDO::PARAM_INT);
+            $q->bindValue(":partid", $this->id, PDO::PARAM_INT);
+            $q->execute();
+        }
+        
+        /**
          * Name getter
          */
         public function get_name() {
             return $this->player_name;
+        }
+        
+        /**
+         * Match getter
+         */
+        public function get_match() {
+            return $this->match;
         }
     }
 ?>
