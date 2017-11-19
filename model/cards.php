@@ -8,6 +8,10 @@
          */
         private static $sql_queries;
         /**
+         * The ID->Card cache
+         */
+        private static $id_cache = array();
+        /**
          * The ID of this card
          */
         private $id;
@@ -58,12 +62,20 @@
          * Fetches all cards in the DB
          */
         public static function get_all_cards() {
+            // There is no real efficient way to only load the cards the cache is missing.
+            // So in this case, we'll load them all.
             $q = self::$sql_queries["all_cards"];
             $q->execute();
             $rows = $q->fetchAll();
+            
             $cards = array();
             foreach ($rows as $card) {
-                $cards[$card["card_id"]] = new Card($card["card_id"], $card["card_text"], $card["card_type"]);
+                // We'll take those that we already have cached from the cache
+                $id = $card["card_id"];
+                if (!isset(self::$id_cache[$id])) {
+                    self::$id_cache[$id] = new Card($card["card_id"], $card["card_text"], $card["card_type"]);
+                }
+                $cards[$id] = self::$id_cache[$id];
             }
             return $cards;
         }
@@ -72,14 +84,14 @@
          * Fetches one card from the DB
          */
         public static function get_card($id) {
-            $q = self::$sql_queries["get_card"];
-            $q->bindValue(":cardid", $id, PDO::PARAM_INT);
-            $q->execute();
-            $rows = $q->fetchAll();
-            foreach ($rows as $card) {
-                return new Card($card["card_id"], $card["card_text"], $card["card_type"]);
+            if (!isset(self::$id_cache[$id])) {
+                $q = self::$sql_queries["get_card"];
+                $q->bindValue(":cardid", $id, PDO::PARAM_INT);
+                $q->execute();
+                $card = $q->fetch();
+                self::$id_cache[$id] = new Card($card["card_id"], $card["card_text"], $card["card_type"]);
             }
-            return null;
+            return self::$id_cache[$id];
         }
         
         /**
@@ -89,13 +101,16 @@
             $q = self::$sql_queries["random_card"];
             $q->bindValue(":cardtype", $type, PDO::PARAM_STR);
             $q->execute();
-            $rows = $q->fetchAll();
-            foreach ($rows as $row) {
-                return new Card($row["card_id"], $row["card_text"], $row["card_type"]);
+            $card = $q->fetch();
+            if (!isset(self::$id_cache[$card["card_id"]])) {
+                self::$id_cache[$card["card_id"]] = new Card($card["card_id"], $card["card_text"], $card["card_type"]);
             }
-            return null;
+            return self::$id_cache[$card["card_id"]];
         }
         
+        /**
+         * Private constructor to prevent instance creation
+         */
         private function __construct($id, $text, $type) {
             $this->id = intval($id);
             $this->text = $text;
@@ -109,6 +124,7 @@
             $q = self::$sql_queries["delete_card"];
             $q->bindValue(":cardid", $this->id, PDO::PARAM_INT);
             $q->execute();
+            unset(self::$id_cache[$this->id]);
         }
         
         /**
@@ -143,6 +159,9 @@
             return preg_replace("/_/", "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>", $this->text);
         }
         
+        /**
+         * ID getter
+         */
         public function get_id() {
             return $this->id;
         }
