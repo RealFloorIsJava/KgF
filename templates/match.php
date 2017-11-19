@@ -96,38 +96,76 @@
                     </div>
                 </div>
                 
-                <div class="card-base statement-card">
-                    This is a statement about <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
-                    <div class="card-id">
-                        #1234
+                <div class="card-area">
+                    <div class="card-area-statement">
+                        <div class="card-base statement-card sticky-card">
+                            This is a statement about <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
+                            <div class="card-id">
+                                #1234
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="card-base object-card">
-                    Things
-                    <div class="card-id">
-                        #1234
-                    </div>
-                </div>
-                
-                <div class="card-base object-card">
-                    Stuff
-                    <div class="card-id">
-                        #1234
-                    </div>
-                </div>
-                
-                <div class="card-base object-card">
-                    Objects
-                    <div class="card-id">
-                        #1234
-                    </div>
-                </div>
-                
-                <div class="card-base object-card">
-                    Words
-                    <div class="card-id">
-                        #1234
+                    <div class="card-area-played">
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
+                        <div class="card-area-set">
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                            <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                        </div>
                     </div>
                 </div>
             </div>

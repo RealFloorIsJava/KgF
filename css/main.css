@@ -35,6 +35,7 @@ a, a:link, a:visited, a:hover, a:active {
     padding-right: 20px;
     margin-bottom: 20px;
     position: relative;
+    z-index: 100;
 }
 
 .card-base:hover {
@@ -51,6 +52,11 @@ a, a:link, a:visited, a:hover, a:active {
     border-radius: 5px;
     height: 150px;
     font-family: 'Arial';
+}
+
+.sticky-card {
+    position: sticky !important;
+    top: 15px;
 }
 
 .card-id {
@@ -70,10 +76,12 @@ a, a:link, a:visited, a:hover, a:active {
     display: flex;
     justify-content: space-between;
     margin-top: -20px;
+    height: 100%;
 }
 
 .match-view {
     margin-top: 20px;
+    height: 100%;
 }
 
 .chat-svg {
@@ -96,14 +104,19 @@ a, a:link, a:visited, a:hover, a:active {
 
 .chat-messages {
     padding: 5px 5px 0px 5px;
+    position: sticky;
+    top: 30px;
 }
 
 .chat-line {
     border: 0px;
     width: 100%;
-    padding-top: 7px;
+    box-sizing: border-box;
     padding: 5px 4px 3px 4px;
-    min-height: 15px;
+    height: 30px;
+    position: sticky;
+    z-index: 1;
+    top: 0px;
 }
 
 .part-container {
@@ -113,7 +126,7 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 .part {
-    margin: 3px 10px 15px 10px;
+    margin: 3px 6px 7px 6px;
     overflow: hidden;
     position: relative;
     width: 256px;
@@ -152,9 +165,33 @@ a, a:link, a:visited, a:hover, a:active {
 .match-status {
     text-align: center;
     width: 100%;
-    margin: 5px 10px 15px 10px;
+    margin: 0px 10px 10px 10px;
 }
 
 .default-container {
     padding-left: 20px;
+}
+
+.card-area {
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
+
+.card-area-statement {
+    padding: 100px 10px 0px 90px;
+}
+
+.card-area-played {
+    padding: 40px 20px 0px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card-area-set {
+    display: flex;
+    justify-content: center;
+    padding: 0px 15px 20px 15px;
 }
