@@ -178,6 +178,23 @@ a, a:link, a:visited, a:hover, a:active {
     padding-left: 20px;
 }
 
+.hand-area {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    position: sticky;
+    bottom: 0px;
+}
+
+.hand-area-set {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px 20px 40px 20px;
+    border-radius: 5px 5px 0px 0px;
+    margin-bottom: -20px; /* To counteract body margin */
+}
+
 .card-area {
     height: 100%;
     display: flex;

@@ -67,6 +67,11 @@ a, a:link, a:visited, a:hover, a:active {
     color: #dddddd;
 }
 
+.hand-area-set {
+    background-color: #4f4f4f;
+    box-shadow: 2px -3px 7px -3px #222222;
+}
+
 .object-card {
     color: #001111;
     background-color: #bbaaaa;
