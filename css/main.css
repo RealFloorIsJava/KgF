@@ -30,12 +30,14 @@ a, a:link, a:visited, a:hover, a:active {
 
 .cupboard {
     padding-left: 20px;
-    padding-top: 15px;
-    padding-bottom: 15px;
+    padding-top: 16px;
+    padding-bottom: 16px;
     padding-right: 20px;
     margin-bottom: 20px;
     position: relative;
     z-index: 100;
+    font-size: 16px;
+    line-height: 22px;
 }
 
 .card-base:hover {
@@ -56,7 +58,7 @@ a, a:link, a:visited, a:hover, a:active {
 
 .sticky-card {
     position: sticky !important;
-    top: 15px;
+    top: 50px;
 }
 
 .card-id {
@@ -77,6 +79,7 @@ a, a:link, a:visited, a:hover, a:active {
     justify-content: space-between;
     margin-top: -20px;
     height: 100%;
+    position: relative;
 }
 
 .match-view {
@@ -100,12 +103,17 @@ a, a:link, a:visited, a:hover, a:active {
     width: 20%;
     min-width: 256px;
     font-size: small;
+    position: sticky;
+    top: 0px;
+    height: 80vh;
+    padding-bottom: 10px;
 }
 
 .chat-messages {
     padding: 5px 5px 0px 5px;
-    position: sticky;
-    top: 30px;
+    overflow: auto;
+    position: relative;
+    height: calc(100% - 30px); /* 30: height of the chat line */
 }
 
 .chat-line {
@@ -114,9 +122,7 @@ a, a:link, a:visited, a:hover, a:active {
     box-sizing: border-box;
     padding: 5px 4px 3px 4px;
     height: 30px;
-    position: sticky;
     z-index: 1;
-    top: 0px;
 }
 
 .part-container {
