@@ -168,13 +168,33 @@
                             </div>
                         </div>
                         <div class="hand-area">
-                            <div class="hand-area-set">
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                                <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                            <div class="hand-border">
+                                <div class="hand-tabs">
+                                    <div class="hand-tab-header" id="tab-actions" onclick="pickTab('tab-actions')">
+                                        Actions
+                                    </div>
+                                    <div class="hand-tab-header" id="tab-objects" onclick="pickTab('tab-objects')">
+                                        Objects
+                                    </div>
+                                </div>
+                                <div class="hand-area-set">
+                                    <div class="hand-area-set-row tab-actions">
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                        <div class="card-base verb-card">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                                    </div>
+                                    <div class="hand-area-set-row tab-objects">
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                        <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

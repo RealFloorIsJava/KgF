@@ -189,10 +189,37 @@ a, a:link, a:visited, a:hover, a:active {
 .hand-area-set {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
     padding: 20px 20px 40px 20px;
-    border-radius: 5px 5px 0px 0px;
+    border-radius: 0px 5px 0px 0px;
+    z-index: 0;
     margin-bottom: -20px; /* To counteract body margin */
+    position: relative;
+}
+
+.hand-area-set-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hand-tabs {
+    position: absolute;
+    display: flex;
+    top: -27px;
+    line-height: 20px;
+}
+
+.hand-tab-header {
+    cursor: pointer;
+    padding: 3px 10px 4px 10px;
+    margin-right: 4px;
+    border-radius: 5px 5px 0px 0px;
+    height: 27px;
+}
+
+.active-tab-header {
+    z-index: 1;
 }
 
 .card-area {

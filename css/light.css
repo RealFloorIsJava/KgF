@@ -64,7 +64,12 @@ a, a:link, a:visited, a:hover, a:active {
 
 .hand-area-set {
     background-color: #cfcfcf;
-    box-shadow: 2px -3px 7px -3px #222222;
+    box-shadow: 2px -3px 7px -4px #222222;
+}
+
+.hand-tab-header {
+    background-color: #cfcfcf;
+    box-shadow: 2px -6px 7px -4px #222222;
 }
 
 .statement-card {
