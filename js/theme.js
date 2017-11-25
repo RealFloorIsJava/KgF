@@ -12,11 +12,7 @@ function toggleLights() {
 }
 
 function checkLights() {
-    if (theme == "light") {
-        document.getElementById("lightLabel").innerHTML = 'Lights off';
-    } else {
-        document.getElementById("lightLabel").innerHTML = 'Lights on';
-    }
+    $("#lightLabel").html("Lights " + (theme == "light" ? "off" : "on"));
 }
 
 checkLights();
