@@ -17,8 +17,8 @@
         <div class="match-container">
             <div class="match-view">
                 <?= $this->get_status_format() ?>
-                <div class="match-status">
-                    The match will start in <b>27</b> seconds...
+                <div class="match-status" id="matchstatus">
+                    Loading...
                 </div>
                 <div class="part-container" id="partlist">
                     <div class="part">

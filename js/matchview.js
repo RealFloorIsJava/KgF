@@ -2,6 +2,7 @@ var sel = [];
 var partResolver = {};
 var chatId = 0;
 var chatLock = false;
+var countDown = 0;
 
 function pickTab(tab) {
     $(".hand-tab-header").removeClass("active-tab-header");
@@ -31,9 +32,8 @@ function loadStatus() {
         data: {}
     }).done(function(msg) {
         var jdata = JSON.parse(msg);
-        var minutes = (Math.abs(Math.floor(jdata["timer"] / 60)) + "").padStart(2, "0");
-        var seconds = (Math.abs(jdata["timer"]) % 60 + "").padStart(2, "0");
-        $("#countdown").html(minutes + ":" + seconds);
+        countDown = jdata["timer"];
+        $("#matchstatus").html(jdata["status"]);
     });
 }
 
@@ -123,6 +123,12 @@ function toggleSelect(o) {
     }
 }
 
+function updateCountdown() {
+    var minutes = (Math.abs(Math.floor(countDown / 60)) + "").padStart(2, "0");
+    var seconds = (Math.abs(countDown) % 60 + "").padStart(2, "0");
+    $("#countdown").html(minutes + ":" + seconds);
+}
+
 $('#chatinput').keypress(function (e){
     var key = e.which;
     if (key == 13) {
@@ -131,9 +137,12 @@ $('#chatinput').keypress(function (e){
 });
 
 pickTab('tab-actions');
-loadParticipants();
 loadStatus();
+loadParticipants();
 
 setInterval(loadParticipants, 5000);
 setInterval(loadChat, 500);
-setInterval(loadStatus, 990);
+setInterval(loadStatus, 5000);
+
+setInterval(updateCountdown, 1000);
+setInterval(function() { countDown--; }, 1000);

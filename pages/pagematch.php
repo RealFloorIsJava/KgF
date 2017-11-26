@@ -131,7 +131,8 @@
         
         private function action_status() {
             echo json_encode(array(
-                "timer" => $this->match->get_seconds_to_next_phase()
+                "timer" => $this->match->get_seconds_to_next_phase(),
+                "status" => $this->match->get_status()
             ));
         }
         

@@ -44,6 +44,20 @@
                         "(SELECT COUNT(*) AS `count` FROM `kgf_match_participant` mp WHERE mp.`mp_match` = `match_id`) < 1 ".
                         "OR ((SELECT COUNT(*) AS `count` FROM `kgf_match_participant` mp WHERE mp.`mp_match` = `match_id`) < 3 AND `match_state` != 'PENDING')"
                 ),
+                "extend_empty_match_timer" => $dbh->prepare(
+                    "UPDATE `kgf_match` m ".
+                    "SET `match_timer` = :newtimer ".
+                    "WHERE `match_timer` <= :curtimer ".
+                        "AND (SELECT COUNT(*) ".
+                                "FROM `kgf_match_participant` ".
+                                "WHERE `mp_match` = m.`match_id`) < 4"
+                ),
+                "extend_timer_on_join" => $dbh->prepare(
+                    "UPDATE `kgf_match` ".
+                    "SET `match_timer` = :newtimer ".
+                    "WHERE `match_timer` <= :curtimer ".
+                        "AND `match_id` = :match"
+                ),
                 "all_matches" => $dbh->prepare(
                     "SELECT * ".
                     "FROM `kgf_match` ".
@@ -74,6 +88,11 @@
          */
         public static function perform_housekeeping() {
             $q = self::$sql_queries["housekeeping"];
+            $q->execute();
+            
+            $q = self::$sql_queries["extend_empty_match_timer"];
+            $q->bindValue(":newtimer", time() + 60, PDO::PARAM_INT);
+            $q->bindValue(":curtimer", time() + 10, PDO::PARAM_INT);
             $q->execute();
         }
         
@@ -155,6 +174,12 @@
         public function add_user($user, $timeout) {
             $this->participants[] = Participant::create_from_user_and_match($user, $this, $timeout);
             ChatMessage::send_message($this, "SYSTEM", "<b>".$user->get_nickname()." joined</b>");
+            
+            $q = self::$sql_queries["extend_timer_on_join"];
+            $q->bindValue(":newtimer", time() + 30, PDO::PARAM_INT);
+            $q->bindValue(":curtimer", time() + 30, PDO::PARAM_INT);
+            $q->bindValue(":match", $this->id);
+            $q->execute();
         }
         
         /*+
@@ -193,6 +218,16 @@
          */
         public function get_id() {
             return $this->id;
+        }
+        
+        /**
+         * Fetches a line about the status of this match
+         */
+        public function get_status() {
+            if ($this->state == "PENDING") {
+                return "Waiting for players...";
+            }
+            return "<State of Match unknown>";
         }
     }
     
