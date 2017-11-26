@@ -66,4 +66,4 @@ ALTER TABLE `kgf_match_chat`
 ALTER TABLE `kgf_match_chat`
   MODIFY `chat_id` int(12) UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE `kgf_match_chat`
-  ADD CONSTRAINT `kgf_match_chat_ibfk_1` FOREIGN KEY (`chat_match_id`) REFERENCES `kgf_match` (`match_id`);
+  ADD CONSTRAINT `kgf_match_chat_ibfk_1` FOREIGN KEY (`chat_match_id`) REFERENCES `kgf_match` (`match_id`) ON DELETE CASCADE ON UPDATE RESTRICT;
