@@ -127,7 +127,7 @@
             $match = $q->fetch();
             
             self::$id_cache[$match["match_id"]] = new Match($match["match_id"], $match["match_timer"], $card, $match["match_state"]);
-            ChatMessage::send_message(self::$id_cache[$match["match_id"]], "SYSTEM", "Match was created!");
+            ChatMessage::send_message(self::$id_cache[$match["match_id"]], "SYSTEM", "<b>Match was created</b>");
             return self::$id_cache[$match["match_id"]];
         }
         
@@ -154,6 +154,7 @@
          */
         public function add_user($user, $timeout) {
             $this->participants[] = Participant::create_from_user_and_match($user, $this, $timeout);
+            ChatMessage::send_message($this, "SYSTEM", "<b>".$user->get_nickname()." joined</b>");
         }
         
         /*+
@@ -245,6 +246,11 @@
          */
         public static function provideDB($dbh) {
             self::$sql_queries = array(
+                "housekeeping_find" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_match_participant` ".
+                    "WHERE `mp_timeout` <= UNIX_TIMESTAMP()"
+                ),
                 "housekeeping" => $dbh->prepare(
                     "DELETE FROM `kgf_match_participant` ".
                     "WHERE `mp_timeout` <= UNIX_TIMESTAMP()"
@@ -287,6 +293,13 @@
          * Performs housekeeping tasks
          */
         public static function perform_housekeeping() {
+            $q = self::$sql_queries["housekeeping_find"];
+            $q->execute();
+            $rows = $q->fetchAll();
+            foreach ($rows as $part) {
+                ChatMessage::send_message(Match::get_by_id($part["mp_match"]), "SYSTEM", "<b>".$part["mp_name"]." timed out</b>");
+            }
+            
             $q = self::$sql_queries["housekeeping"];
             $q->execute();
         }
@@ -377,6 +390,8 @@
          * Leaves the match (and thus destroys this participant)
          */
         public function leave_match() {
+            ChatMessage::send_message($this->match, "SYSTEM", "<b>".$this->get_name()." left</b>");
+
             $q = self::$sql_queries["abandon"];
             $q->bindValue(":partid", $this->id, PDO::PARAM_INT);
             $q->execute();
