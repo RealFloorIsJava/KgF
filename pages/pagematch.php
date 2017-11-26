@@ -86,9 +86,24 @@
             exit();
         }
         
+        private function action_participants() {
+            $parts = $this->match->get_participants();
+            $tojson = array();
+            foreach ($parts as $part) {
+                $tojson[] = array(
+                    "id" => $part->get_id(),
+                    "name" => $part->get_name(),
+                    "score" => $part->get_score()
+                );
+            }
+            echo json_encode($tojson);
+        }
+        
         private function process_action() {
             if ($this->action == "abandon") {
                 $this->action_abandon();
+            } else if ($this->action == "participants") {
+                $this->action_participants();
             }
         }
     }

@@ -20,79 +20,9 @@
                 <div class="match-status">
                     The match will start in <b>27</b> seconds...
                 </div>
-                <div class="part-container">
-                    <?php
-                        $parts = $this->match->get_participants();
-                        foreach ($parts as $part) {
-                    ?>
+                <div class="part-container" id="partlist">
                     <div class="part">
-                        <div class="part-name"><?= $part->get_name() ?></div>
-                        <div class="part-score"><b><?= $part->get_score() ?>pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <?php
-                        }
-                    ?>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
-                    </div>
-                    <div class="part">
-                        <div class="part-name">ALongNameThatIsStillPlausible123</div>
-                        <div class="part-score"><b>99pts</b></div>
-                        <div class="part-type"><i>Memester</i></div>
-                        <div class="part-status"><i>Waiting...</i></div>
+                        <div class="part-name">Loading...</div>
                     </div>
                 </div>
                 <div class="card-area">

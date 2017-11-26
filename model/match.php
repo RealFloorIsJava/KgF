@@ -396,6 +396,13 @@
         }
         
         /**
+         * ID getter
+         */
+        public function get_id() {
+            return $this->id;
+        }
+        
+        /**
          * Name getter
          */
         public function get_name() {
