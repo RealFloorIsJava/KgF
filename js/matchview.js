@@ -24,6 +24,19 @@ function sendChat() {
     }
 }
 
+function loadStatus() {
+    $.ajax({
+        method: "POST",
+        url: "/global.php?page=match&action=status",
+        data: {}
+    }).done(function(msg) {
+        var jdata = JSON.parse(msg);
+        var minutes = (Math.abs(Math.floor(jdata["timer"] / 60)) + "").padStart(2, "0");
+        var seconds = (Math.abs(jdata["timer"]) % 60 + "").padStart(2, "0");
+        $("#countdown").html(minutes + ":" + seconds);
+    });
+}
+
 function loadChat() {
     if (chatLock) {
         return;
@@ -119,6 +132,8 @@ $('#chatinput').keypress(function (e){
 
 pickTab('tab-actions');
 loadParticipants();
+loadStatus();
 
-setInterval(loadParticipants, 2000);
+setInterval(loadParticipants, 5000);
 setInterval(loadChat, 500);
+setInterval(loadStatus, 990);

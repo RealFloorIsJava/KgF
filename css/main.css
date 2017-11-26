@@ -71,12 +71,6 @@ body {
     font-size: x-small;
 }
 
-.sticky-card {
-    position: sticky !important;  /* To override relative positioning
-                                     of cards */
-    top: 50px;
-}
-
 .card-select {
     margin: 0px 0px 0px -6px;  /* To counteract card padding */
     position: absolute;
@@ -256,4 +250,16 @@ body {
     padding: 0px 15px 20px 15px;
     display: flex;
     justify-content: center;
+}
+
+.side-slider {
+    position: sticky;
+    top: 20px;
+}
+
+.countdown-clock {
+    margin: 0px 0px 20px 0px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 45px;
 }

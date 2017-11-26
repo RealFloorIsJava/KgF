@@ -129,6 +129,12 @@
             echo json_encode($tojson);
         }
         
+        private function action_status() {
+            echo json_encode(array(
+                "timer" => $this->match->get_seconds_to_next_phase()
+            ));
+        }
+        
         private function process_action() {
             if ($this->action == "abandon") {
                 $this->action_abandon();
@@ -138,6 +144,8 @@
                 $this->action_chat();
             } else if ($this->action == "chatsend") {
                 $this->action_chatsend();
+            } else if ($this->action == "status") {
+                $this->action_status();
             }
         }
     }

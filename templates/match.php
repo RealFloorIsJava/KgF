@@ -27,10 +27,15 @@
                 </div>
                 <div class="card-area">
                     <div class="card-area-statement">
-                        <div class="card-base statement-card sticky-card">
-                            This is a statement about <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
-                            <div class="card-id">
-                                #1234
+                        <div class="side-slider">
+                            <div class="countdown-clock" id="countdown">
+                                00:00
+                            </div>
+                            <div class="card-base statement-card sticky-card">
+                                This is a statement about <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
+                                <div class="card-id">
+                                    #1234
+                                </div>
                             </div>
                         </div>
                     </div>
