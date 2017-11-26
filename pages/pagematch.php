@@ -84,7 +84,10 @@
             if (isset($_POST["message"]) && strlen($_POST["message"]) < 150) {
                 $text = trim(htmlspecialchars($_POST["message"]));
                 if (strlen($text) > 0 && strlen($text) < 200) {
-                    ChatMessage::send_message($this->match, "USER", $this->participant->get_name().": ".$text);
+                    if ($this->user->may_chat()) {
+                        ChatMessage::send_message($this->match, "USER", "<b>".$this->participant->get_name()."</b>: ".$text);
+                        $this->user->prevent_chat_until(time() + 1);
+                    }
                 }
             }
         }

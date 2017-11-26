@@ -1,6 +1,7 @@
 var sel = [];
 var partResolver = {};
 var chatId = 0;
+var chatLock = false;
 
 function pickTab(tab) {
     $(".hand-tab-header").removeClass("active-tab-header");
@@ -24,6 +25,10 @@ function sendChat() {
 }
 
 function loadChat() {
+    if (chatLock) {
+        return;
+    }
+    chatLock = true;
     $.ajax({
         method: "POST",
         url: "/global.php?page=match&action=chat",
@@ -32,6 +37,7 @@ function loadChat() {
         }
     }).done(function(msg) {
         var list = $("#chatlist");
+        var shouldScroll = list.scrollTop() + list.innerHeight() >= list.get(0).scrollHeight - 50;
         var jdata = JSON.parse(msg);
         for (var i = 0; i < jdata.length; i++) {
             var part = jdata[i];
@@ -44,6 +50,10 @@ function loadChat() {
             jdata[i] = elem;
         }
         list.append(jdata);
+        if (shouldScroll && jdata.length > 0) {
+            list.scrollTop(list.get(0).scrollHeight + list.innerHeight());
+        }
+        chatLock = false;
     });
 }
 
@@ -111,4 +121,4 @@ pickTab('tab-actions');
 loadParticipants();
 
 setInterval(loadParticipants, 2000);
-setInterval(loadChat, 300);
+setInterval(loadChat, 500);

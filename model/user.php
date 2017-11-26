@@ -19,12 +19,17 @@
          * The nickname of this user
          */
         private $nickname;
+        /**
+         * The next point in time when a message is allowed to prevent spam
+         */
+        private $chat_cooldown;
         
         public function __construct() {
             $this->id = uniqid("p", true);
             $this->admin = false;
             $this->theme = "dark";
             $this->nickname = "Meme".rand(10000, 99999);
+            $this->chat_cooldown = 0;
         }
         
         /**
@@ -34,6 +39,9 @@
             return '<link rel="stylesheet" type="text/css" href="/css/'.$this->theme.'.css" id="theme"><script type="text/javascript">var theme = "'.$this->theme.'";</script>';
         }
         
+        /**
+         * Theme setter
+         */
         public function set_theme($theme) {
             $this->theme = $theme;
         }
@@ -45,20 +53,46 @@
             $this->admin = true;
         }
         
+        /**
+         * Nick setter
+         */
         public function set_nickname($name) {
             $this->nickname = $name;
         }
         
+        /**
+         * Nick getter
+         */
         public function get_nickname() {
             return $this->nickname;
         }
         
+        /**
+         * ID getter
+         */
         public function get_id() {
             return $this->id;
         }
         
+        /**
+         * Admin status getter
+         */
         public function is_admin() {
             return $this->admin;
+        }
+        
+        /**
+         * Checks whether the anti spam prevents this user from chatting
+         */
+        public function may_chat() {
+            return time() >= $this->chat_cooldown;
+        }
+        
+        /**
+         * Prevents chatting until the given point in time has passed
+         */
+        public function prevent_chat_until($time) {
+            $this->chat_cooldown = $time;
         }
     }
 ?>

@@ -97,6 +97,7 @@ body {
 
 .chat-msg {
     vertical-align: middle;
+    word-wrap: break-word;
 }
 
 /** Match view **/
