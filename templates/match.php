@@ -131,69 +131,8 @@
                 </div>
             </div>
             <div class="match-chat">
-                <input type="text" class="chat-line" spellcheck="false">
-                <div class="chat-messages">
-                    <div><img src="/img/bang.svg" class="chat-svg"><span class="chat-msg">Match was created</span></div>
-                    <div><img src="/img/bang.svg" class="chat-svg"><span class="chat-msg">This is a long text containing a bunch of stuff just for testing the behavior of this chatbox in different settings.</span></div>
-                    <div><img src="/img/bang.svg" class="chat-svg"><span class="chat-msg">Another message</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">ALongNameThatIsStillPlausible123: hello i am a person</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">OtherPerson: me too</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: hi</span></div>
-                    <div><img src="/img/message.svg" class="chat-svg"><span class="chat-msg">Spambert: asdads</span></div>
-                    <br>
-                </div>
+                <input type="text" class="chat-line" id="chatinput" spellcheck="false" maxlength="120">
+                <div class="chat-messages" id="chatlist"></div>
             </div>
         </div>
 

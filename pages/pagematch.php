@@ -80,6 +80,15 @@
             exit();
         }
         
+        private function action_chatsend() {
+            if (isset($_POST["message"]) && strlen($_POST["message"]) < 150) {
+                $text = trim(htmlspecialchars($_POST["message"]));
+                if (strlen($text) > 0 && strlen($text) < 200) {
+                    ChatMessage::send_message($this->match, "USER", $this->participant->get_name().": ".$text);
+                }
+            }
+        }
+        
         private function action_abandon() {
             $this->participant->leave_match();
             header("Location: /global.php?page=dashboard");
@@ -99,11 +108,33 @@
             echo json_encode($tojson);
         }
         
+        private function action_chat() {
+            if (!isset($_POST["offset"])) {
+                $offset = 0;
+            } else {
+                $offset = abs(intval($_POST["offset"]));
+            }
+            $msgs = ChatMessage::load_for_match($this->match, $offset);
+            $tojson = array();
+            foreach ($msgs as $msg) {
+                $tojson[] = array(
+                    "id" => $msg->get_id(),
+                    "type" => $msg->get_type(),
+                    "message" => $msg->get_message()
+                );
+            }
+            echo json_encode($tojson);
+        }
+        
         private function process_action() {
             if ($this->action == "abandon") {
                 $this->action_abandon();
             } else if ($this->action == "participants") {
                 $this->action_participants();
+            } else if ($this->action == "chat") {
+                $this->action_chat();
+            } else if ($this->action == "chatsend") {
+                $this->action_chatsend();
             }
         }
     }

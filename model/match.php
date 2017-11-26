@@ -125,9 +125,9 @@
             $q = self::$sql_queries["fetch_latest"];
             $q->execute();
             $match = $q->fetch();
-            if (!isset(self::$id_cache[$match["match_id"]])) {
-                self::$id_cache[$match["match_id"]] = new Match($match["match_id"], $match["match_timer"], $card, $match["match_state"]);
-            }
+            
+            self::$id_cache[$match["match_id"]] = new Match($match["match_id"], $match["match_timer"], $card, $match["match_state"]);
+            ChatMessage::send_message(self::$id_cache[$match["match_id"]], "SYSTEM", "Match was created!");
             return self::$id_cache[$match["match_id"]];
         }
         
@@ -354,10 +354,9 @@
             $row = $q->fetch();
             $id = $row["mp_id"];
             $pid = $row["mp_player"];
-            if (!isset(self::$id_cache[$id])) {
-                self::$id_cache[$id] = new Participant($id, $pid, $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
-                self::$player_cache[$pid] = self::$id_cache[$id];
-            }
+            
+            self::$id_cache[$id] = new Participant($id, $pid, $row["mp_name"], $match, $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
+            self::$player_cache[$pid] = self::$id_cache[$id];
             return self::$id_cache[$id];
         }
         
@@ -421,6 +420,110 @@
          */
         public function get_score() {
             return $this->score;
+        }
+    }
+    
+    /**
+     * Represents a chat message
+     */
+    class ChatMessage {
+        /**
+         * Prepared SQL queries
+         */
+        private static $sql_queries;
+        /**
+         * The ID of this participant
+         */
+        private $id;
+        /**
+         * The match of this message
+         */
+        private $match;
+        /**
+         * The type of this message
+         */
+        private $type;
+        /**
+         * The message
+         */
+        private $message;
+        
+        /**
+         * Used to provide a DB handle and to initialize all the queries
+         */
+        public static function provideDB($dbh) {
+            self::$sql_queries = array(
+                "fetch_match_offset" => $dbh->prepare(
+                    "SELECT * ".
+                    "FROM `kgf_match_chat` ".
+                    "WHERE `chat_id` >= :offset ".
+                        "AND `chat_match_id` = :match ".
+                    "ORDER BY `chat_id` ASC"
+                ),
+                "add_message" => $dbh->prepare(
+                    "INSERT INTO `kgf_match_chat` (`chat_id`, `chat_match_id`, `chat_type`, `chat_message`) ".
+                    "VALUES (NULL, :match, :type, :message)"
+                )
+            );
+        }
+        
+        /**
+         * Sends a chat message for the given match
+         */
+        public static function send_message($match, $type, $msg) {
+            $q = self::$sql_queries["add_message"];
+            $q->bindValue(":match", $match->get_id(), PDO::PARAM_INT);
+            $q->bindValue(":type", $type, PDO::PARAM_STR);
+            $q->bindValue(":message", $msg, PDO::PARAM_STR);
+            $q->execute();
+        }
+        
+        /**
+         * Loads the chat messages of the given match from the given offset
+         */
+        public static function load_for_match($match, $offset) {
+            $q = self::$sql_queries["fetch_match_offset"];
+            $q->bindValue(":match", $match->get_id(), PDO::PARAM_INT);
+            $q->bindValue(":offset", $offset, PDO::PARAM_INT);
+            $q->execute();
+            $rows = $q->fetchAll();
+            
+            $msgs = array();
+            foreach ($rows as $msg) {
+                $msgs[] = new ChatMessage($msg["chat_id"], $match, $msg["chat_type"], $msg["chat_message"]);
+            }
+            return $msgs;
+        }
+        
+        /**
+         * Private constructor to prevent instance creation from outside this class
+         */
+        private function __construct($id, $match, $type, $message) {
+            $this->id = intval($id);
+            $this->match = $match;
+            $this->type = $type;
+            $this->message = $message;
+        }
+        
+        /**
+         * ID getter
+         */
+        public function get_id() {
+            return $this->id;
+        }
+        
+        /**
+         * Type getter
+         */
+        public function get_type() {
+            return $this->type;
+        }
+        
+        /**
+         * Message getter
+         */
+        public function get_message() {
+            return $this->message;
         }
     }
 ?>

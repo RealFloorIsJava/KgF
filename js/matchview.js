@@ -1,19 +1,50 @@
 var sel = [];
 var partResolver = {};
-
-function heartbeat() {
-    $.ajax({
-        method: "POST",
-        url: "/global.php?page=match&action=heartbeat",
-        data: {}
-    });
-}
+var chatId = 0;
 
 function pickTab(tab) {
     $(".hand-tab-header").removeClass("active-tab-header");
     $(".hand-area-set-row").css("display", "none");
     $("." + tab).css("display", "inherit");
     $("#" + tab).addClass("active-tab-header");
+}
+
+function sendChat() {
+    var text = $("#chatinput").val();
+    $("#chatinput").val("");
+    if (text.length > 0) {
+        $.ajax({
+            method: "POST",
+            url: "/global.php?page=match&action=chatsend",
+            data: {
+                message: text
+            }
+        });
+    }
+}
+
+function loadChat() {
+    $.ajax({
+        method: "POST",
+        url: "/global.php?page=match&action=chat",
+        data: {
+            offset: chatId
+        }
+    }).done(function(msg) {
+        var list = $("#chatlist");
+        var jdata = JSON.parse(msg);
+        for (var i = 0; i < jdata.length; i++) {
+            var part = jdata[i];
+            var elem = $("<div><img><span></span></div>");
+            elem.children("img").attr("src", part["type"] == "SYSTEM" ? "/img/bang.svg" : "/img/message.svg");
+            elem.children("img").addClass("chat-svg");
+            elem.children("span").addClass("chat-msg").html(part["message"]);
+            
+            chatId = part["id"] + 1;
+            jdata[i] = elem;
+        }
+        list.append(jdata);
+    });
 }
 
 function loadParticipants() {
@@ -49,11 +80,11 @@ function loadParticipants() {
 function toggleSelect(o) {
     var remove = false;
     for (var i = 0; i < sel.length; i++) {
-        if (sel[i] == o) {
+        if (sel[i] == o || remove) {
             // Need sync with server
-            $(o).children(".card-select").eq(0).remove();
-            $(o).removeClass("card-selected");
-            sel.splice(i, 1);
+            $(sel[i]).children(".card-select").eq(0).remove();
+            $(sel[i]).removeClass("card-selected");
+            sel.splice(i--, 1);
             remove = true;
         }
     }
@@ -69,8 +100,15 @@ function toggleSelect(o) {
     }
 }
 
+$('#chatinput').keypress(function (e){
+    var key = e.which;
+    if (key == 13) {
+        sendChat();
+    }
+});
+
 pickTab('tab-actions');
 loadParticipants();
 
-setInterval(heartbeat, 2000);
-setInterval(loadParticipants, 1900);
+setInterval(loadParticipants, 2000);
+setInterval(loadChat, 300);

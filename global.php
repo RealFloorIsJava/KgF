@@ -57,6 +57,7 @@
     // Initialize stuff
     Match::provideDB($db_handle);
     Participant::provideDB($db_handle);
+    ChatMessage::provideDB($db_handle);
     Card::provideDB($db_handle);
     
     Participant::perform_housekeeping();
