@@ -53,3 +53,17 @@ ALTER TABLE `kgf_hand`
 ALTER TABLE `kgf_hand`
   ADD CONSTRAINT `kgf_hand_ibfk_1` FOREIGN KEY (`hand_participant`) REFERENCES `kgf_match_participant` (`mp_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   ADD CONSTRAINT `kgf_hand_ibfk_2` FOREIGN KEY (`hand_card`) REFERENCES `kgf_cards` (`card_id`);
+
+CREATE TABLE `kgf_match_chat` (
+  `chat_id` int(12) UNSIGNED NOT NULL,
+  `chat_match_id` int(12) UNSIGNED NOT NULL,
+  `chat_type` enum('SYSTEM','USER') COLLATE utf8_unicode_ci NOT NULL,
+  `chat_message` text COLLATE utf8_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ALTER TABLE `kgf_match_chat`
+  ADD PRIMARY KEY (`chat_id`),
+  ADD KEY `chat_match_id` (`chat_match_id`);
+ALTER TABLE `kgf_match_chat`
+  MODIFY `chat_id` int(12) UNSIGNED NOT NULL AUTO_INCREMENT;
+ALTER TABLE `kgf_match_chat`
+  ADD CONSTRAINT `kgf_match_chat_ibfk_1` FOREIGN KEY (`chat_match_id`) REFERENCES `kgf_match` (`match_id`);
