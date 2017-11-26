@@ -8,6 +8,7 @@ body {
     margin: 0px 0px 20px 0px;  /* To allow for scrolling further than 
                                   the content would normally allow    */
     padding: 0px;
+    font-family: 'Helvetica';
 }
 
 /** Site header **/
@@ -46,12 +47,12 @@ body {
 }
 
 /** Card display **/
-.card-base:hover {
+.card-base:hover, .card-base.card-selected {
     transform: scale(1.05);
 }
 
 .card-base {
-    margin: 5px;
+    margin: 6px;
     padding: 6px;
     position: relative;
     width: 128px;
@@ -60,6 +61,7 @@ body {
     font-family: 'Arial';
     transition-property: transform;
     transition-duration: 200ms;
+    cursor: default;
 }
 
 .card-id {
@@ -73,6 +75,16 @@ body {
     position: sticky !important;  /* To override relative positioning
                                      of cards */
     top: 50px;
+}
+
+.card-select {
+    margin: 0px 0px 0px -6px;  /* To counteract card padding */
+    position: absolute;
+    width: 100%;
+    font-family: 'Arial';
+    font-size: 128px;
+    text-align: center;
+    opacity: 0.2;
 }
 
 /** Chat messages **/
