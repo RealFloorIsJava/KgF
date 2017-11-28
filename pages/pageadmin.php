@@ -12,8 +12,8 @@
          */
         private $action;
         
-        public function __construct($dbh, $user) {
-            parent::__construct($dbh, $user);
+        public function __construct($user) {
+            parent::__construct($user);
             if (!$this->user->is_admin()) {
                 $this->fail_permission_check();
             }

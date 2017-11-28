@@ -20,8 +20,8 @@
          */
         protected $match;
         
-        public function __construct($dbh, $user) {
-            parent::__construct($dbh, $user);
+        public function __construct($user) {
+            parent::__construct($user);
             $this->action = isset($_GET["action"]) ? $_GET["action"] : "invalid";
             $this->subpage = isset($_GET["sub"]) ? $_GET["sub"] : "invalid";
         }

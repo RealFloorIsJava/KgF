@@ -4,10 +4,6 @@
      */
     class Page {
         /**
-         * The database handle
-         */
-        protected $dbh;
-        /**
          * The user that initiated the request
          */
         protected $user;
@@ -20,15 +16,37 @@
          */
         private $success;
         
-        public function __construct($dbh, $user) {
-            $this->dbh = $dbh;
+        /**
+         * Locates the file that needs to be included to open the given
+         * page. If the page does not exist the include for a default
+         * page will be used.
+         * Returns an array (include, classname)
+         */
+        public static function get_page_source($page_name) {
+            $page = "dashboard";
+            if (preg_match("/[a-z]+/", $page_name)) {
+                $page = $page_name;
+            }
+            $file = "pages/page".$page.".php";
+            if (!file_exists($file)) {
+                return array("pages/pagedashboard.php",
+                    "PageDashboard");
+            }
+            return array($file, "Page".ucfirst($page));
+        }
+        
+        /**
+         * Constructor
+         */
+        public function __construct($user) {
             $this->user = $user;
             $this->status = "";
             $this->success = true;
         }
         
         /**
-         * Displays the page to the user (and performs necessary calculations)
+         * Displays the page to the user (and performs necessary 
+         * calculations)
          */
         public function display() {
             die("Display not implemented!");
@@ -42,7 +60,8 @@
         }
         
         /**
-         * Can be used by specific pages to fail permission checks with redirecting to the dashboard
+         * Can be used by specific pages to fail permission checks with
+         * redirecting to the dashboard
          */
         protected function fail_permission_check() {
             header("Location: /global.php");
@@ -55,9 +74,11 @@
         protected function get_status_format() {
             if ($this->status != "") {
                 if ($this->success) {
-                    return '<div class="status-box success-box">'.$this->status.'</div>';
+                    return '<div class="status-box success-box">'.
+                        $this->status.'</div>';
                 } else {
-                    return '<div class="status-box failure-box">'.$this->status.'</div>';
+                    return '<div class="status-box failure-box">'.
+                        $this->status.'</div>';
                 }
             }
             return "";

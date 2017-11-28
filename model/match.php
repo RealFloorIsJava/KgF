@@ -25,7 +25,7 @@
         private $current_card;
         /**
          * The state of this match
-         * One of PENDING CHOOSING PICKING COOLDOWN
+         * One of PENDING CHOOSING PICKING COOLDOWN ENDING
          */
         private $state;
         /**
@@ -226,6 +226,8 @@
         public function get_status() {
             if ($this->state == "PENDING") {
                 return "Waiting for players...";
+            } else if ($this->state == "ENDING") {
+                return "Match is ending...";
             }
             return "<State of Match unknown>";
         }
