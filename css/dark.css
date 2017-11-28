@@ -1,96 +1,98 @@
 body {
-    background-color: #333333;
-    color: #dddddd;
+  background-color: #333333;
+  color: #dddddd;
 }
 
 a, a:link, a:visited, a:hover, a:active {
-    color: #aaaadd;
+  color: #aaaadd;
 }
 
 .match-box {
-    background-color: #4f4f4f;
-    box-shadow: 7px 7px 7px -3px #222222;
+  background-color: #4f4f4f;
+  box-shadow: 7px 7px 7px -3px #222222;
 }
 
 .cupboard {
-    background-color: #3f3f3f;
-    box-shadow: 0px 0px 10px -1px #222222;
+  background-color: #3f3f3f;
+  box-shadow: 0px 0px 10px -1px #222222;
 }
 
 .knob-statement {
-    text-decoration: none !important;
-    background-color: #000000;
+  text-decoration: none !important;
+  background-color: #000000;
 }
 
 .knob-object {
-    text-decoration: none !important;
-    background-color: #AD0021;
+  text-decoration: none !important;
+  background-color: #AD0021;
 }
 
 .knob-verb {
-    text-decoration: none !important;
-    background-color: #D4BD4B;
+  text-decoration: none !important;
+  background-color: #D4BD4B;
 }
 
 .success-box {
-    border: 1px solid #00840A;
-    background-color: #4F8853;
+  border: 1px solid #00840A;
+  background-color: #4F8853;
 }
 
 .failure-box {
-    border: 1px solid #9D000E;
-    background-color: #8F3E46;
+  border: 1px solid #9D000E;
+  background-color: #8F3E46;
 }
 
 .card-base {
-    box-shadow: 2px 2px 6px -3px #aaaaaa;
+  box-shadow: 2px 2px 6px -3px #aaaaaa;
 }
 
 .statement-card {
-    color: #eeeeee;
-    background-color: #111111;
+  color: #eeeeee;
+  background-color: #111111;
 }
 
 .part {
-    background-color: #555555;
-    box-shadow: 7px 7px 7px -3px #222222;
+  background-color: #555555;
+  box-shadow: 7px 7px 7px -3px #222222;
 }
 
 .match-chat {
-    background-color: #444444;
-    box-shadow: -2px 0px 7px -3px #222222;
+  background-color: #444444;
+  box-shadow: -2px 0px 7px -3px #222222;
 }
 
 .chat-line {
-    box-shadow: 1px 0px 7px -1px #222222;
-    background-color: #2a2a2a;
-    color: #dddddd;
+  box-shadow: 1px 0px 7px -1px #222222;
+  background-color: #2a2a2a;
+  color: #dddddd;
 }
 
 .hand-area-set {
-    background-color: #4f4f4f;
-    box-shadow: 2px -3px 7px -4px #222222;
+  background-color: #4f4f4f;
+  box-shadow: 2px -3px 7px -4px #222222;
 }
 
 .hand-tab-header {
-    background-color: #4f4f4f;
-    box-shadow: 2px -6px 7px -4px #222222;
+  background-color: #4f4f4f;
+  box-shadow: 2px -6px 7px -4px #222222;
 }
 
 .object-card {
-    color: #001111;
-    background-color: #bbaaaa;
+  color: #001111;
+  background-color: #bbaaaa;
 }
 
 .verb-card {
-    color: #000011;
-    background-color: #bbbbaa;
+  color: #000011;
+  background-color: #bbbbaa;
 }
 
-.object-card a, .object-card a:link, .object-card a:visited, .object-card a:hover, .object-card a:active {
-    color: #444411;
+.object-card a, .object-card a:link, .object-card a:visited,
+  .object-card a:hover, .object-card a:active {
+  color: #444411;
 }
 
-.verb-card a, .verb-card a:link, .verb-card a:visited, .verb-card a:hover, .verb-card a:active {
-    color: #444411;
+.verb-card a, .verb-card a:link, .verb-card a:visited, .verb-card a:hover,
+  .verb-card a:active {
+  color: #444411;
 }

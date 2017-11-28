@@ -1,11 +1,14 @@
 <?php
+  /**
+   * The dashboard
+   */
+  class PageDashboard extends Page {
+
     /**
-     * The dashboard
+     * Displays the page
      */
-    class PageDashboard extends Page {
-        
-        public function display() {
-            $this->show_template("templates/dashboard.php");
-        }
+    public function display() {
+      $this->show_template("templates/dashboard.php");
     }
+  }
 ?>

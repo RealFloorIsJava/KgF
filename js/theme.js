@@ -1,18 +1,18 @@
 function toggleLights() {
-    theme = (theme == "dark") ? "light" : "dark";
-    checkLights();
-    document.getElementById("theme").href = '/css/' + theme + '.css';
-    $.ajax({
-        method: "POST",
-        url: "/global.php?page=ajax&action=settheme",
-        data: {
-            selection: theme
-        }
-    })
+  theme = (theme == "dark") ? "light" : "dark";
+  checkLights();
+  document.getElementById("theme").href = '/css/' + theme + '.css';
+  $.ajax({
+    method: "POST",
+    url: "/global.php?page=ajax&action=settheme",
+    data: {
+      selection: theme
+    }
+  });
 }
 
 function checkLights() {
-    $("#lightLabel").html("Lights " + (theme == "light" ? "off" : "on"));
+  $("#lightLabel").html("Lights " + (theme == "light" ? "off" : "on"));
 }
 
 checkLights();
