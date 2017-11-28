@@ -101,7 +101,7 @@
       $q->execute();
       $rows = $q->fetchAll();
       foreach ($rows as $part) {
-        ChatMessage::send_message(Match::get_by_id($part["mp_match"]), "SYSTEM",
+        Match::get_by_id($part["mp_match"])->get_chat()->send_message("SYSTEM",
           "<b>".$part["mp_name"]." timed out</b>");
       }
 
@@ -202,7 +202,7 @@
      * Leaves the match (and thus destroys this participant)
      */
     public function leave_match() {
-      ChatMessage::send_message($this->match, "SYSTEM",
+      $this->match->get_chat()->send_message("SYSTEM",
         "<b>".$this->get_name()." left</b>");
 
       $q = self::$sql_queries["abandon"];

@@ -6,9 +6,11 @@
   // could require class definitions to be present.
   require "model/user.php";
   require "model/card.php";
+  require "model/chat.php";
+  require "model/chatmessage.php";
   require "model/match.php";
-  require "model/participant.php";
   require "model/page.php";
+  require "model/participant.php";
 
   // Initialize the session
   require "includes/session.php";
@@ -19,7 +21,7 @@
   // Initialize stuff
   Match::provideDB($db_handle);
   Participant::provideDB($db_handle);
-  ChatMessage::provideDB($db_handle);
+  Chat::provideDB($db_handle);
   Card::provideDB($db_handle);
 
   // Perform housekeeping
