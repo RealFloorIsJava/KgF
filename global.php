@@ -5,7 +5,7 @@
   // Load all models already here because deserializing the session
   // could require class definitions to be present.
   require "model/user.php";
-  require "model/cards.php";
+  require "model/card.php";
   require "model/match.php";
   require "model/page.php";
 
