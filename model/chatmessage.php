@@ -21,9 +21,9 @@
     private $message;
 
     /**
-     * Private constructor to prevent instance creation from outside this class
+     * Constructor
      */
-    private function __construct($id, $match, $type, $message) {
+    public function __construct($id, $match, $type, $message) {
       $this->id = intval($id);
       $this->match = $match;
       $this->type = $type;

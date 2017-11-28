@@ -1,39 +1,37 @@
 <?php
   // Initialize error logging
-  require "includes/error.php";
-
-  // Load all models already here because deserializing the session
-  // could require class definitions to be present.
-  require "model/user.php";
-  require "model/card.php";
-  require "model/chat.php";
-  require "model/chatmessage.php";
-  require "model/match.php";
-  require "model/page.php";
-  require "model/participant.php";
+  require_once "includes/error.php";
 
   // Initialize the session
-  require "includes/session.php";
+  require_once "model/user.php";
+  require_once "includes/session.php";
 
   // Connect to the DB and import the $db_handle into the scope
-  require "includes/pdo.php";
+  require_once "includes/pdo.php";
 
   // Initialize stuff
-  Match::provideDB($db_handle);
+  require_once "model/participant.php";
+  require_once "model/match.php";
+  require_once "model/chat.php";
+  require_once "model/card.php";
+
+  // Provide the DB handle to all db-interacting classes
   Participant::provideDB($db_handle);
+  Match::provideDB($db_handle);
   Chat::provideDB($db_handle);
   Card::provideDB($db_handle);
 
-  // Perform housekeeping
+  // First clear old participants, then their matches
   Participant::perform_housekeeping();
   Match::perform_housekeeping();
 
+  require_once "model/page.php";
   // Fetch the page source (include/class array)
   $source = Page::get_page_source(
   isset($_GET["page"]) ? $_GET["page"] : "dashboard");
 
   // Load, create and display the page
-  require $source[0];
+  require_once $source[0];
   $pageclass = $source[1];
   (new $pageclass($_SESSION["user"]))->display();
 ?>

@@ -1,4 +1,9 @@
 <?php
+  require_once "model/page.php";
+  require_once "model/participant.php";
+  require_once "model/match.php";
+  require_once "model/card.php";
+
   /**
    * The match page
    */
@@ -106,7 +111,7 @@
         $text = trim(htmlspecialchars($_POST["message"]));
         if (strlen($text) > 0 && strlen($text) < 200) {
           if ($this->user->may_chat()) {
-            ChatMessage::send_message($this->match, "USER",
+            $this->match->get_chat()->send_message("USER",
               "<b>".$this->participant->get_name()."</b>: ".$text);
             $this->user->prevent_chat_until(time() + 1);
           }
@@ -148,7 +153,7 @@
         // message ID)
         $offset = abs(intval($_POST["offset"]));
       }
-      $msgs = ChatMessage::load_for_match($this->match, $offset);
+      $msgs = $this->match->get_chat()->load($offset);
       $tojson = array();
       foreach ($msgs as $msg) {
         $tojson[] = array(

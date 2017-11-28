@@ -1,4 +1,7 @@
 <?php
+  require_once "model/page.php";
+  require_once "model/match.php";
+
   /**
    * The dashboard
    */

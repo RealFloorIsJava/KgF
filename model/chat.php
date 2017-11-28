@@ -1,4 +1,6 @@
 <?php
+  require_once "model/chatmessage.php";
+
   /**
    * Represents the chat of a match
    */
@@ -40,7 +42,7 @@
     }
 
     /**
-     * Sends a chat message for the given match
+     * Sends a chat message in this chat
      */
     public function send_message($type, $msg) {
       $q = self::$sql_queries["add_message"];
@@ -51,9 +53,9 @@
     }
 
     /**
-     * Loads the chat messages of the given match from the given offset
+     * Loads the chat messages from the given offset
      */
-    public function load_for_match($offset) {
+    public function load($offset) {
       $q = self::$sql_queries["fetch_match_offset"];
       $q->bindValue(":match", $this->match->get_id(), PDO::PARAM_INT);
       $q->bindValue(":offset", $offset, PDO::PARAM_INT);

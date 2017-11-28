@@ -1,4 +1,7 @@
 <?php
+  require_once "model/page.php";
+  require_once "model/card.php";
+
   /**
    * The admin CP
    */

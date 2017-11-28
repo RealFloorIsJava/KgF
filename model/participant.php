@@ -1,4 +1,6 @@
 <?php
+  require_once "model/match.php";
+
   /**
    * Represents a participant of a match
    */
