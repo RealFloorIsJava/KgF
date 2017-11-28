@@ -7,6 +7,7 @@
   require "model/user.php";
   require "model/card.php";
   require "model/match.php";
+  require "model/participant.php";
   require "model/page.php";
 
   // Initialize the session
