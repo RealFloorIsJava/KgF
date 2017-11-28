@@ -3,7 +3,7 @@ var matchResolver = {};
 function loadMatches() {
   $.ajax({
     method: "POST",
-    url: "/global.php?page=ajax&action=matchlist",
+    url: "/global.php?page=dashboard&action=matchlist",
     data: {}
   }).done(function(msg) {
     var list = $("#matchlist");
