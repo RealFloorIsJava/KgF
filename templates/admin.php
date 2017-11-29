@@ -3,7 +3,7 @@
   <head>
     <title>Admin CP</title>
     <link rel="stylesheet" type="text/css" href="/css/main.css">
-    <?= $this->user->get_theme_loader() ?>
+    <?= $this->mUser->getThemeLoader() ?>
   </head>
   <body>
     <div class="cupboard">
@@ -19,7 +19,7 @@
       </div>
       <div style="clear: both;"></div>
     </div>
-    <?= $this->get_status_format() ?>
+    <?= $this->getStatusFormat() ?>
     <div class="default-container">
       <a href="/global.php?page=admin&amp;sub=list">List cards</a><br>
     </div>

@@ -6,15 +6,15 @@
     /**
      * The user that initiated the request
      */
-    protected $user;
+    protected $mUser;
     /**
      * The status message for the last action, if any.
      */
-    private $status;
+    private $mStatus;
     /**
      * Whether the last action was a success.
      */
-    private $success;
+    private $mSuccess;
 
     /**
      * Locates the file that needs to be included to open the given
@@ -22,10 +22,10 @@
      * page will be used.
      * Returns an array (include, classname)
      */
-    public static function get_page_source($page_name) {
+    public static function getPageSource($pageName) {
       $page = "dashboard";
-      if (preg_match("/[a-z]+/", $page_name)) {
-        $page = $page_name;
+      if (preg_match("/[a-z]+/", $pageName)) {
+        $page = $pageName;
       }
       $file = "pages/page".$page.".php";
       if (!file_exists($file)) {
@@ -38,9 +38,9 @@
      * Constructor
      */
     public function __construct($user) {
-      $this->user = $user;
-      $this->status = "";
-      $this->success = true;
+      $this->mUser = $user;
+      $this->mStatus = "";
+      $this->mSuccess = true;
     }
 
     /**
@@ -54,7 +54,7 @@
     /**
      * Shows a template to the user
      */
-    protected function show_template($tpl) {
+    protected function showTemplate($tpl) {
       eval("?>".file_get_contents($tpl));
     }
 
@@ -62,7 +62,7 @@
      * Can be used by specific pages to fail permission checks with
      * redirecting to the dashboard
      */
-    protected function fail_permission_check() {
+    protected function failPermissionCheck() {
       header("Location: /global.php");
       exit();
     }
@@ -70,12 +70,12 @@
     /**
      * Returns a colored status bar (if necessary)
      */
-    protected function get_status_format() {
-      if ($this->status !== "") {
-        if ($this->success) {
-          return '<div class="status-box success-box">'.$this->status.'</div>';
+    protected function getStatusFormat() {
+      if ($this->mStatus !== "") {
+        if ($this->mSuccess) {
+          return '<div class="status-box success-box">'.$this->mStatus.'</div>';
         } else {
-          return '<div class="status-box failure-box">'.$this->status.'</div>';
+          return '<div class="status-box failure-box">'.$this->mStatus.'</div>';
         }
       }
       return "";
@@ -84,9 +84,9 @@
     /**
      * Stores a status for later display
      */
-    protected function report_status($status, $success) {
-      $this->status = $status;
-      $this->success = $success;
+    protected function reportStatus($status, $success) {
+      $this->mStatus = $status;
+      $this->mSuccess = $success;
     }
   }
 ?>

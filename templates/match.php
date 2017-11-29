@@ -3,7 +3,7 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="stylesheet" type="text/css" href="/css/main.css">
-    <?= $this->user->get_theme_loader() ?>
+    <?= $this->mUser->getThemeLoader() ?>
   </head>
   <body>
     <div class="cupboard">
@@ -18,7 +18,7 @@
     </div>
     <div class="match-container">
       <div class="match-view">
-        <?= $this->get_status_format() ?>
+        <?= $this->getStatusFormat() ?>
         <div class="match-status" id="matchstatus">
           Loading...
         </div>

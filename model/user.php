@@ -6,39 +6,39 @@
     /**
      * The ID of the user, has to be unique
      */
-    private $id;
+    private $mId;
     /**
      * Whether this user has admin privileges
      */
-    private $admin;
+    private $mAdmin;
     /**
      * The theme of this user
      */
-    private $theme;
+    private $mTheme;
     /**
      * The nickname of this user
      */
-    private $nickname;
+    private $mNickname;
     /**
      * The next point in time when a message is allowed to prevent spam
      */
-    private $chat_cooldown;
+    private $mChatCooldown;
 
     public function __construct() {
-      $this->id = uniqid("p", true);
-      $this->admin = false;
-      $this->theme = "dark";
-      $this->nickname = "Meme".rand(10000, 99999);
-      $this->chat_cooldown = 0;
+      $this->mId = uniqid("p", true);
+      $this->mAdmin = false;
+      $this->mTheme = "dark";
+      $this->mNickname = "Meme".rand(10000, 99999);
+      $this->mChatCooldown = 0;
     }
 
     /**
      * Fetches the theme loader, HTML that will initialize the user's theme
      */
-    public function get_theme_loader() {
+    public function getThemeLoader() {
       $loader = '<link rel="stylesheet" type="text/css" href="/css/'.
-        $this->theme.'.css" id="theme">';
-      $loader .= '<script type="text/javascript"> var theme = "'.$this->theme.
+        $this->mTheme.'.css" id="theme">';
+      $loader .= '<script type="text/javascript"> var theme = "'.$this->mTheme.
         '"; </script>';
       return $loader;
     }
@@ -46,57 +46,57 @@
     /**
      * Theme setter
      */
-    public function set_theme($theme) {
-      $this->theme = $theme;
+    public function setTheme($theme) {
+      $this->mTheme = $theme;
     }
 
     /**
      * Makes this user an admin
      */
-    public function escalate_privileges() {
-      $this->admin = true;
+    public function escalatePrivileges() {
+      $this->mAdmin = true;
     }
 
     /**
      * Nick setter
      */
-    public function set_nickname($name) {
-      $this->nickname = $name;
+    public function setNickname($name) {
+      $this->mNickname = $name;
     }
 
     /**
      * Nick getter
      */
-    public function get_nickname() {
-      return $this->nickname;
+    public function getNickname() {
+      return $this->mNickname;
     }
 
     /**
      * ID getter
      */
-    public function get_id() {
-      return $this->id;
+    public function getId() {
+      return $this->mId;
     }
 
     /**
      * Admin status getter
      */
-    public function is_admin() {
-      return $this->admin;
+    public function isAdmin() {
+      return $this->mAdmin;
     }
 
     /**
      * Checks whether the anti spam prevents this user from chatting
      */
-    public function may_chat() {
-      return time() >= $this->chat_cooldown;
+    public function mayChat() {
+      return time() >= $this->mChatCooldown;
     }
 
     /**
      * Prevents chatting until the given point in time has passed
      */
-    public function prevent_chat_until($time) {
-      $this->chat_cooldown = $time;
+    public function preventChatUntil($time) {
+      $this->mChatCooldown = $time;
     }
   }
 ?>

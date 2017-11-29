@@ -3,17 +3,17 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="stylesheet" type="text/css" href="/css/main.css">
-    <?= $this->user->get_theme_loader() ?>
+    <?= $this->mUser->getThemeLoader() ?>
   </head>
   <body>
     <div class="cupboard">
       <a href="?logout">Log Out</a> &mdash;
       You are known as
-      <span id="username"><?= $this->user->get_nickname() ?></span>
+      <span id="username"><?= $this->mUser->getNickname() ?></span>
       (<a href="#" onclick="changeName()">Change</a>)
       <div style="float: right;">
         <?php
-          if ($this->user->is_admin()) {
+          if ($this->mUser->isAdmin()) {
             echo '<a href="#" onclick="enterACP(true)">Admin CP</a>';
           } else {
             echo '<a href="#" onclick="enterACP(false)">Admin CP</a>';
@@ -25,7 +25,7 @@
       </div>
       <div style="clear: both;"></div>
     </div>
-    <?= $this->get_status_format() ?>
+    <?= $this->getStatusFormat() ?>
 
     <div id="matchlist">
       <div class="match-box">

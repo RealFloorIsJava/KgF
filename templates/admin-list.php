@@ -3,7 +3,7 @@
   <head>
     <title>Admin CP</title>
     <link rel="stylesheet" type="text/css" href="/css/main.css">
-    <?= $this->user->get_theme_loader() ?>
+    <?= $this->mUser->getThemeLoader() ?>
   </head>
   <body>
     <div class="cupboard">
@@ -19,24 +19,24 @@
       </div>
       <div style="clear: both;"></div>
     </div>
-    <?= $this->get_status_format() ?>
+    <?= $this->getStatusFormat() ?>
     <div class="card-container">
       <?php
-      $cards = Card::get_all_cards();
-      foreach ($cards as $card) {
+        $cards = Card::getAllCards();
+        foreach ($cards as $card) {
       ?>
-      <div class="card-base <?= $card->get_type_class() ?>">
-        <?= $card->get_formatted_text() ?>
+      <div class="card-base <?= $card->getTypeClass() ?>">
+        <?= $card->getFormattedText() ?>
         <div class="card-id">
-          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-s&amp;card=<?= $card->get_id() ?>" class="knob-statement">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
-          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-o&amp;card=<?= $card->get_id() ?>" class="knob-object">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
-          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-v&amp;card=<?= $card->get_id() ?>" class="knob-verb">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
-          <a href="/global.php?page=admin&amp;sub=list&amp;action=delete&amp;card=<?= $card->get_id() ?>">Delete</a> -
-          #<?= $card->get_id() ?>
+          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-s&amp;card=<?= $card->getId() ?>" class="knob-statement">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-o&amp;card=<?= $card->getId() ?>" class="knob-object">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+          <a href="/global.php?page=admin&amp;sub=list&amp;action=mode-v&amp;card=<?= $card->getId() ?>" class="knob-verb">&nbsp;&nbsp;&nbsp;&nbsp;</a> -
+          <a href="/global.php?page=admin&amp;sub=list&amp;action=delete&amp;card=<?= $card->getId() ?>">Delete</a> -
+          #<?= $card->getId() ?>
         </div>
       </div>
       <?php
-      }
+        }
       ?>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>

@@ -1,18 +1,18 @@
 <?php
   require_once "config/db.php";
-  $dsn = "mysql:host=".$db_host.";dbname=".$db_name;
+  $dsn = "mysql:host=".$dbHost.";dbname=".$dbName;
   try {
-    $db_handle = new PDO($dsn, $db_user, $db_pw);
+    $dbHandle = new PDO($dsn, $dbUser, $dbPw);
   } catch (PDOException $e) {
     die("Database connection failed!");
   }
-  unset($db_user, $db_pw, $db_host, $db_name);
+  unset($dbUser, $dbPw, $dbHost, $dbName);
 
-  $db_handle->beginTransaction();
+  $dbHandle->beginTransaction();
 
-  function dbh_autocommit() {
-    global $db_handle;
-    $db_handle->commit();
+  function dbhAutocommit() {
+    global $dbHandle;
+    $dbHandle->commit();
   }
-  register_shutdown_function('dbh_autocommit');
+  register_shutdown_function('dbhAutocommit');
 ?>

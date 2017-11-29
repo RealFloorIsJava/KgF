@@ -6,49 +6,49 @@
     /**
      * Prepared SQL queries
      */
-    private static $sql_queries;
+    private static $sSqlQueries;
     /**
      * The ID->Card cache
      */
-    private static $id_cache = array();
+    private static $sIdCache = array();
     /**
      * The ID of this card
      */
-    private $id;
+    private $mId;
     /**
      * The text on this card
      */
-    private $text;
+    private $mText;
     /**
      * The type of this card
      * One of STATEMENT VERB OBJECT
      */
-    private $type;
+    private $mType;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
      */
     public static function provideDB($dbh) {
-      self::$sql_queries = array(
-        "all_cards" => $dbh->prepare(
+      self::$sSqlQueries = array(
+        "allCards" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_cards`"
         ),
-        "get_card" => $dbh->prepare(
+        "getCard" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_cards` ".
           "WHERE `card_id` = :cardid"
         ),
-        "delete_card" => $dbh->prepare(
+        "deleteCard" => $dbh->prepare(
           "DELETE FROM `kgf_cards` ".
           "WHERE `card_id` = :cardid"
         ),
-        "set_card_mode" => $dbh->prepare(
+        "setCardMode" => $dbh->prepare(
           "UPDATE `kgf_cards` ".
           "SET `card_type` = :cardtype ".
           "WHERE `card_id` = :cardid"
         ),
-        "random_card" => $dbh->prepare(
+        "randomCard" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_cards` ".
           "WHERE `card_type` = :cardtype ".
@@ -61,10 +61,10 @@
     /**
      * Fetches all cards in the DB
      */
-    public static function get_all_cards() {
+    public static function getAllCards() {
       // There is no real efficient way to only load the cards the cache is
       // missing. So in this case, we'll load them all.
-      $q = self::$sql_queries["all_cards"];
+      $q = self::$sSqlQueries["allCards"];
       $q->execute();
       $rows = $q->fetchAll();
 
@@ -72,11 +72,11 @@
       foreach ($rows as $card) {
         // We'll take those that we already have cached from the cache
         $id = $card["card_id"];
-        if (!isset(self::$id_cache[$id])) {
-          self::$id_cache[$id] = new Card($card["card_id"], $card["card_text"],
+        if (!isset(self::$sIdCache[$id])) {
+          self::$sIdCache[$id] = new Card($card["card_id"], $card["card_text"],
             $card["card_type"]);
         }
-        $cards[$id] = self::$id_cache[$id];
+        $cards[$id] = self::$sIdCache[$id];
       }
       return $cards;
     }
@@ -84,72 +84,72 @@
     /**
      * Fetches one card from the DB
      */
-    public static function get_card($id) {
-      if (!isset(self::$id_cache[$id])) {
-        $q = self::$sql_queries["get_card"];
+    public static function getCard($id) {
+      if (!isset(self::$sIdCache[$id])) {
+        $q = self::$sSqlQueries["getCard"];
         $q->bindValue(":cardid", $id, PDO::PARAM_INT);
         $q->execute();
         $card = $q->fetch();
-        self::$id_cache[$id] = new Card($card["card_id"], $card["card_text"],
+        self::$sIdCache[$id] = new Card($card["card_id"], $card["card_text"],
           $card["card_type"]);
       }
-      return self::$id_cache[$id];
+      return self::$sIdCache[$id];
     }
 
     /**
      * Returns a random card of the given type
      */
-    public static function random_card($type) {
-      $q = self::$sql_queries["random_card"];
+    public static function randomCard($type) {
+      $q = self::$sSqlQueries["randomCard"];
       $q->bindValue(":cardtype", $type, PDO::PARAM_STR);
       $q->execute();
       $card = $q->fetch();
-      if (!isset(self::$id_cache[$card["card_id"]])) {
-        self::$id_cache[$card["card_id"]] = new Card($card["card_id"],
+      if (!isset(self::$sIdCache[$card["card_id"]])) {
+        self::$sIdCache[$card["card_id"]] = new Card($card["card_id"],
           $card["card_text"], $card["card_type"]);
       }
-      return self::$id_cache[$card["card_id"]];
+      return self::$sIdCache[$card["card_id"]];
     }
 
     /**
      * Private constructor to prevent instance creation
      */
     private function __construct($id, $text, $type) {
-      $this->id = intval($id);
-      $this->text = $text;
-      $this->type = $type;
+      $this->mId = intval($id);
+      $this->mText = $text;
+      $this->mType = $type;
     }
 
     /**
      * Deletes this card
      */
-    public function delete_card() {
-      $q = self::$sql_queries["delete_card"];
-      $q->bindValue(":cardid", $this->id, PDO::PARAM_INT);
+    public function deleteCard() {
+      $q = self::$sSqlQueries["deleteCard"];
+      $q->bindValue(":cardid", $this->mId, PDO::PARAM_INT);
       $q->execute();
-      unset(self::$id_cache[$this->id]);
+      unset(self::$sIdCache[$this->mId]);
     }
 
     /**
      * Changes the mode of this card
      */
-    public function set_mode($type) {
-      $this->type = $type;
-      $q = self::$sql_queries["set_card_mode"];
-      $q->bindValue(":cardid", $this->id, PDO::PARAM_INT);
-      $q->bindValue(":cardtype", $this->type, PDO::PARAM_STR);
+    public function setMode($type) {
+      $this->mType = $type;
+      $q = self::$sSqlQueries["setCardMode"];
+      $q->bindValue(":cardid", $this->mId, PDO::PARAM_INT);
+      $q->bindValue(":cardtype", $this->mType, PDO::PARAM_STR);
       $q->execute();
     }
 
     /**
      * Returns the name of the CSS type class
      */
-    public function get_type_class() {
-      if ($this->type === "STATEMENT") {
+    public function getTypeClass() {
+      if ($this->mType === "STATEMENT") {
         return "statement-card";
-      } else if ($this->type === "OBJECT") {
+      } else if ($this->mType === "OBJECT") {
         return "object-card";
-      } else if ($this->type === "VERB") {
+      } else if ($this->mType === "VERB") {
         return "verb-card";
       }
       return "unknown";
@@ -158,16 +158,17 @@
     /**
      * Returns the HTML-formatted text of the card
      */
-    public function get_formatted_text() {
+    public function getFormattedText() {
       return preg_replace("/_/",
-        "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>", $this->text);
+        "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>",
+        $this->mText);
     }
 
     /**
      * ID getter
      */
-    public function get_id() {
-      return $this->id;
+    public function getId() {
+      return $this->mId;
     }
   }
 ?>

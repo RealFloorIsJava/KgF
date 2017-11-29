@@ -9,23 +9,23 @@
     /**
      * The sub page of the current page
      */
-    private $subpage;
+    private $mSubpage;
     /**
      * The action that was required
      */
-    private $action;
+    private $mAction;
 
     /**
      * Constructor
      */
     public function __construct($user) {
       parent::__construct($user);
-      if (!$this->user->is_admin()) {
-        $this->fail_permission_check();
+      if (!$this->mUser->isAdmin()) {
+        $this->failPermissionCheck();
       }
 
-      $this->subpage = isset($_GET["sub"]) ? $_GET["sub"] : "index";
-      $this->action = isset($_GET["action"]) ? $_GET["action"] : "invalid";
+      $this->mSubpage = isset($_GET["sub"]) ? $_GET["sub"] : "index";
+      $this->mAction = isset($_GET["action"]) ? $_GET["action"] : "invalid";
     }
 
     /**
@@ -33,41 +33,41 @@
      * specific templates
      */
     public function display() {
-      $this->process_action();
+      $this->processAction();
 
-      if ($this->subpage === "list") {
-        $this->show_template("templates/admin-list.php");
+      if ($this->mSubpage === "list") {
+        $this->showTemplate("templates/admin-list.php");
       } else {
-        $this->show_template("templates/admin.php");
+        $this->showTemplate("templates/admin.php");
       }
     }
 
     /**
      * Dispatcher for the more specific methods handling card actions
      */
-    private function process_action() {
-      if ($this->action === "delete") {
-        $this->action_delete();
-      } else if ($this->action === "mode-s") {
-        $this->action_mode("STATEMENT");
-      } else if ($this->action === "mode-o") {
-        $this->action_mode("OBJECT");
-      } else if ($this->action === "mode-v") {
-        $this->action_mode("VERB");
+    private function processAction() {
+      if ($this->mAction === "delete") {
+        $this->actionDelete();
+      } else if ($this->mAction === "mode-s") {
+        $this->actionMode("STATEMENT");
+      } else if ($this->mAction === "mode-o") {
+        $this->actionMode("OBJECT");
+      } else if ($this->mAction === "mode-v") {
+        $this->actionMode("VERB");
       }
     }
 
     /**
      * Deletes the selected card
      */
-    private function action_delete() {
+    private function actionDelete() {
       if (isset($_GET["card"])) {
-        $card = Card::get_card($_GET["card"]);
+        $card = Card::getCard($_GET["card"]);
         if ($card !== null) {
-          $card->delete_card();
-          $this->report_status("Card #".$_GET["card"]." deleted!", true);
+          $card->deleteCard();
+          $this->reportStatus("Card #".$_GET["card"]." deleted!", true);
         } else {
-          $this->report_status(
+          $this->reportStatus(
             "Card #".$_GET["card"]." does not exist!", false);
         }
       }
@@ -76,15 +76,15 @@
     /**
      * Changes the mode of the selected card
      */
-    private function action_mode($mode) {
+    private function actionMode($mode) {
       if (isset($_GET["card"])) {
-        $card = Card::get_card($_GET["card"]);
+        $card = Card::getCard($_GET["card"]);
         if ($card !== null) {
-          $card->set_mode($mode);
-          $this->report_status(
+          $card->setMode($mode);
+          $this->reportStatus(
             "Card #".$_GET["card"]."'s mode was changed!", true);
         } else {
-          $this->report_status(
+          $this->reportStatus(
             "Card #".$_GET["card"]." does not exist!", false);
         }
       }

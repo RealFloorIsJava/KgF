@@ -1,8 +1,8 @@
 <?php
   if (isset($_POST["pw"])) {
     $pw = $_POST["pw"];
-    $correct_pw = trim(file_get_contents("config/site_password"));
-    if ($pw === $correct_pw) {
+    $correctPw = trim(file_get_contents("config/site_password"));
+    if ($pw === $correctPw) {
       // Set the login stub
       session_start();
       $_SESSION["login"] = true;

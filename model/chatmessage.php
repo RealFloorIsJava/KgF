@@ -6,49 +6,49 @@
     /**
      * The ID of this participant
      */
-    private $id;
+    private $mId;
     /**
      * The match of this message
      */
-    private $match;
+    private $mMatch;
     /**
      * The type of this message
      */
-    private $type;
+    private $mType;
     /**
      * The message
      */
-    private $message;
+    private $mMessage;
 
     /**
      * Constructor
      */
     public function __construct($id, $match, $type, $message) {
-      $this->id = intval($id);
-      $this->match = $match;
-      $this->type = $type;
-      $this->message = $message;
+      $this->mId = intval($id);
+      $this->mMatch = $match;
+      $this->mType = $type;
+      $this->mMessage = $message;
     }
 
     /**
      * ID getter
      */
-    public function get_id() {
-      return $this->id;
+    public function getId() {
+      return $this->mId;
     }
 
     /**
      * Type getter
      */
-    public function get_type() {
-      return $this->type;
+    public function getType() {
+      return $this->mType;
     }
 
     /**
      * Message getter
      */
-    public function get_message() {
-      return $this->message;
+    public function getMessage() {
+      return $this->mMessage;
     }
   }
 ?>

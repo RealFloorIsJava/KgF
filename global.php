@@ -6,7 +6,7 @@
   require_once "model/user.php";
   require_once "includes/session.php";
 
-  // Connect to the DB and import the $db_handle into the scope
+  // Connect to the DB and import the $dbHandle into the scope
   require_once "includes/pdo.php";
 
   // Initialize stuff
@@ -16,19 +16,19 @@
   require_once "model/card.php";
 
   // Provide the DB handle to all db-interacting classes
-  Participant::provideDB($db_handle);
-  Match::provideDB($db_handle);
-  Chat::provideDB($db_handle);
-  Card::provideDB($db_handle);
+  Participant::provideDB($dbHandle);
+  Match::provideDB($dbHandle);
+  Chat::provideDB($dbHandle);
+  Card::provideDB($dbHandle);
 
   // First clear old participants, then their matches
-  Participant::perform_housekeeping();
-  Match::perform_housekeeping();
+  Participant::performHousekeeping();
+  Match::performHousekeeping();
 
   require_once "model/page.php";
   // Fetch the page source (include/class array)
-  $source = Page::get_page_source(
-  isset($_GET["page"]) ? $_GET["page"] : "dashboard");
+  $source = Page::getPageSource(
+    isset($_GET["page"]) ? $_GET["page"] : "dashboard");
 
   // Load, create and display the page
   require_once $source[0];

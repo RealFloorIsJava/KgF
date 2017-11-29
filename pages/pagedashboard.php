@@ -6,27 +6,34 @@
    * The dashboard
    */
   class PageDashboard extends Page {
+    /**
+     * The required action
+     */
+    private $mAction;
 
+    /**
+     * Constructor
+     */
     public function __construct($user) {
       parent::__construct($user);
-      $this->action = isset($_GET["action"]) ? $_GET["action"] : "invalid";
+      $this->mAction = isset($_GET["action"]) ? $_GET["action"] : "invalid";
     }
 
     /**
      * Displays the page
      */
     public function display() {
-      $this->process_action();
+      $this->processAction();
 
-      $this->show_template("templates/dashboard.php");
+      $this->showTemplate("templates/dashboard.php");
     }
 
     /**
      * Dispatcher for more specific actions
      */
-    private function process_action() {
-      if ($this->action === "matchlist") {
-        $this->action_matchlist();
+    private function processAction() {
+      if ($this->mAction === "matchlist") {
+        $this->actionMatchList();
         exit();
       }
     }
@@ -34,19 +41,19 @@
     /**
      * Lists all matches.
      */
-    private function action_matchlist() {
-      $matches = Match::get_all_matches();
-      $tojson = array();
+    private function actionMatchList() {
+      $matches = Match::getAllMatches();
+      $toJson = array();
       foreach ($matches as $match) {
-        $tojson[] = array(
-          "id" => $match->get_id(),
-          "owner" => $match->get_owner_name(),
-          "participants" => $match->get_participant_count(),
-          "started" => $match->has_started(),
-          "seconds" => $match->get_seconds_to_next_phase()
+        $toJson[] = array(
+          "id" => $match->getId(),
+          "owner" => $match->getOwnerName(),
+          "participants" => $match->getParticipantCount(),
+          "started" => $match->hasStarted(),
+          "seconds" => $match->getSecondsToNextPhase()
         );
       }
-      echo json_encode($tojson);
+      echo json_encode($toJson);
     }
   }
 ?>
