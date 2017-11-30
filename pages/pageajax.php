@@ -1,6 +1,4 @@
 <?php
-  require_once "model/page.php";
-
   /**
    * This class handles AJAX requests that do not fit to a certain page but
    * rather might be used anywhere.

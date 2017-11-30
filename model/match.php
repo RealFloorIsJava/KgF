@@ -1,8 +1,4 @@
 <?php
-  require_once "model/participant.php";
-  require_once "model/card.php";
-  require_once "model/chat.php";
-
   /**
    * Represents a match
    */

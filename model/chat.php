@@ -1,6 +1,4 @@
 <?php
-  require_once "model/chatmessage.php";
-
   /**
    * Represents the chat of a match
    */

@@ -10,10 +10,11 @@
   require_once "includes/pdo.php";
 
   // Initialize stuff
-  require_once "model/participant.php";
-  require_once "model/match.php";
-  require_once "model/chat.php";
   require_once "model/card.php";
+  require_once "model/chat.php";
+  require_once "model/chatmessage.php";
+  require_once "model/match.php";
+  require_once "model/participant.php";
 
   // Provide the DB handle to all db-interacting classes
   Participant::provideDB($dbHandle);
