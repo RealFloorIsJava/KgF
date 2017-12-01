@@ -62,6 +62,7 @@ body {
   transition-property: transform;
   transition-duration: 200ms;
   cursor: default;
+  overflow: hidden;
 }
 
 .card-id {

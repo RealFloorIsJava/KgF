@@ -46,7 +46,7 @@
         <div class="card-editor-card-display"></div>
         <b>Underscore (_):</b> Represents a gap for statement cards<br>
         <b>Pipe (|):</b> Represents a hyphenation point for long words<br>
-        <input type="text" size="70" id="card-text-input" class="card-text-edit"><br>
+        <input type="text" size="70" maxlength="250" id="card-text-input" class="card-text-edit"><br>
         <button style="font-size: large;" onclick="closeEditor()">
           Save card
         </button>
