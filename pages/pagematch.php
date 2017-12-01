@@ -66,6 +66,9 @@
         if (isset($_GET["match"])) {
           $id = $_GET["match"];
           $match = Match::getById($id);
+          if ($match === null) {
+            $this->failPermissionCheck();
+          }
           $match->addUser($this->mUser, time() + 15);
         }
       }

@@ -125,6 +125,10 @@
       $q->execute();
       $row = $q->fetch();
 
+      if (!$row) {
+        return null;
+      }
+
       $match = new Match($row["match_id"], $row["match_timer"], null,
         $row["match_state"]);
 

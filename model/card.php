@@ -68,6 +68,10 @@
       $q->execute();
       $row = $q->fetch();
 
+      if (!$row) {
+        return null;
+      }
+
       return new Card($row["card_id"], $row["card_text"], $row["card_type"],
         $match);
     }
