@@ -62,8 +62,8 @@
 
       $msgs = array();
       foreach ($rows as $msg) {
-        $msgs[] = new ChatMessage($msg["chat_id"], $this->mMatch,
-          $msg["chat_type"], $msg["chat_message"]);
+        $msgs[] = new ChatMessage($msg["chat_id"], $msg["chat_type"],
+          $msg["chat_message"]);
       }
       return $msgs;
     }

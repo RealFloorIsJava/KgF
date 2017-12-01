@@ -73,10 +73,11 @@
         // We'll take those that we already have cached from the cache
         $id = $card["card_id"];
         if (!isset(self::$sIdCache[$id])) {
-          self::$sIdCache[$id] = new Card($card["card_id"], $card["card_text"],
+          $cards[$id] = new Card($card["card_id"], $card["card_text"],
             $card["card_type"]);
+        } else {
+          $cards[$id] = self::$sIdCache[$id];
         }
-        $cards[$id] = self::$sIdCache[$id];
       }
       return $cards;
     }
@@ -90,7 +91,7 @@
         $q->bindValue(":cardid", $id, PDO::PARAM_INT);
         $q->execute();
         $card = $q->fetch();
-        self::$sIdCache[$id] = new Card($card["card_id"], $card["card_text"],
+        return new Card($card["card_id"], $card["card_text"],
           $card["card_type"]);
       }
       return self::$sIdCache[$id];
@@ -105,8 +106,8 @@
       $q->execute();
       $card = $q->fetch();
       if (!isset(self::$sIdCache[$card["card_id"]])) {
-        self::$sIdCache[$card["card_id"]] = new Card($card["card_id"],
-          $card["card_text"], $card["card_type"]);
+        return new Card($card["card_id"], $card["card_text"],
+          $card["card_type"]);
       }
       return self::$sIdCache[$card["card_id"]];
     }
@@ -118,6 +119,7 @@
       $this->mId = intval($id);
       $this->mText = $text;
       $this->mType = $type;
+      self::$sIdCache[$this->mId] = $this;
     }
 
     /**

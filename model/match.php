@@ -53,20 +53,6 @@
               "WHERE mp.`mp_match` = `match_id`) < 3 ".
             "AND `match_state` != 'PENDING')"
         ),
-        "extendEmptyMatchTimer" => $dbh->prepare(
-          "UPDATE `kgf_match` m ".
-          "SET `match_timer` = :newtimer ".
-          "WHERE `match_timer` <= :curtimer ".
-            "AND (SELECT COUNT(*) ".
-              "FROM `kgf_match_participant` ".
-              "WHERE `mp_match` = m.`match_id`) < 4" // TODO make this code
-        ),
-        "extendTimerOnJoin" => $dbh->prepare(
-          "UPDATE `kgf_match` ".
-          "SET `match_timer` = :newtimer ".
-          "WHERE `match_timer` <= :curtimer ".
-            "AND `match_id` = :match"
-        ),
         "allMatches" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_match` ".
@@ -88,6 +74,11 @@
           "FROM `kgf_match` ".
           "ORDER BY `match_id` DESC ".
           "LIMIT 1"
+        ),
+        "modifyTimer" => $dbh->prepare(
+          "UPDATE `kgf_match` ".
+          "SET `match_timer` = :newtimer ".
+          "WHERE `match_id` = :match"
         )
       );
     }
@@ -97,11 +88,6 @@
      */
     public static function performHousekeeping() {
       $q = self::$sSqlQueries["housekeeping"];
-      $q->execute();
-
-      $q = self::$sSqlQueries["extendEmptyMatchTimer"];
-      $q->bindValue(":newtimer", time() + 60, PDO::PARAM_INT);
-      $q->bindValue(":curtimer", time() + 10, PDO::PARAM_INT);
       $q->execute();
     }
 
@@ -117,11 +103,12 @@
       foreach ($rows as $match) {
         $id = $match["match_id"];
         if (!isset(self::$sIdCache[$id])) {
-          self::$sIdCache[$id] = new Match($match["match_id"],
+          $matches[] = new Match($match["match_id"],
             $match["match_timer"], Card::getCard($match["match_card_id"]),
             $match["match_state"]);
+        } else {
+          $matches[] = self::$sIdCache[$id];
         }
-        $matches[] = self::$sIdCache[$id];
       }
       return $matches;
     }
@@ -138,10 +125,8 @@
       $q->bindValue(":matchid", $id, PDO::PARAM_INT);
       $q->execute();
       $row = $q->fetch();
-      self::$sIdCache[$row["match_id"]] = new Match($row["match_id"],
-        $row["match_timer"], Card::getCard($row["match_card_id"]),
-        $row["match_state"]);
-      return self::$sIdCache[$row["match_id"]];
+      return new Match($row["match_id"], $row["match_timer"],
+        Card::getCard($row["match_card_id"]), $row["match_state"]);
     }
 
     /**
@@ -158,11 +143,10 @@
       $q->execute();
       $match = $q->fetch();
 
-      self::$sIdCache[$match["match_id"]] = new Match($match["match_id"],
+      $obj = new Match($match["match_id"],
         $match["match_timer"], $card, $match["match_state"]);
-      self::$sIdCache[$match["match_id"]]->getChat()->sendMessage("SYSTEM",
-        "<b>Match was created</b>");
-      return self::$sIdCache[$match["match_id"]];
+      $obj->getChat()->sendMessage("SYSTEM", "<b>Match was created</b>");
+      return $obj;
     }
 
     /**
@@ -176,6 +160,10 @@
 
       $this->mParticipants = Participant::loadForMatch($this);
       $this->mChat = new Chat($this);
+
+      self::$sIdCache[$this->mId] = $this;
+
+      $this->refreshTimerIfNecessary();
     }
 
     /**
@@ -194,11 +182,9 @@
       $this->getChat()->sendMessage("SYSTEM",
         "<b>".$user->getNickname()." joined</b>");
 
-      $q = self::$sSqlQueries["extendTimerOnJoin"];
-      $q->bindValue(":newtimer", time() + 30, PDO::PARAM_INT);
-      $q->bindValue(":curtimer", time() + 30, PDO::PARAM_INT);
-      $q->bindValue(":match", $this->mId);
-      $q->execute();
+      if ($this->mTimer - time() < 30) {
+        $this->setTimer(time() + 30);
+      }
     }
 
     /**
@@ -257,6 +243,29 @@
         return "Match is ending...";
       }
       return "<State of Match unknown>";
+    }
+
+    /**
+     * Changes the match timer to the given value
+     */
+    private function setTimer($timer) {
+      $this->mTimer = $timer;
+      $q = self::$sSqlQueries["modifyTimer"];
+      $q->bindValue(":newtimer", $this->mTimer, PDO::PARAM_INT);
+      $q->bindValue(":match", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+    }
+
+    /**
+     * Refreshes the match timer if it is necessary, e.g. when the match can't
+     * be started due to lack of players
+     */
+    private function refreshTimerIfNecessary() {
+      if ($this->mTimer - time() < 10) {
+        if (count($this->mParticipants) < 4) {
+          $this->setTimer(time() + 60);
+        }
+      }
     }
   }
 ?>

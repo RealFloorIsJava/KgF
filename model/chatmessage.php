@@ -8,10 +8,6 @@
      */
     private $mId;
     /**
-     * The match of this message
-     */
-    private $mMatch;
-    /**
      * The type of this message
      */
     private $mType;
@@ -23,9 +19,8 @@
     /**
      * Constructor
      */
-    public function __construct($id, $match, $type, $message) {
+    public function __construct($id, $type, $message) {
       $this->mId = intval($id);
-      $this->mMatch = $match;
       $this->mType = $type;
       $this->mMessage = $message;
     }

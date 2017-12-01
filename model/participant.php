@@ -123,13 +123,13 @@
         $id = $part["mp_id"];
         $pid = $part["mp_player"];
         if (!isset(self::$sIdCache[$id])) {
-          self::$sIdCache[$id] = new Participant($part["mp_id"],
+          $parts[] = new Participant($part["mp_id"],
             $part["mp_player"], $part["mp_name"], $match,
             intval($part["mp_score"]), intval($part["mp_picking"]) != 0,
             intval($part["mp_timeout"]));
-          self::$sPlayerCache[$pid] = self::$sIdCache[$id];
+        } else {
+          $parts[] = self::$sIdCache[$id];
         }
-        $parts[] = self::$sIdCache[$id];
       }
       return $parts;
     }
@@ -150,13 +150,9 @@
         return null;
       }
 
-      $id = $row["mp_id"];
-      $pid = $player;
-      self::$sIdCache[$id] = new Participant($id, $pid, $row["mp_name"],
+      return new Participant($row["mp_id"], $player, $row["mp_name"],
         Match::getById($row["mp_match"]), intval($row["mp_score"]),
         intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]));
-      self::$sPlayerCache[$pid] = self::$sIdCache[$id];
-      return self::$sIdCache[$id];
     }
 
     /**
@@ -178,10 +174,8 @@
       $id = $row["mp_id"];
       $pid = $row["mp_player"];
 
-      self::$sIdCache[$id] = new Participant($id, $pid, $row["mp_name"], $match,
+      return new Participant($id, $pid, $row["mp_name"], $match,
         $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
-      self::$sPlayerCache[$pid] = self::$sIdCache[$id];
-      return self::$sIdCache[$id];
     }
 
     /**
@@ -196,6 +190,9 @@
       $this->mScore = intval($score);
       $this->mPicking = $picking;
       $this->mTimeout = $timeout;
+
+      self::$sIdCache[$this->mId] = $this;
+      self::$sPlayerCache[$this->mPlayerId] = $this;
     }
 
     /**
