@@ -20,7 +20,7 @@
      */
     private $mTimer;
     /**
-     * The current black card
+     * The current black card (may be null)
      */
     private $mCurrentCard;
     /**
@@ -58,7 +58,7 @@
         "createEmpty" => $dbh->prepare(
           "INSERT INTO `kgf_match` ".
             "(`match_id`, `match_timer`, `match_card_id`, `match_state`) ".
-          "VALUES (NULL, :timer, :cardid, 'PENDING')"
+          "VALUES (NULL, :timer, NULL, 'PENDING')"
         ),
         "fetchById" => $dbh->prepare(
           "SELECT * ".
@@ -99,9 +99,12 @@
       foreach ($rows as $match) {
         $id = $match["match_id"];
         if (!isset(self::$sIdCache[$id])) {
-          $matches[] = new Match($match["match_id"],
-            $match["match_timer"], Card::getCard($match["match_card_id"]),
-            $match["match_state"]);
+          $card = $match["match_card_id"];
+          if (!is_null($card)) {
+            $card = Card::getById($card);
+          }
+          $matches[] = new Match($match["match_id"], $match["match_timer"],
+            $card, $match["match_state"]);
         } else {
           $matches[] = self::$sIdCache[$id];
         }
@@ -121,17 +124,25 @@
       $q->bindValue(":matchid", $id, PDO::PARAM_INT);
       $q->execute();
       $row = $q->fetch();
-      return new Match($row["match_id"], $row["match_timer"],
-        Card::getCard($row["match_card_id"]), $row["match_state"]);
+
+      $match = new Match($row["match_id"], $row["match_timer"], null,
+        $row["match_state"]);
+
+      $card = $row["match_card_id"];
+      if (!is_null($card)) {
+        $card = Card::getByIdForMatch($card, $match);
+        $match->mCurrentCard = $card;
+      }
+
+      return $match;
     }
 
     /**
      * Creates an empty match
      */
-    public static function createEmpty($startTime, $card) {
+    public static function createEmpty($startTime) {
       $q = self::$sSqlQueries["createEmpty"];
       $q->bindValue(":timer", $startTime, PDO::PARAM_INT);
-      $q->bindValue(":cardid", $card->getId(), PDO::PARAM_INT);
       $q->execute();
 
       // We're in a transaction, so this should be the one we just created
@@ -139,8 +150,8 @@
       $q->execute();
       $match = $q->fetch();
 
-      $obj = new Match($match["match_id"],
-        $match["match_timer"], $card, $match["match_state"]);
+      $obj = new Match($match["match_id"], $match["match_timer"], null,
+        $match["match_state"]);
       $obj->getChat()->sendMessage("SYSTEM", "<b>Match was created</b>");
       return $obj;
     }
@@ -180,6 +191,51 @@
 
       if ($this->mTimer - time() < 30) {
         $this->setTimer(time() + 30);
+      }
+    }
+
+    /**
+     * Reads the given deck file and creates a deck from it
+     */
+    public function createMatchDeck($file) {
+      $tsvData = file_get_contents($file);
+      $tsvData = preg_split("/\n|\r|\r\n/", $tsvData);
+
+      $minimumCardLimit = array(
+        "STATEMENT" => 10,
+        "OBJECT" => 10,
+        "VERB" => 10
+      );
+
+      // Limit to 3000 cards
+      $amount = min(count($tsvData), 2000);
+      for ($i = 0; $i < $amount; $i++) {
+        $line = trim($tsvData[$i]);
+        if (empty($line)) {
+          continue;
+        }
+
+        $tsv = preg_split("/\t/", $line);
+        if (count($tsv) != 2) {
+          continue;
+        }
+
+        $text = substr(htmlspecialchars($tsv[0]), 0, 255);
+        $type = $tsv[1];
+        if (!Card::isValidType($type)) {
+          continue;
+        }
+
+        Card::createForMatch($text, $type, $this);
+        $minimumCardLimit[$type]--;
+      }
+
+      foreach ($minimumCardLimit as $type => $value) {
+        $orig = $value;
+        while ($value-- > 0) {
+          Card::createForMatch("Your deck needs at least ".$orig.
+            " more ".strtolower($type)." cards", $type, $this);
+        }
       }
     }
 

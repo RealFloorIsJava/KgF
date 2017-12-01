@@ -20,6 +20,10 @@
      * Displays the page
      */
     public function display() {
+      if (isset($_GET["deckfail"])) {
+        $this->reportStatus("The uploaded file is too big!", false);
+      }
+
       $this->processAction();
 
       $this->showTemplate("templates/dashboard.php");

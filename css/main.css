@@ -266,6 +266,10 @@ body {
 }
 
 /** Deck upload and editor **/
+.upload-hint {
+  font-size: small;
+}
+
 .card-editor-container {
   position: fixed;
   top: 25vh;

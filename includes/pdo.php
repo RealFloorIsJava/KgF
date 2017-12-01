@@ -1,6 +1,6 @@
 <?php
   require_once "config/db.php";
-  $dsn = "mysql:host=".$dbHost.";dbname=".$dbName;
+  $dsn = "mysql:host=".$dbHost.";dbname=".$dbName.";charset=utf8";
   try {
     $dbHandle = new PDO($dsn, $dbUser, $dbPw);
   } catch (PDOException $e) {

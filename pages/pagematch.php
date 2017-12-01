@@ -86,9 +86,25 @@
         $this->failPermissionCheck();
       }
 
-      $statement = Card::randomCard("STATEMENT");
-      $match = Match::createEmpty(time() + 60, $statement);
+      // Check if the user provided a deck
+      if (!isset($_FILES['deckupload'])) {
+        $this->failPermissionCheck();
+      }
+
+      $file = $_FILES['deckupload'];
+      if ($file["size"] >= 200000) {
+        header("Location: /global.php?page=dashboard&deckfail=1");
+        exit();
+      }
+      $fileName = "./uploads/f".md5(uniqid("f", true));
+      if (!move_uploaded_file($file["tmp_name"], $fileName)) {
+        $this->failPermissionCheck();
+      }
+      chmod($fileName, 0644);
+
+      $match = Match::createEmpty(time() + 60);
       $match->addUser($this->mUser, time() + 15);
+      $match->createMatchDeck($fileName);
 
       header("Location: /global.php?page=match&sub=view");
       exit();

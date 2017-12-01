@@ -24,153 +24,70 @@
      * One of STATEMENT VERB OBJECT
      */
     private $mType;
+    /**
+     * The match this card belongs to
+     */
+    private $mMatch;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
      */
     public static function provideDB($dbh) {
       self::$sSqlQueries = array(
-        "allCards" => $dbh->prepare(
-          "SELECT * ".
-          "FROM `kgf_cards`"
+        "createForMatch" => $dbh->prepare(
+          "INSERT INTO `kgf_cards` ".
+            "(`card_id`, `card_text`, `card_type`, `card_match_id`) ".
+          "VALUES (NULL, :text, :type, :match)"
         ),
-        "getCard" => $dbh->prepare(
-          "SELECT * ".
-          "FROM `kgf_cards` ".
-          "WHERE `card_id` = :cardid"
-        ),
-        "deleteCard" => $dbh->prepare(
-          "DELETE FROM `kgf_cards` ".
-          "WHERE `card_id` = :cardid"
-        ),
-        "setCardMode" => $dbh->prepare(
-          "UPDATE `kgf_cards` ".
-          "SET `card_type` = :cardtype ".
-          "WHERE `card_id` = :cardid"
-        ),
-        "randomCard" => $dbh->prepare(
+        "getById" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_cards` ".
-          "WHERE `card_type` = :cardtype ".
-          "ORDER BY RAND() ".
-          "LIMIT 1"
+          "WHERE `card_id` = :id"
         )
       );
     }
 
     /**
-     * Fetches all cards in the DB
+     * Creates a card for the given match
      */
-    public static function getAllCards() {
-      // There is no real efficient way to only load the cards the cache is
-      // missing. So in this case, we'll load them all.
-      $q = self::$sSqlQueries["allCards"];
+    public static function createForMatch($text, $type, $match) {
+      $q = self::$sSqlQueries["createForMatch"];
+      $q->bindValue(":text", $text, PDO::PARAM_STR);
+      $q->bindValue(":type", $type, PDO::PARAM_STR);
+      $q->bindValue(":match", $match->getId(), PDO::PARAM_INT);
       $q->execute();
-      $rows = $q->fetchAll();
+    }
 
-      $cards = array();
-      foreach ($rows as $card) {
-        // We'll take those that we already have cached from the cache
-        $id = $card["card_id"];
-        if (!isset(self::$sIdCache[$id])) {
-          $cards[$id] = new Card($card["card_id"], $card["card_text"],
-            $card["card_type"]);
-        } else {
-          $cards[$id] = self::$sIdCache[$id];
-        }
+    public static function getByIdForMatch($id, $match) {
+      if (isset(self::$sIdCache[$id])) {
+        return self::$sIdCache[$id];
       }
-      return $cards;
+
+      $q = self::$sSqlQueries["getById"];
+      $q->bindValue(":id", $id, PDO::PARAM_INT);
+      $q->execute();
+      $row = $q->fetch();
+
+      return new Card($row["card_id"], $row["card_text"], $row["card_type"],
+        $match);
     }
 
     /**
-     * Fetches one card from the DB
+     * Checks whether the given card type is valid
      */
-    public static function getCard($id) {
-      if (!isset(self::$sIdCache[$id])) {
-        $q = self::$sSqlQueries["getCard"];
-        $q->bindValue(":cardid", $id, PDO::PARAM_INT);
-        $q->execute();
-        $card = $q->fetch();
-        return new Card($card["card_id"], $card["card_text"],
-          $card["card_type"]);
-      }
-      return self::$sIdCache[$id];
-    }
-
-    /**
-     * Returns a random card of the given type
-     */
-    public static function randomCard($type) {
-      $q = self::$sSqlQueries["randomCard"];
-      $q->bindValue(":cardtype", $type, PDO::PARAM_STR);
-      $q->execute();
-      $card = $q->fetch();
-      if (!isset(self::$sIdCache[$card["card_id"]])) {
-        return new Card($card["card_id"], $card["card_text"],
-          $card["card_type"]);
-      }
-      return self::$sIdCache[$card["card_id"]];
+    public static function isValidType($type) {
+      return $type === "STATEMENT" || $type === "OBJECT" || $type === "VERB";
     }
 
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($id, $text, $type) {
-      $this->mId = intval($id);
+    private function __construct($id, $text, $type, $match) {
+      $this->mId = intval($id); //TODO
       $this->mText = $text;
       $this->mType = $type;
+      $this->mMatch = $match;
       self::$sIdCache[$this->mId] = $this;
-    }
-
-    /**
-     * Deletes this card
-     */
-    public function deleteCard() {
-      $q = self::$sSqlQueries["deleteCard"];
-      $q->bindValue(":cardid", $this->mId, PDO::PARAM_INT);
-      $q->execute();
-      unset(self::$sIdCache[$this->mId]);
-    }
-
-    /**
-     * Changes the mode of this card
-     */
-    public function setMode($type) {
-      $this->mType = $type;
-      $q = self::$sSqlQueries["setCardMode"];
-      $q->bindValue(":cardid", $this->mId, PDO::PARAM_INT);
-      $q->bindValue(":cardtype", $this->mType, PDO::PARAM_STR);
-      $q->execute();
-    }
-
-    /**
-     * Returns the name of the CSS type class
-     */
-    public function getTypeClass() {
-      if ($this->mType === "STATEMENT") {
-        return "statement-card";
-      } else if ($this->mType === "OBJECT") {
-        return "object-card";
-      } else if ($this->mType === "VERB") {
-        return "verb-card";
-      }
-      return "unknown";
-    }
-
-    /**
-     * Returns the HTML-formatted text of the card
-     */
-    public function getFormattedText() {
-      return preg_replace("/_/",
-        "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>",
-        $this->mText);
-    }
-
-    /**
-     * ID getter
-     */
-    public function getId() {
-      return $this->mId;
     }
   }
 ?>

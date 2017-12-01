@@ -27,11 +27,13 @@
     </div>
 
     <div class="match-box">
-      <div style="float: right;">
-        <button style="font-size: large;" onclick="createMatch()">
-          Create new match
-        </button>
-      </div>
+      <form action="/global.php?page=match&amp;action=create" method="POST" enctype="multipart/form-data">
+        <input type="file" name="deckupload" required="required" accept=".tsv">
+        <span class="upload-hint">(Maximum file size for decks is <b>200kB</b>)</span>
+        <div style="float: right;">
+          <input type="submit" value="Create new match" style="font-size: large;">
+        </div>
+      </form>
       <div style="clear: both;"></div>
     </div>
 

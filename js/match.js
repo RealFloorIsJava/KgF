@@ -51,10 +51,6 @@ function joinMatch(id) {
   window.location.assign("/global.php?page=match&action=join&match=" + id);
 }
 
-function createMatch() {
-  window.location.assign("/global.php?page=match&action=create");
-}
-
 function deckEditor() {
   window.location.assign("/global.php?page=deckedit");
 }

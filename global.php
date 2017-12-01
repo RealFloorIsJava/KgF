@@ -4,6 +4,9 @@
   // Initialize error logging
   require_once "includes/error.php";
 
+  // Initialize the upload directory
+  require_once "includes/upload.php";
+
   // Initialize the session
   require_once "model/user.php";
   require_once "includes/session.php";
