@@ -105,6 +105,7 @@
       $match = Match::createEmpty(time() + 60);
       $match->addUser($this->mUser, time() + 15);
       $match->createMatchDeck($fileName);
+      unlink($fileName);
 
       header("Location: /global.php?page=match&sub=view");
       exit();
