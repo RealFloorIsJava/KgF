@@ -55,4 +55,8 @@ function createMatch() {
   window.location.assign("/global.php?page=match&action=create");
 }
 
+function deckEditor() {
+  window.location.assign("/global.php?page=deckedit");
+}
+
 setInterval(loadMatches, 900);

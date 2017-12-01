@@ -8,10 +8,6 @@
      */
     private $mId;
     /**
-     * Whether this user has admin privileges
-     */
-    private $mAdmin;
-    /**
      * The theme of this user
      */
     private $mTheme;
@@ -26,7 +22,6 @@
 
     public function __construct() {
       $this->mId = uniqid("p", true);
-      $this->mAdmin = false;
       $this->mTheme = "dark";
       $this->mNickname = "Meme".rand(10000, 99999);
       $this->mChatCooldown = 0;
@@ -51,13 +46,6 @@
     }
 
     /**
-     * Makes this user an admin
-     */
-    public function escalatePrivileges() {
-      $this->mAdmin = true;
-    }
-
-    /**
      * Nick setter
      */
     public function setNickname($name) {
@@ -76,13 +64,6 @@
      */
     public function getId() {
       return $this->mId;
-    }
-
-    /**
-     * Admin status getter
-     */
-    public function isAdmin() {
-      return $this->mAdmin;
     }
 
     /**

@@ -12,13 +12,6 @@
       <span id="username"><?= $this->mUser->getNickname() ?></span>
       (<a href="#" onclick="changeName()">Change</a>)
       <div style="float: right;">
-        <?php
-          if ($this->mUser->isAdmin()) {
-            echo '<a href="#" onclick="enterACP(true)">Admin CP</a>';
-          } else {
-            echo '<a href="#" onclick="enterACP(false)">Admin CP</a>';
-          }
-        ?> &mdash;
         <a href="#" onclick="toggleLights()" id="lightLabel">
           Lights are being checked...
         </a>
@@ -37,6 +30,15 @@
       <div style="float: right;">
         <button style="font-size: large;" onclick="createMatch()">
           Create new match
+        </button>
+      </div>
+      <div style="clear: both;"></div>
+    </div>
+
+    <div class="match-box">
+      <div style="float: right;">
+        <button style="font-size: large;" onclick="deckEditor()">
+          Open deck editor
         </button>
       </div>
       <div style="clear: both;"></div>

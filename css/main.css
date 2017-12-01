@@ -263,3 +263,40 @@ body {
   font-weight: bold;
   font-size: 45px;
 }
+
+/** Deck upload and editor **/
+.card-editor-container {
+  position: fixed;
+  top: 25vh;
+  width: 100%;
+  display: none;
+  justify-content: center;
+}
+
+.card-editor-cover {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.card-editor {
+  padding: 20px;
+  z-index: 101;
+  border-radius: 5px;
+}
+
+.card-editor-card-display {
+  margin: 0px 0px 20px 0px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.card-text-edit {
+  border-radius: 5px;
+  margin: 10px 0px 10px 0px;
+}

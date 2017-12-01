@@ -19,7 +19,7 @@ a, a:link, a:visited, a:hover, a:active {
 
 .knob-statement {
   text-decoration: none !important;
-  background-color: #000000;
+  background-color: #444444;
 }
 
 .knob-object {
@@ -29,7 +29,7 @@ a, a:link, a:visited, a:hover, a:active {
 
 .knob-verb {
   text-decoration: none !important;
-  background-color: #FAD416;
+  background-color: #FFBB00;
 }
 
 .success-box {
@@ -90,4 +90,9 @@ a, a:link, a:visited, a:hover, a:active {
 .verb-card {
   color: #000011;
   background-color: #dddd99;
+}
+
+.card-editor {
+  background-color: #999999;
+  box-shadow: 2px 2px 7px -3px #222222;
 }

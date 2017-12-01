@@ -31,8 +31,6 @@
     private function processAction() {
       if ($this->mAction === "settheme") {
         $this->actionSetTheme();
-      } else if ($this->mAction === "escalate") {
-        $this->actionEscalate();
       } else if ($this->mAction === "rename") {
         $this->actionRename();
       }
@@ -47,20 +45,6 @@
         $name = htmlspecialchars($_POST['name']);
         if ($name !== "" && strlen($name) < 32) {
           $this->mUser->setNickname($name);
-        }
-      }
-    }
-
-    /**
-     * Escalates user privileges to admin (manager) privileges when the correct
-     * manager password is given.
-     */
-    private function actionEscalate() {
-      if (isset($_POST['token'])) {
-        $token = sha1($_POST['token']);
-        $correct_token = trim(file_get_contents("config/mgr_password"));
-        if ($token === $correct_token) {
-          $this->mUser->escalatePrivileges();
         }
       }
     }
