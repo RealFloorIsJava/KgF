@@ -47,11 +47,7 @@
           "WHERE ".
             "(SELECT COUNT(*) ".
               "FROM `kgf_match_participant` mp ".
-              "WHERE mp.`mp_match` = `match_id`) < 1 ".
-            "OR ((SELECT COUNT(*) ".
-              "FROM `kgf_match_participant` mp ".
-              "WHERE mp.`mp_match` = `match_id`) < 3 ".
-            "AND `match_state` != 'PENDING')"
+              "WHERE mp.`mp_match` = `match_id`) < 1 "
         ),
         "allMatches" => $dbh->prepare(
           "SELECT * ".
