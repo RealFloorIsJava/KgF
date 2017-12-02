@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Karten gegen Flopsigkeit</title>
+    <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" type="text/css" href="/css/main.css">
     <?= $this->mUser->getThemeLoader() ?>
   </head>
