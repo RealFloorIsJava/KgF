@@ -95,7 +95,11 @@ function loadParticipants() {
       var elem = $(partResolver[part["id"]]);
       elem.children("div").eq(0).html(part["name"]);
       elem.children("div").eq(1).html("<b>" + part["score"] + "pts</b>");
-      elem.children("div").eq(2).html("<i>???</i>");
+      if (part["picking"]) {
+        elem.children("div").eq(2).html("<i>Picking</i>");
+      } else {
+        elem.children("div").eq(2).html("<i>&nbsp;</i>");
+      }
       elem.children("div").eq(3).html("<i>???</i>");
       jdata[i] = elem;
     }
@@ -127,8 +131,8 @@ function toggleSelect(o) {
 }
 
 function updateCountdown() {
-  var minutes = (Math.abs(Math.floor(countDown / 60)) + "").padStart(2, "0");
-  var seconds = (Math.abs(countDown) % 60 + "").padStart(2, "0");
+  var minutes = (Math.max(0, Math.floor(countDown / 60)) + "").padStart(2, "0");
+  var seconds = (Math.max(0, countDown) % 60 + "").padStart(2, "0");
   $("#countdown").html(minutes + ":" + seconds);
 }
 

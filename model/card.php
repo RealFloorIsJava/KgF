@@ -87,7 +87,7 @@
      * Private constructor to prevent instance creation
      */
     private function __construct($id, $text, $type, $match) {
-      $this->mId = intval($id); //TODO
+      $this->mId = intval($id);
       $this->mText = $text;
       $this->mType = $type;
       $this->mMatch = $match;

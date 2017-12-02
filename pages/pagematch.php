@@ -150,7 +150,8 @@
         $toJson[] = array(
           "id" => $part->getId(),
           "name" => $part->getName(),
-          "score" => $part->getScore()
+          "score" => $part->getScore(),
+          "picking" => $part->isPicking()
         );
       }
       echo json_encode($toJson);

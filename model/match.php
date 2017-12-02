@@ -4,6 +4,10 @@
    */
   class Match {
     /**
+     * The minimum amount of players for a match
+     */
+    const MINIMUM_PLAYERS = 4;
+    /**
      * Prepared SQL queries
      */
     private static $sSqlQueries;
@@ -74,6 +78,11 @@
         "modifyTimer" => $dbh->prepare(
           "UPDATE `kgf_match` ".
           "SET `match_timer` = :newtimer ".
+          "WHERE `match_id` = :match"
+        ),
+        "modifyState" => $dbh->prepare(
+          "UPDATE `kgf_match` ".
+          "SET `match_state` = :newstate ".
           "WHERE `match_id` = :match"
         )
       );
@@ -175,6 +184,7 @@
       self::$sIdCache[$this->mId] = $this;
 
       $this->refreshTimerIfNecessary();
+      $this->updateState();
     }
 
     /**
@@ -295,6 +305,8 @@
     public function getStatus() {
       if ($this->mState == "PENDING") {
         return "Waiting for players...";
+      } else if ($this->mState == "CHOOSING") {
+        return "Players are picking cards...";
       } else if ($this->mState == "ENDING") {
         return "Match is ending...";
       }
@@ -313,14 +325,65 @@
     }
 
     /**
+     * Changes the match state to the given value
+     */
+    private function setState($state) {
+      $this->mState = $state;
+      $q = self::$sSqlQueries["modifyState"];
+      $q->bindValue(":newstate", $this->mState, PDO::PARAM_STR);
+      $q->bindValue(":match", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+    }
+
+    /**
      * Refreshes the match timer if it is necessary, e.g. when the match can't
      * be started due to lack of players
      */
     private function refreshTimerIfNecessary() {
       if ($this->mTimer - time() < 10) {
-        if (count($this->mParticipants) < 4) {
+        if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
           $this->setTimer(time() + 60);
         }
+      }
+    }
+
+    /**
+     * Updates the state of this match if the needed conditions are met
+     */
+    private function updateState() {
+      if ($this->mState == "PENDING") {
+        if ($this->mTimer <= time()) {
+          $this->selectPicker();
+          $this->setState("CHOOSING");
+          $this->setTimer(time() + 60);
+        }
+      } else {
+        if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
+          $this->setState("ENDING");
+          $this->setTimer(time() + 30);
+          return;
+        }
+      }
+    }
+
+    /**
+     * Select the next person to pick cards
+     */
+    private function selectPicker() {
+      $first = $this->mParticipants[0];
+      $next = false;
+      for ($i = 0; $i < count($this->mParticipants); $i++) {
+        $part = $this->mParticipants[$i];
+        if ($next) {
+          $part->setPicking(true);
+          break;
+        } else if ($part->isPicking()) {
+          $next = true;
+          $part->setPicking(false);
+        }
+      }
+      if (!$next) {
+        $first->setPicking(true);
       }
     }
   }

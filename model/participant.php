@@ -89,6 +89,11 @@
           "UPDATE `kgf_match_participant` ".
           "SET `mp_timeout` = :timeout ".
           "WHERE `mp_id` = :partid"
+        ),
+        "modifyPicking" => $dbh->prepare(
+          "UPDATE `kgf_match_participant` ".
+          "SET `mp_picking` = :picking ".
+          "WHERE `mp_id` = :partid"
         )
       );
     }
@@ -246,6 +251,24 @@
      */
     public function getScore() {
       return $this->mScore;
+    }
+
+    /**
+     * Check whether the participant is picking cards
+     */
+    public function isPicking() {
+      return $this->mPicking;
+    }
+
+    /**
+     * Sets whether this participant is picking cards
+     */
+    public function setPicking($val) {
+      $this->mPicking = $val;
+      $q = self::$sSqlQueries["modifyPicking"];
+      $q->bindValue(":picking", $this->mPicking ? 1 : 0, PDO::PARAM_INT);
+      $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
     }
   }
 ?>
