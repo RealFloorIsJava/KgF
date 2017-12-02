@@ -245,6 +245,14 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  /* For nice display of the hand even without played cards */
+  min-height: 100vh;
+  align-content: flex-start;
+}
+
+.card-area-boost {
+  min-width: 486px;
+  width: 100%;
 }
 
 .card-area-set {

@@ -34,18 +34,16 @@
               <div class="countdown-clock" id="countdown">
                 00:00
               </div>
-              <div class="card-base statement-card sticky-card">
+              <!--<div class="card-base statement-card sticky-card">
                 This is a statement about
                 <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
-                <div class="card-id">
-                  #1234
-                </div>
-              </div>
+              </div>//-->
+              <div class="card-base system-card sticky-card">Waiting for the match to start...</div>
             </div>
           </div>
           <div class="area-played-hand">
             <div class="card-area-played">
-              <div class="card-area-set">
+              <!--<div class="card-area-set">
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
@@ -104,7 +102,11 @@
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
+              </div>//-->
+              <div class="card-area-boost">&nbsp;</div>
+              <div class="card-area-boost">&nbsp;</div>
+              <div class="card-area-boost">&nbsp;</div>
+              <div class="card-area-boost">&nbsp;</div>
             </div>
             <div class="hand-area">
               <div class="hand-border">
@@ -118,20 +120,22 @@
                 </div>
                 <div class="hand-area-set">
                   <div class="hand-area-set-row tab-actions">
+                    <!--<div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
+                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>//-->
+                    <div class="card-base system-card">No cards on your hand.</div>
                   </div>
                   <div class="hand-area-set-row tab-objects">
+                    <!--<div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
+                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>//-->
+                    <div class="card-base system-card">No cards on your hand.</div>
                   </div>
                 </div>
               </div>

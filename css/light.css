@@ -72,6 +72,11 @@ a, a:link, a:visited, a:hover, a:active {
   box-shadow: 2px -6px 7px -4px #222222;
 }
 
+.system-card {
+  color: #111100;
+  background-color: #AAAADD;
+}
+
 .statement-card {
   color: #fafafa;
   background-color: #0a0a0a;
