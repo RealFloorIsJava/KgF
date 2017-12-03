@@ -390,16 +390,13 @@
           $this->setState("CHOOSING");
           $this->setTimer(time() + 60);
         }
-      } else {
-        if ($this->mState === "ENDING") {
-          if ($this->mTimer <= time()) {
-            $this->delete();
-          }
-        } else if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
-          $this->setState("ENDING");
-          $this->setTimer(time() + 30);
-          return;
+      } else if ($this->mState === "ENDING") {
+        if ($this->mTimer <= time()) {
+          $this->delete();
         }
+      } else if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
+        $this->setState("ENDING");
+        $this->setTimer(time() + 30);
       }
     }
 
