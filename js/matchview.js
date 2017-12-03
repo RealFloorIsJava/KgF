@@ -42,6 +42,22 @@ function loadStatus() {
       clearInterval(intervalParticipants);
       clearInterval(intervalStatus);
     }
+
+    var elem = $("#match-statement");
+    if (jdata["hasCard"]) {
+      var format = getFormatted(jdata["cardText"]);
+      elem.html(format);
+      if (elem.hasClass("system-card")) {
+        $("#match-statement").addClass("statement-card");
+        $("#match-statement").removeClass("system-card");
+      }
+    } else {
+      elem.html("Waiting...");
+      if (elem.hasClass("statement-card")) {
+        $("#match-statement").removeClass("statement-card");
+        $("#match-statement").addClass("system-card");
+      }
+    }
   });
 }
 
@@ -157,11 +173,11 @@ loadParticipants();
 
 intervalParticipants = setInterval(loadParticipants, 5000);
 setInterval(loadChat, 500);
-intervalStatus = setInterval(loadStatus, 5000);
+intervalStatus = setInterval(loadStatus, 2000);
 
-setInterval(updateCountdown, 1000);
 setInterval(function() {
   countDown--;
+  updateCountdown();
   if (countDown == 0 && ending) {
     window.location.assign("/global.php");
   }

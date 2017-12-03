@@ -92,6 +92,11 @@
           "UPDATE `kgf_match` ".
           "SET `match_state` = :newstate ".
           "WHERE `match_id` = :match"
+        ),
+        "modifyCard" => $dbh->prepare(
+          "UPDATE `kgf_match` ".
+          "SET `match_card_id` = :newcard ".
+          "WHERE `match_id` = :match"
         )
       );
     }
@@ -116,12 +121,14 @@
       foreach ($rows as $match) {
         $id = $match["match_id"];
         if (!isset(self::$sIdCache[$id])) {
-          $card = $match["match_card_id"];
+          $matchObj = new Match($match["match_id"], $match["match_timer"],
+            null, $match["match_state"]);
+              $card = $match["match_card_id"];
           if (!is_null($card)) {
-            $card = Card::getById($card);
+            $card = Card::getByIdForMatch($card, $matchObj);
+            $matchObj->mCurrentCard = $card;
           }
-          $matches[] = new Match($match["match_id"], $match["match_timer"],
-            $card, $match["match_state"]);
+          $matches[] = $matchObj;
         } else {
           $matches[] = self::$sIdCache[$id];
         }
@@ -228,7 +235,7 @@
         "VERB" => 10
       );
 
-      // Limit to 3000 cards
+      // Limit to 2000 cards
       $amount = min(count($tsvData), 2000);
       for ($i = 0; $i < $amount; $i++) {
         $line = trim($tsvData[$i]);
@@ -245,6 +252,16 @@
         $type = $tsv[1];
         if (!Card::isValidType($type)) {
           continue;
+        }
+
+        $underscores = substr_count($text, "_");
+        if ($underscores > 0) {
+          if ($type !== "STATEMENT") {
+            continue;
+          }
+          if ($underscores > 3) {
+            continue;
+          }
         }
 
         Card::createForMatch($text, $type, $this);
@@ -321,13 +338,30 @@
     }
 
     /**
+     * Checks whether the current match has a card
+     */
+    public function hasCard() {
+      if ($this->mState == "ENDING") {
+        return false;
+      }
+      return $this->mCurrentCard !== null;
+    }
+
+    /**
+     * Fetches the current card of the match
+     */
+    public function getCard() {
+      return $this->mCurrentCard;
+    }
+
+    /**
      * Fetches a line about the status of this match
      */
     public function getStatus() {
       if ($this->mState == "PENDING") {
         return "Waiting for players...";
       } else if ($this->mState == "CHOOSING") {
-        return "Players are picking cards...";
+        return "Players are choosing cards...";
       } else if ($this->mState == "PICKING") {
         $picker = "<unknown>";
         for ($i = 0; $i < count($this->mParticipants); $i++) {
@@ -343,6 +377,17 @@
         return "The match is ending...";
       }
       return "<State of Match unknown>";
+    }
+
+    /**
+     *
+     */
+    private function setCurrentCard($card) {
+      $this->mCurrentCard = $card;
+      $q = self::$sSqlQueries["modifyCard"];
+      $q->bindValue(":newcard", $card->getId(), PDO::PARAM_INT);
+      $q->bindValue(":match", $this->mId, PDO::PARAM_INT);
+      $q->execute();
     }
 
     /**
@@ -398,6 +443,7 @@
       if ($this->mState === "PENDING") {
         if ($this->mTimer <= time()) {
           $this->selectPicker();
+          $this->selectMatchCard();
           $this->setState("CHOOSING");
           $this->setTimer(time() + 60);
         }
@@ -405,9 +451,13 @@
         if ($this->mTimer <= time()) {
           $this->delete();
         }
-      } else if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
-        $this->setState("ENDING");
-        $this->setTimer(time() + 30);
+      }
+
+      if ($this->mState !== "PENDING" && $this->mState !== "ENDING") {
+        if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
+          $this->setState("ENDING");
+          $this->setTimer(time() + 30);
+        }
       }
     }
 
@@ -430,6 +480,14 @@
       if (!$next) {
         $first->setPicking(true);
       }
+    }
+
+    /**
+     * Selects a statement card for the match
+     */
+    private function selectMatchCard() {
+      $card = Card::getRandomStatementForMatch($this);
+      $this->setCurrentCard($card);
     }
   }
 ?>

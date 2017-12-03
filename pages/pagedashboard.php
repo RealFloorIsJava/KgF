@@ -46,6 +46,9 @@
       $matches = Match::getAllMatches();
       $toJson = array();
       foreach ($matches as $match) {
+        if ($match->isDeleted()) {
+          continue;
+        }
         $toJson[] = array(
           "id" => $match->getId(),
           "owner" => $match->getOwnerName(),

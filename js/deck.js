@@ -177,11 +177,6 @@ function closeEditor() {
   cardNodes[editId].children("span").eq(0).html(getFormatted(cards[editId][0]));
 }
 
-function getFormatted(str) {
-  return str.replace(/\|/g, "&shy;").replace(/_/g,
-    "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>");
-}
-
 $("#card-text-input").bind("input", function() {
   var str = getFormatted($("#card-text-input").val());
   $(".card-editor-card-display").children("div").children("span").eq(0)

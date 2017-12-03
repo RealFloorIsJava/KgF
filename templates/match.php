@@ -34,11 +34,7 @@
               <div class="countdown-clock" id="countdown">
                 00:00
               </div>
-              <!--<div class="card-base statement-card sticky-card">
-                This is a statement about
-                <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>.
-              </div>//-->
-              <div class="card-base system-card sticky-card">Waiting for the match to start...</div>
+              <div class="card-base system-card sticky-card" id="match-statement">Waiting...</div>
             </div>
           </div>
           <div class="area-played-hand">
@@ -150,6 +146,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="/js/card.js"></script>
     <script type="text/javascript" src="/js/matchview.js"></script>
     <script type="text/javascript" src="/js/theme.js"></script>
   </body>

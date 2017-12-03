@@ -43,6 +43,13 @@
           "SELECT * ".
           "FROM `kgf_cards` ".
           "WHERE `card_id` = :id"
+        ),
+        "randomStatement" => $dbh->prepare(
+          "SELECT * ".
+          "FROM `kgf_cards` ".
+          "WHERE `card_match_id` = :match ".
+            "AND `card_type` = 'STATEMENT' ".
+          "ORDER BY RAND()"
         )
       );
     }
@@ -58,6 +65,9 @@
       $q->execute();
     }
 
+    /**
+     * Fetches a card by its ID for the given match
+     */
     public static function getByIdForMatch($id, $match) {
       if (isset(self::$sIdCache[$id])) {
         return self::$sIdCache[$id];
@@ -70,6 +80,26 @@
 
       if (!$row) {
         return null;
+      }
+
+      return new Card($row["card_id"], $row["card_text"], $row["card_type"],
+        $match);
+    }
+
+    /**
+     * Fetches a random statement card for the given match
+     */
+    public static function getRandomStatementForMatch($match) {
+      $q = self::$sSqlQueries["randomStatement"];
+      $q->bindValue(":match", $match->getId(), PDO::PARAM_INT);
+      $q->execute();
+      $row = $q->fetch();
+      if (!$row) {
+        return null;
+      }
+
+      if (isset(self::$sIdCache[$row["card_id"]])) {
+        return self::$sIdCache[$id];
       }
 
       return new Card($row["card_id"], $row["card_text"], $row["card_type"],
@@ -92,6 +122,20 @@
       $this->mType = $type;
       $this->mMatch = $match;
       self::$sIdCache[$this->mId] = $this;
+    }
+
+    /**
+     * ID getter
+     */
+    public function getId() {
+      return $this->mId;
+    }
+
+    /**
+     * ID getter
+     */
+    public function getText() {
+      return $this->mText;
     }
   }
 ?>

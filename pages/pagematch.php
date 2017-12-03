@@ -190,11 +190,16 @@
      * Fetches the match status
      */
     private function actionStatus() {
-      echo json_encode(array(
+      $data = array(
         "timer" => $this->mMatch->getSecondsToNextPhase(),
         "status" => $this->mMatch->getStatus(),
-        "ending" => $this->mMatch->isEnding()
-      ));
+        "ending" => $this->mMatch->isEnding(),
+        "hasCard" => $this->mMatch->hasCard()
+      );
+      if ($this->mMatch->hasCard()) {
+        $data["cardText"] = $this->mMatch->getCard()->getText();
+      }
+      echo json_encode($data);
     }
 
     /**
