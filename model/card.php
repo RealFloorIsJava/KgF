@@ -117,11 +117,12 @@
      * Private constructor to prevent instance creation
      */
     private function __construct($id, $text, $type, $match) {
+      self::$sIdCache[$this->mId] = $this;
+
       $this->mId = intval($id);
       $this->mText = $text;
       $this->mType = $type;
       $this->mMatch = $match;
-      self::$sIdCache[$this->mId] = $this;
     }
 
     /**
@@ -136,6 +137,13 @@
      */
     public function getText() {
       return $this->mText;
+    }
+
+    /**
+     * Type getter
+     */
+    public function getType() {
+      return $this->mType;
     }
   }
 ?>

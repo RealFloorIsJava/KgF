@@ -4,6 +4,10 @@
    */
   class Participant {
     /**
+     * The number of cards per type on the hand (excluding STATEMENT)
+     */
+    const HAND_CARD_PER_TYPE = 6;
+    /**
      * Prepared SQL queries
      */
     private static $sSqlQueries;
@@ -43,6 +47,10 @@
      * The point in time when this participant will be kicked due to timeout
      */
     private $mTimeout;
+    /**
+     * The hand cards of this participant
+     */
+    private $mHand;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
@@ -94,6 +102,24 @@
           "UPDATE `kgf_match_participant` ".
           "SET `mp_picking` = :picking ".
           "WHERE `mp_id` = :partid"
+        ),
+        "loadHand" => $dbh->prepare(
+          "SELECT * ".
+          "FROM `kgf_hand` ".
+          "WHERE `hand_participant` = :partid"
+        ),
+        "replenishCardType" => $dbh->prepare(
+          "INSERT INTO `kgf_hand` ".
+            "(`hand_id`, `hand_participant`, `hand_card`) ".
+            "SELECT NULL, :partid, `card_id` ".
+            "FROM `kgf_cards` ".
+            "WHERE `card_id` NOT IN (".
+              "SELECT `hand_card` ".
+              "FROM `kgf_hand` ".
+              "WHERE `hand_participant` = :partid ".
+              ") AND `card_type` = :type ".
+            "ORDER BY RAND()".
+            "LIMIT :num"
         )
       );
     }
@@ -156,9 +182,8 @@
       }
 
       $part = new Participant($row["mp_id"], $player, $row["mp_name"],
-        null, intval($row["mp_score"]),
+        Match::getById($row["mp_match"]), intval($row["mp_score"]),
         intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]));
-      $part->mMatch = Match::getById($row["mp_match"]);
       return $part;
     }
 
@@ -197,9 +222,25 @@
       $this->mScore = intval($score);
       $this->mPicking = $picking;
       $this->mTimeout = $timeout;
+      $this->loadHand();
 
       self::$sIdCache[$this->mId] = $this;
       self::$sPlayerCache[$this->mPlayerId] = $this;
+    }
+
+    /**
+     * Loads the hand of this participant
+     */
+    private function loadHand() {
+      $this->mHand = array();
+      $q = self::$sSqlQueries["loadHand"];
+      $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+      $rows = $q->fetchAll();
+      foreach ($rows as $row) {
+        $this->mHand[$row["hand_id"]] = Card::getByIdForMatch($row["hand_card"],
+          $this->mMatch);
+      }
     }
 
     /**
@@ -271,6 +312,26 @@
       $q->bindValue(":picking", $this->mPicking ? 1 : 0, PDO::PARAM_INT);
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
       $q->execute();
+    }
+
+    /**
+     * Replenishes the hand cards of this participant
+     */
+    public function replenishHand() {
+      $counts = array(
+        "OBJECT" => self::HAND_CARD_PER_TYPE,
+        "VERB" => self::HAND_CARD_PER_TYPE
+      );
+      foreach ($this->mHand as $handId => $card) {
+        $counts[$card->getType()]--;
+      }
+      foreach ($counts as $type => $needed) {
+        $q = self::$sSqlQueries["replenishCardType"];
+        $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
+        $q->bindValue(":type", $type, PDO::PARAM_STR);
+        $q->bindValue(":num", $needed, PDO::PARAM_INT);
+        $q->execute();
+      }
     }
   }
 ?>

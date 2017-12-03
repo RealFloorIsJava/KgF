@@ -76,10 +76,10 @@ ALTER TABLE `kgf_cards`
 
 ALTER TABLE `kgf_hand`
   ADD CONSTRAINT `kgf_hand_ibfk_1` FOREIGN KEY (`hand_participant`) REFERENCES `kgf_match_participant` (`mp_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `kgf_hand_ibfk_2` FOREIGN KEY (`hand_card`) REFERENCES `kgf_cards` (`card_id`);
+  ADD CONSTRAINT `kgf_hand_ibfk_2` FOREIGN KEY (`hand_card`) REFERENCES `kgf_cards` (`card_id`) ON DELETE CASCADE;
 
 ALTER TABLE `kgf_match`
-  ADD CONSTRAINT `kgf_match_ibfk_1` FOREIGN KEY (`match_card_id`) REFERENCES `kgf_cards` (`card_id`);
+  ADD CONSTRAINT `kgf_match_ibfk_1` FOREIGN KEY (`match_card_id`) REFERENCES `kgf_cards` (`card_id`) ON DELETE CASCADE;
 
 ALTER TABLE `kgf_match_chat`
   ADD CONSTRAINT `kgf_match_chat_ibfk_1` FOREIGN KEY (`chat_match_id`) REFERENCES `kgf_match` (`match_id`) ON DELETE CASCADE;

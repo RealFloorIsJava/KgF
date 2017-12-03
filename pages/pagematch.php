@@ -47,7 +47,11 @@
       $this->mParticipant = $part;
       $this->mMatch = $part->getMatch();
 
-      // If the match is not valid, abort
+      // Check & update the gamestate
+      $this->mMatch->refreshTimerIfNecessary();
+      $this->mMatch->updateState();
+
+      // If the match is not valid anymore, abort
       if ($this->mMatch->isDeleted()) {
         $this->failPermissionCheck();
       }

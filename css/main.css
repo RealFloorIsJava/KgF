@@ -276,6 +276,7 @@ body {
 /** Deck upload and editor **/
 .upload-hint {
   font-size: small;
+  margin: 0px 20px 0px 10px;
 }
 
 .card-editor-container {

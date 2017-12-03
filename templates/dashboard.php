@@ -29,6 +29,7 @@
 
     <div class="match-box">
       <form action="/global.php?page=match&amp;action=create" method="POST" enctype="multipart/form-data">
+      <span class="upload-hint">Choose a deck...</span>
         <input type="file" name="deckupload" required="required" accept=".tsv">
         <span class="upload-hint">(Maximum file size for decks is <b>200kB</b>)</span>
         <div style="float: right;">
