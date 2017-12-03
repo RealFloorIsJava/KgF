@@ -328,8 +328,19 @@
         return "Waiting for players...";
       } else if ($this->mState == "CHOOSING") {
         return "Players are picking cards...";
+      } else if ($this->mState == "PICKING") {
+        $picker = "<unknown>";
+        for ($i = 0; $i < count($this->mParticipants); $i++) {
+          if ($this->mParticipants[$i]->isPicking()) {
+            $picker = $this->mParticipants[$i]->getName();
+            break;
+          }
+        }
+        return $picker." is picking a winner...";
+      } else if ($this->mState == "COOLDOWN") {
+        return "The next round is about to start...";
       } else if ($this->mState == "ENDING") {
-        return "Match is ending...";
+        return "The match is ending...";
       }
       return "<State of Match unknown>";
     }
