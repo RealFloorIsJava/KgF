@@ -47,6 +47,11 @@
       $this->mParticipant = $part;
       $this->mMatch = $part->getMatch();
 
+      // If the match is not valid, abort
+      if ($this->mMatch->isDeleted()) {
+        $this->failPermissionCheck();
+      }
+
       // Register a heartbeat for this user
       $this->mParticipant->heartbeat(15);
 

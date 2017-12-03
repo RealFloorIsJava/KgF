@@ -40,6 +40,10 @@
      * The chat of this match
      */
     private $mChat;
+    /**
+     * Whether this match has been deleted
+     */
+    private $mDeleted;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
@@ -52,6 +56,10 @@
             "(SELECT COUNT(*) ".
               "FROM `kgf_match_participant` mp ".
               "WHERE mp.`mp_match` = `match_id`) < 1 "
+        ),
+        "deleteMatch" => $dbh->prepare(
+          "DELETE FROM `kgf_match` ".
+          "WHERE `match_id` = :match"
         ),
         "allMatches" => $dbh->prepare(
           "SELECT * ".
@@ -181,6 +189,8 @@
       $this->mParticipants = Participant::loadForMatch($this);
       $this->mChat = new Chat($this);
 
+      $this->mDeleted = false;
+
       self::$sIdCache[$this->mId] = $this;
 
       $this->refreshTimerIfNecessary();
@@ -300,6 +310,13 @@
     }
 
     /**
+     * Checks whether this match is deleted
+     */
+    public function isDeleted() {
+      return $this->mDeleted;
+    }
+
+    /**
      * Fetches a line about the status of this match
      */
     public function getStatus() {
@@ -336,13 +353,25 @@
     }
 
     /**
+     * Deletes this match
+     */
+    private function delete() {
+      $q = self::$sSqlQueries["deleteMatch"];
+      $q->bindValue(":match", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+      $this->mDeleted = true;
+    }
+
+    /**
      * Refreshes the match timer if it is necessary, e.g. when the match can't
      * be started due to lack of players
      */
     private function refreshTimerIfNecessary() {
-      if ($this->mTimer - time() < 10) {
-        if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
-          $this->setTimer(time() + 60);
+      if ($this->mState === "PENDING") {
+        if ($this->mTimer - time() < 10) {
+          if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
+            $this->setTimer(time() + 60);
+          }
         }
       }
     }
@@ -351,14 +380,18 @@
      * Updates the state of this match if the needed conditions are met
      */
     private function updateState() {
-      if ($this->mState == "PENDING") {
+      if ($this->mState === "PENDING") {
         if ($this->mTimer <= time()) {
           $this->selectPicker();
           $this->setState("CHOOSING");
           $this->setTimer(time() + 60);
         }
       } else {
-        if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
+        if ($this->mState === "ENDING") {
+          if ($this->mTimer <= time()) {
+            $this->delete();
+          }
+        } else if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
           $this->setState("ENDING");
           $this->setTimer(time() + 30);
           return;

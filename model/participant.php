@@ -155,9 +155,11 @@
         return null;
       }
 
-      return new Participant($row["mp_id"], $player, $row["mp_name"],
-        Match::getById($row["mp_match"]), intval($row["mp_score"]),
+      $part = new Participant($row["mp_id"], $player, $row["mp_name"],
+        null, intval($row["mp_score"]),
         intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]));
+      $part->mMatch = Match::getById($row["mp_match"]);
+      return $part;
     }
 
     /**
