@@ -304,6 +304,13 @@
     }
 
     /**
+     * Fetches the hand of this participant
+     */
+    public function getHand() {
+      return $this->mHand;
+    }
+
+    /**
      * Sets whether this participant is picking cards
      */
     public function setPicking($val) {

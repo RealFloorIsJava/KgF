@@ -6,6 +6,10 @@ var countDown = 0;
 var ending = false;
 var intervalParticipants;
 var intervalStatus;
+var handResolver = {
+  OBJECT: {},
+  VERB: {}
+};
 
 function pickTab(tab) {
   $(".hand-tab-header").removeClass("active-tab-header");
@@ -58,7 +62,56 @@ function loadStatus() {
         $("#match-statement").addClass("system-card");
       }
     }
+
+    updateHand(jdata["hand"]["OBJECT"], "OBJECT");
+    updateHand(jdata["hand"]["VERB"], "VERB");
   });
+}
+
+function updateHand(hand, type) {
+  var lowerType = type.toLowerCase();
+  var container = $("#" + lowerType + "-hand");
+
+  var marks = {};
+  for (var handId in handResolver[type]) {
+    marks[handId] = true;
+  }
+
+  for (var handId in hand) {
+    if (!marks.hasOwnProperty(handId)) {
+      var elem = $("<div></div>");
+      elem.addClass("card-base").addClass(lowerType + "-card");
+      (function(){
+        var htmlElem = elem[0];
+        elem.click(function(){
+          toggleSelect(htmlElem);
+        });
+      })();
+      elem.html(getFormatted(hand[handId]));
+      container.append(elem);
+      handResolver[type][handId] = elem;
+    }
+    if (marks.hasOwnProperty(handId)) {
+      delete marks[handId];
+    }
+  }
+
+  for (var handId in marks) {
+    handResolver[type][handId].remove();
+  }
+
+  var needsSystemCard = true;
+  for (var handId in handResolver[type]) {
+    needsSystemCard = false;
+    container.children(".system-card").remove();
+    break;
+  }
+  if (needsSystemCard) {
+    var sysCard = $("<div></div>");
+    sysCard.addClass("card-base").addClass("system-card");
+    sysCard.html("No cards on your hand.");
+    container.append(sysCard);
+  }
 }
 
 function loadChat() {

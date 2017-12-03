@@ -198,10 +198,17 @@
         "timer" => $this->mMatch->getSecondsToNextPhase(),
         "status" => $this->mMatch->getStatus(),
         "ending" => $this->mMatch->isEnding(),
-        "hasCard" => $this->mMatch->hasCard()
+        "hasCard" => $this->mMatch->hasCard(),
+        "hand" => array(
+          "OBJECT" => array(),
+          "VERB" => array()
+        )
       );
       if ($this->mMatch->hasCard()) {
         $data["cardText"] = $this->mMatch->getCard()->getText();
+      }
+      foreach ($this->mParticipant->getHand() as $handId => $card) {
+        $data["hand"][$card->getType()][$handId] = $card->getText();
       }
       echo json_encode($data);
     }

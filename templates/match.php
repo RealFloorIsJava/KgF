@@ -115,7 +115,7 @@
                   </div>
                 </div>
                 <div class="hand-area-set">
-                  <div class="hand-area-set-row tab-actions">
+                  <div class="hand-area-set-row tab-actions" id="verb-hand">
                     <!--<div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
@@ -124,7 +124,7 @@
                     <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>//-->
                     <div class="card-base system-card">No cards on your hand.</div>
                   </div>
-                  <div class="hand-area-set-row tab-objects">
+                  <div class="hand-area-set-row tab-objects" id="object-hand">
                     <!--<div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
                     <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
