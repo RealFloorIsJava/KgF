@@ -181,17 +181,14 @@
      * Private constructor to prevent instance creation
      */
     private function __construct($id, $timer, $card, $state) {
+      self::$sIdCache[$this->mId] = $this;
       $this->mId = intval($id);
       $this->mTimer = intval($timer);
       $this->mCurrentCard = $card;
       $this->mState = $state;
-
       $this->mParticipants = Participant::loadForMatch($this);
       $this->mChat = new Chat($this);
-
       $this->mDeleted = false;
-
-      self::$sIdCache[$this->mId] = $this;
 
       $this->refreshTimerIfNecessary();
       $this->updateState();
@@ -314,6 +311,13 @@
      */
     public function isDeleted() {
       return $this->mDeleted;
+    }
+
+    /**
+     * Checks whether the match is ending
+     */
+    public function isEnding() {
+      return $this->mState === "ENDING";
     }
 
     /**

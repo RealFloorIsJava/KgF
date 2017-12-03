@@ -192,7 +192,8 @@
     private function actionStatus() {
       echo json_encode(array(
         "timer" => $this->mMatch->getSecondsToNextPhase(),
-        "status" => $this->mMatch->getStatus()
+        "status" => $this->mMatch->getStatus(),
+        "ending" => $this->mMatch->isEnding()
       ));
     }
 
