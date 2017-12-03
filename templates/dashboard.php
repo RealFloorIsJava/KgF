@@ -41,7 +41,7 @@
 
     <div class="match-box">
       <div style="float: right;">
-        <button style="font-size: large;" onclick="deckEditor()">
+        <button style="font-size: large;" onclick="matchjs.deckEditor()">
           Open deck editor
         </button>
       </div>

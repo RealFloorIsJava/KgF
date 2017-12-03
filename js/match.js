@@ -1,18 +1,20 @@
-var matchResolver = {};
+matchjs = new (function() {
+  /**
+   * Maps match IDs to match box elements (jQuery)
+   */
+  this.matchResolver = {};
 
-function loadMatches() {
-  $.ajax({
-    method: "POST",
-    url: "/global.php?page=dashboard&action=matchlist",
-    data: {}
-  }).done(function(msg) {
+  /**
+   * Displays the fetched match list
+   */
+  this.displayMatches = function(msg) {
     var list = $("#matchlist");
     var jdata = JSON.parse(msg);
     for (var i = 0; i < jdata.length; i++) {
       var match = jdata[i];
-      if (!matchResolver.hasOwnProperty(match["id"])) {
+      if (!this.matchResolver.hasOwnProperty(match["id"])) {
         var newElem = $("<div><div></div><div></div></div>");
-        matchResolver[match["id"]] = newElem;
+        this.matchResolver[match["id"]] = newElem;
 
         var btn = $("<button onclick=\"joinMatch(" + match["id"]
           + ")\"></button>").html("Join match");
@@ -31,7 +33,7 @@ function loadMatches() {
               .html("Match in progress")))
           .append($("<div></div>").css("clear", "both"));
       }
-      var elem = $(matchResolver[match["id"]]);
+      var elem = $(this.matchResolver[match["id"]]);
       elem.children("div").eq(0).find("b").eq(0).html(match["owner"]);
       elem.children("div").eq(1).find("b").eq(0).html(match["owner"]);
       elem.children("div").eq(0).find("b").eq(1).html(match["participants"]);
@@ -44,15 +46,36 @@ function loadMatches() {
       jdata[i] = elem;
     }
     list.empty().append(jdata);
-  });
-}
+  };
 
-function joinMatch(id) {
-  window.location.assign("/global.php?page=match&action=join&match=" + id);
-}
+  /**
+   * Loads the match list
+   */
+  this.loadMatches = function() {
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=dashboard&action=matchlist",
+      data: {}
+    }).done(function(msg) {
+      this.displayMatches(msg);
+    }.bind(this));
+  };
 
-function deckEditor() {
-  window.location.assign("/global.php?page=deckedit");
-}
+  /**
+   * Joins the match with the given ID
+   */
+  this.joinMatch = function(id) {
+    window.location.assign("/global.php?page=match&action=join&match=" + id);
+  };
 
-setInterval(loadMatches, 900);
+  /**
+   * Opens the deck editor
+   */
+  this.deckEditor = function() {
+    window.location.assign("/global.php?page=deckedit");
+  }
+})();
+
+setInterval(function() {
+  matchjs.loadMatches();
+}, 900);

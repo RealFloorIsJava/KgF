@@ -8,7 +8,7 @@ function changeName() {
         name: newName
       }
     }).done(function(msg) {
-      $("#username").html(newName);
+      $("#username").text(newName);
     });
   } else {
     alert("Invalid name!");
