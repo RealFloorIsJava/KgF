@@ -203,7 +203,7 @@
      * Returns whether this match has already started
      */
     public function hasStarted() {
-      return $this->mState != "PENDING";
+      return $this->mState !== "PENDING";
     }
 
     /**
