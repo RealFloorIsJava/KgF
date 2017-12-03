@@ -1,181 +1,220 @@
-var fr = null;
-var idCounter = 1;
-var cards = [];
-var cardNodes = [];
-var editId = 1;
+deckjs = new (function(){
+  /**
+   * The file reader that is used for deck parsing
+   */
+  this.fileReader = null;
+  /**
+   * The ID for the next card
+   */
+  this.idCounter = 1;
+  /**
+   * The cards as TSV arrays
+   */
+  this.cards = [];
+  /**
+   * The jQuery elements representing the cards
+   */
+  this.cardNodes = [];
+  /**
+   * The ID of the card currently being edited
+   */
+  this.editId = 1;
 
-function markDirty() {
-  window.onbeforeunload = function() {
-      return 'Please make sure you save all unsaved data you want to keep!';
+  /**
+   * Marks the deck editor as dirty and requires a close confirmation
+   */
+  this.markDirty = function() {
+    window.onbeforeunload = function() {
+        return 'Please make sure you save all unsaved data you want to keep!';
+    };
   };
-}
 
-function markClean() {
-  window.onbeforeunload = null;
-}
+  /**
+   * Marks the deck editor as clean
+   */
+  this.markClean = function() {
+    window.onbeforeunload = null;
+  };
 
-function openDeck() {
-  var elem = $("#deckinput")[0];
-  if (elem.files && elem.files[0]) {
-    var file = elem.files[0];
-    fr = new FileReader();
-    fr.onload = displayDeck;
-    fr.readAsText(file);
-  }
-}
-
-function displayDeck() {
-  var lines = fr.result.split(/\r|\n|\r\n/);
-
-  clearCards();
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
-    if (line.length == 0) {
-      continue;
+  /**
+   * Opens the deck file
+   */
+  this.openDeck = function() {
+    var elem = $("#deckinput")[0];
+    if (elem.files && elem.files[0]) {
+      var file = elem.files[0];
+      this.fileReader = new FileReader();
+      this.fileReader.onload = (function() {
+        this.displayDeck();
+      }).bind(this);
+      this.fileReader.readAsText(file);
     }
-    displayCard(line.split(/\t/));
-  }
-}
+  };
 
-function clearCards() {
-  $("#deck-display").empty();
-  cards = [];
-  cardNodes = [];
-  idCounter = 1;
-}
-
-function createCard(tsv, curId, armed) {
-  var node = $("<div></div>");
-  node.addClass("card-base");
-  node.addClass(tsv[1].toLowerCase() + "-card");
-  node.append($("<span></span>").html(getFormatted(tsv[0])));
-
-  var tools = $("<div></div>");
-  tools.addClass("card-id");
-
-  if (armed) {
-    var typeKnob = $("<a></a>");
-    typeKnob.addClass("knob-" + tsv[1].toLowerCase());
-    typeKnob.attr("href", "#");
-    typeKnob.html("&nbsp;&nbsp;&nbsp;&nbsp;");
-    typeKnob.click(function() {
-      node.removeClass(cards[curId][1].toLowerCase() + "-card");
-      typeKnob.removeClass("knob-" + cards[curId][1].toLowerCase());
-      if (cards[curId][1] == "STATEMENT") {
-        cards[curId][1] = "OBJECT";
-      } else if (cards[curId][1] == "OBJECT") {
-        cards[curId][1] = "VERB";
-      } else if (cards[curId][1] == "VERB") {
-        cards[curId][1] = "STATEMENT";
+  /**
+   * Displays the deck that was read by the FileReader
+   */
+  this.displayDeck = function() {
+    var lines = this.fileReader.result.split(/\r|\n|\r\n/);
+    this.clearCards();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.length == 0) {
+        continue;
       }
-      typeKnob.addClass("knob-" + cards[curId][1].toLowerCase());
-      node.addClass(cards[curId][1].toLowerCase() + "-card");
-      markDirty();
+      this.displayCard(line.split(/\t/));
+    }
+  };
+
+  /**
+   * Clears all cards from the card display
+   */
+  this.clearCards = function() {
+    $("#deck-display").empty();
+    this.cards = [];
+    this.cardNodes = [];
+    this.idCounter = 1;
+  };
+
+  /**
+   * Creates a card from the given TSV array with the given ID.
+   * If armed is set to true then the card will contain the editing tools.
+   */
+  this.createCard = function(tsv, curId, armed) {
+    var node = $("<div></div>")
+      .addClass("card-base")
+      .addClass(tsv[1].toLowerCase() + "-card")
+      .append($("<span></span>")
+        .html(getFormatted(tsv[0]))
+      );
+
+    var tools = $("<div></div>")
+      .addClass("card-id");
+
+    if (armed) {
+      var typeKnob = $("<a></a>")
+        .addClass("knob-" + tsv[1].toLowerCase())
+        .attr("href", "#")
+        .html("&nbsp;&nbsp;&nbsp;&nbsp;")
+        .click(function() {
+          node.removeClass(this.cards[curId][1].toLowerCase() + "-card");
+          typeKnob.removeClass("knob-" + this.cards[curId][1].toLowerCase());
+          if (this.cards[curId][1] == "STATEMENT") {
+            this.cards[curId][1] = "OBJECT";
+          } else if (cards[curId][1] == "OBJECT") {
+            this.cards[curId][1] = "VERB";
+          } else if (cards[curId][1] == "VERB") {
+            this.cards[curId][1] = "STATEMENT";
+          }
+          typeKnob.addClass("knob-" + this.cards[curId][1].toLowerCase());
+          node.addClass(this.cards[curId][1].toLowerCase() + "-card");
+          this.markDirty();
+        });
+      tools.append(typeKnob).append(" - ");
+
+      var editLink = $("<a></a>")
+        .attr("href", "#")
+        .html("Edit")
+        .click((function() {
+          this.editId = curId;
+          this.openEditor();
+        }).bind(this));
+      tools.append(editLink).append(" - ");
+
+      var deleteLink = $("<a></a>")
+        .attr("href", "#")
+        .html("Delete")
+        .click((function() {
+          node.remove();
+          this.cards[curId] = false;
+          this.markDirty();
+        }).bind(this));
+      tools.append(deleteLink).append(" - ");
+    }
+
+    node.append(tools.append("#" + curId));
+    return node;
+  };
+
+  /**
+   * Displays the given card in the deck card list
+   */
+  this.displayCard = function(tsv) {
+    var curId = this.idCounter++;
+    var node = this.createCard(tsv, curId, true);
+    $("#deck-display").append(node);
+    this.cards[curId] = tsv;
+    this.cardNodes[curId] = node;
+  };
+
+  /**
+   * Adds a new card to the deck and opens it for editing
+   */
+  this.addCard = function() {
+    this.displayCard(["Text", "STATEMENT"]);
+    this.editId = this.idCounter - 1;
+    this.openEditor();
+  };
+
+  /**
+   * Sorts the cards by card type
+   */
+  this.sortCards = function() {
+    var sorting = this.cards.slice(0);
+    sorting.sort(function(a, b) {
+      if (!a || !b) {
+        return (!a && !b) ? 0 : (!a ? -1 : 1);
+      }
+      return (a[1] == b[1]) ? 0 : (a[1] == "VERB" ? 1
+        : (a[1] == "STATEMENT" ? -1 : (b[1] == "STATEMENT" ? 1 : -1)));
     });
-    tools.append(typeKnob);
-    tools.append(" - ");
-    var editLink = $("<a></a>");
-    editLink.attr("href", "#");
-    editLink.html("Edit");
-    editLink.click(function() {
-      editId = curId;
-      openEditor();
-    });
-    tools.append(editLink);
-    tools.append(" - ");
-    var deleteLink = $("<a></a>");
-    deleteLink.attr("href", "#");
-    deleteLink.html("Delete");
-    deleteLink.click(function() {
-      node.remove();
-      cards[curId] = false;
-      markDirty();
-    });
-    tools.append(deleteLink);
-    tools.append(" - ");
-  }
+    this.clearCards();
+    for (var i = 0; i < sorting.length; i++) {
+      if (sorting[i]) {
+        this.displayCard(sorting[i]);
+      }
+    }
+    this.markDirty();
+  };
 
-  tools.append("#" + curId);
-
-  node.append(tools);
-  return node;
-}
-
-function displayCard(tsv) {
-  var curId = idCounter++;
-  var node = createCard(tsv, curId, true);
-  $("#deck-display").append(node);
-  cards[curId] = tsv;
-  cardNodes[curId] = node;
-}
-
-function addCard() {
-  displayCard(["Text", "STATEMENT"]);
-  editId = idCounter - 1;
-  openEditor();
-}
-
-function sortCards() {
-  var sorting = cards.slice(0);
-  sorting.sort(function(a, b) {
-    if (!a && !b) {
-      return 0;
-    }
-    if (!a) {
-      return -1;
-    }
-    if (!b) {
-      return 1;
-    }
-    if (a[1] == b[1]) {
-      return 0;
-    }
-    if (a[1] == "STATEMENT") {
-      return -1;
-    }
-    if (a[1] == "VERB") {
-      return 1;
-    }
-    if (a[1] == "OBJECT") {
-      return b[1] == "STATEMENT" ? 1 : -1;
-    }
-  });
-
-  clearCards();
-  for (var i = 0; i < sorting.length; i++) {
-    if (sorting[i]) {
-      displayCard(sorting[i]);
-    }
-  }
-  markDirty();
-}
-
-function exportDeck() {
-  if (cards.length > 0) {
+  /**
+   * Exports the current deck to a file
+   */
+  this.exportDeck = function() {
     var data = "";
-    for (var i = 0; i < idCounter; i++) {
-      if (cards[i]) {
-        data += cards[i].join("\t") + "\n";
+    for (var i = 0; i < this.idCounter; i++) {
+      if (this.cards[i]) {
+        data += this.cards[i].join("\t") + "\n";
       }
     }
-    download(data, "deck.tsv", "text/tab-separated-values");
-  }
-  markClean();
-}
+    if (data != "") {
+      // hack for utf8
+      download(unescape(encodeURIComponent(data)), "deck.tsv", "text/tab-separated-values");
+    }
+    this.markClean();
+  };
 
-function openEditor() {
-  $(".card-editor-container").css("display", "flex");
-  $(".card-editor-card-display").empty().append(
-    createCard(cards[editId], editId, false));
-  $("#card-text-input").val(cards[editId][0]);
-  $("#card-text-input").focus();
-}
+  /**
+   * Opens the card editor
+   */
+  this.openEditor = function() {
+    $(".card-editor-container").css("display", "flex");
+    $(".card-editor-card-display").empty().append(
+      this.createCard(this.cards[this.editId], this.editId, false));
+    $("#card-text-input").val(this.cards[this.editId][0]);
+    $("#card-text-input").focus();
+  };
 
-function closeEditor() {
-  $(".card-editor-container").css("display", "none");
-  cards[editId][0] = $("#card-text-input").val();
-  cardNodes[editId].children("span").eq(0).html(getFormatted(cards[editId][0]));
-}
+  /**
+   * Closes the card editor
+   */
+  this.closeEditor = function() {
+    $(".card-editor-container").css("display", "none");
+    this.cards[this.editId][0] = $("#card-text-input").val();
+    this.cardNodes[this.editId].children("span").eq(0).html(
+      getFormatted(this.cards[this.editId][0]));
+  };
+})();
 
 $("#card-text-input").bind("input", function() {
   var str = getFormatted($("#card-text-input").val());

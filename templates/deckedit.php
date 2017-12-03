@@ -22,16 +22,16 @@
     <div class="match-box">
       <input type="file" id="deckinput" accept=".tsv">
       <div style="float: right;">
-        <button style="font-size: large;" onclick="openDeck()">
+        <button style="font-size: large;" onclick="deckjs.openDeck()">
           Open deck
         </button>
-        <button style="font-size: large;" onclick="addCard()">
+        <button style="font-size: large;" onclick="deckjs.addCard()">
           Add card
         </button>
-        <button style="font-size: large;" onclick="sortCards()">
+        <button style="font-size: large;" onclick="deckjs.sortCards()">
           Sort by type
         </button>
-        <button style="font-size: large;" onclick="exportDeck()">
+        <button style="font-size: large;" onclick="deckjs.exportDeck()">
           Export deck
         </button>
       </div>
@@ -48,7 +48,7 @@
         <b>Underscore (_):</b> Represents a gap for statement cards (at most 3 per card)<br>
         <b>Pipe (|):</b> Represents a hyphenation point for long words<br>
         <input type="text" size="70" maxlength="250" id="card-text-input" class="card-text-edit"><br>
-        <button style="font-size: large;" onclick="closeEditor()">
+        <button style="font-size: large;" onclick="deckjs.closeEditor()">
           Save card
         </button>
       </div>
