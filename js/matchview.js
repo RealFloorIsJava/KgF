@@ -110,7 +110,7 @@ function updateHand(hand, type) {
     var sysCard = $("<div></div>");
     sysCard.addClass("card-base").addClass("system-card");
     sysCard.html("No cards on your hand.");
-    container.append(sysCard);
+    container.empty().append(sysCard);
   }
 }
 
