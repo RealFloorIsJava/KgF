@@ -96,20 +96,20 @@ deckjs = new (function(){
         .addClass("knob-" + tsv[1].toLowerCase())
         .attr("href", "#")
         .html("&nbsp;&nbsp;&nbsp;&nbsp;")
-        .click(function() {
+        .click((function() {
           node.removeClass(this.cards[curId][1].toLowerCase() + "-card");
           typeKnob.removeClass("knob-" + this.cards[curId][1].toLowerCase());
           if (this.cards[curId][1] == "STATEMENT") {
             this.cards[curId][1] = "OBJECT";
-          } else if (cards[curId][1] == "OBJECT") {
+          } else if (this.cards[curId][1] == "OBJECT") {
             this.cards[curId][1] = "VERB";
-          } else if (cards[curId][1] == "VERB") {
+          } else if (this.cards[curId][1] == "VERB") {
             this.cards[curId][1] = "STATEMENT";
           }
           typeKnob.addClass("knob-" + this.cards[curId][1].toLowerCase());
           node.addClass(this.cards[curId][1].toLowerCase() + "-card");
           this.markDirty();
-        });
+        }).bind(this));
       tools.append(typeKnob).append(" - ");
 
       var editLink = $("<a></a>")
