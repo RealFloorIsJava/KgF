@@ -10,32 +10,32 @@
     <div class="cupboard">
       <a href="?logout">Log Out</a> -
       <a href="/global.php?page=dashboard">Close editor</a>
-      <div style="float: right;">
-        <a href="#" onclick="toggleLights()" id="lightLabel">
+      <div class="rightFloat">
+        <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
     <?= $this->getStatusFormat() ?>
 
     <div class="match-box">
       <input type="file" id="deckinput" accept=".tsv">
-      <div style="float: right;">
-        <button style="font-size: large;" onclick="deckjs.openDeck()">
+      <div class="rightFloat">
+        <button class="largeTextButton" id="openDeckButton">
           Open deck
         </button>
-        <button style="font-size: large;" onclick="deckjs.addCard()">
+        <button class="largeTextButton" id="addCardButton">
           Add card
         </button>
-        <button style="font-size: large;" onclick="deckjs.sortCards()">
+        <button class="largeTextButton" id="sortCardsButton">
           Sort by type
         </button>
-        <button style="font-size: large;" onclick="deckjs.exportDeck()">
+        <button class="largeTextButton" id="exportDeckButton">
           Export deck
         </button>
       </div>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
 
     <div class="card-container" id="deck-display">
@@ -48,7 +48,7 @@
         <b>Underscore (_):</b> Represents a gap for statement cards (at most 3 per card)<br>
         <b>Pipe (|):</b> Represents a hyphenation point for long words<br>
         <input type="text" size="70" maxlength="250" id="card-text-input" class="card-text-edit"><br>
-        <button style="font-size: large;" onclick="deckjs.closeEditor()">
+        <button class="largeTextButton" id="closeEditorButton">
           Save card
         </button>
       </div>

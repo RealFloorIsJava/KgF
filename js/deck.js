@@ -216,6 +216,12 @@ var deckjs = new (function(){
   };
 })();
 
+$("#openDeckButton").click(deckjs.openDeck.bind(deckjs));
+$("#addCardButton").click(deckjs.addCard.bind(deckjs));
+$("#sortCardsButton").click(deckjs.sortCards.bind(deckjs));
+$("#exportDeckButton").click(deckjs.exportDeck.bind(deckjs));
+$("#closeEditorButton").click(deckjs.closeEditor.bind(deckjs));
+
 $("#card-text-input").bind("input", function() {
   var str = getFormatted($("#card-text-input").val());
   $(".card-editor-card-display").children("div").children("span").eq(0)
