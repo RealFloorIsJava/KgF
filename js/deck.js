@@ -1,4 +1,4 @@
-deckjs = new (function(){
+var deckjs = new (function(){
   /**
    * The file reader that is used for deck parsing
    */

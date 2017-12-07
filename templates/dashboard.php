@@ -11,9 +11,9 @@
       <a href="?logout">Log Out</a> &mdash;
       You are known as
       <span id="username"><?= $this->mUser->getNickname() ?></span>
-      (<a href="#" onclick="changeName()">Change</a>)
+      (<a href="#" id="nameChangeLabel">Change</a>)
       <div style="float: right;">
-        <a href="#" onclick="toggleLights()" id="lightLabel">
+        <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
@@ -41,7 +41,7 @@
 
     <div class="match-box">
       <div style="float: right;">
-        <button style="font-size: large;" onclick="matchjs.deckEditor()">
+        <button style="font-size: large;" id="deckEditButton">
           Open deck editor
         </button>
       </div>

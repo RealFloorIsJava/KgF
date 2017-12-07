@@ -1,4 +1,4 @@
-matchjs = new (function() {
+var matchjs = new (function() {
   /**
    * Maps match IDs to match box elements (jQuery)
    */
@@ -79,3 +79,6 @@ matchjs = new (function() {
 setInterval(function() {
   matchjs.loadMatches();
 }, 900);
+
+
+$("#deckEditButton").click(matchjs.deckEditor);

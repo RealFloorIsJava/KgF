@@ -1,4 +1,4 @@
-function changeName() {
+$("#nameChangeLabel").click(function() {
   var newName = prompt("What name would you like to have?");
   if (newName != null && newName != "" && newName.length < 32) {
     $.ajax({
@@ -13,4 +13,4 @@ function changeName() {
   } else {
     alert("Invalid name!");
   }
-}
+});

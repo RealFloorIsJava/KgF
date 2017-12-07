@@ -1,4 +1,4 @@
-function toggleLights() {
+$("#lightLabel").click(function() {
   theme = (theme == "dark") ? "light" : "dark";
   checkLights();
   document.getElementById("theme").href = '/css/' + theme + '.css';
@@ -9,7 +9,7 @@ function toggleLights() {
       selection: theme
     }
   });
-}
+});
 
 function checkLights() {
   $("#lightLabel").html("Lights " + (theme == "light" ? "off" : "on"));
