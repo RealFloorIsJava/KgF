@@ -12,12 +12,12 @@
       You are known as
       <span id="username"><?= $this->mUser->getNickname() ?></span>
       (<a href="#" id="nameChangeLabel">Change</a>)
-      <div style="float: right;">
+      <div class="rightFloat">
         <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
     <?= $this->getStatusFormat() ?>
 
@@ -32,20 +32,20 @@
       <span class="upload-hint">Choose a deck...</span>
         <input type="file" name="deckupload" required="required" accept=".tsv">
         <span class="upload-hint">(Maximum file size for decks is <b>200kB</b>)</span>
-        <div style="float: right;">
-          <input type="submit" value="Create new match" style="font-size: large;">
+        <div class="rightFloat">
+          <input type="submit" value="Create new match" class="largeTextButton">
         </div>
       </form>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
 
     <div class="match-box">
-      <div style="float: right;">
-        <button style="font-size: large;" id="deckEditButton">
+      <div class="rightFloat">
+        <button class="largeTextButton" id="deckEditButton">
           Open deck editor
         </button>
       </div>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
