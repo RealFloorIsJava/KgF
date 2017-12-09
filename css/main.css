@@ -20,6 +20,15 @@ body {
   clear: both;
 }
 
+/** Visibility **/
+.invisible {
+  display: none;
+}
+
+.inlineVisible {
+  display: inline;
+}
+
 /** Form elements **/
 .largeTextButton {
   font-size: large;
@@ -177,6 +186,7 @@ body {
   top: 5px;
   right: 7px;
   font-size: small;
+  font-weight: bold;
 }
 
 .part-type {
@@ -184,6 +194,7 @@ body {
   bottom: 5px;
   right: 7px;
   font-size: small;
+  font-style: italic;
 }
 
 .part-status {
@@ -191,6 +202,7 @@ body {
   bottom: 5px;
   left: 7px;
   font-size: small;
+  font-style: italic;
 }
 
 .match-status {

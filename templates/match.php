@@ -10,12 +10,12 @@
     <div class="cupboard">
       <a href="?logout">Log Out</a> &mdash;
       <a href="/global.php?page=match&amp;action=abandon">Abandon match</a>
-      <div style="float: right;">
-        <a href="#" onclick="toggleLights()" id="lightLabel">
+      <div class="rightFloat">
+        <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div style="clear: both;"></div>
+      <div class="clearAfterFloat"></div>
     </div>
     <div class="match-container">
       <div class="match-view">
@@ -43,61 +43,6 @@
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
                 <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>
-              <div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
               </div>//-->
               <div class="card-area-boost">&nbsp;</div>
               <div class="card-area-boost">&nbsp;</div>
@@ -107,30 +52,18 @@
             <div class="hand-area">
               <div class="hand-border">
                 <div class="hand-tabs">
-                  <div class="hand-tab-header" id="tab-actions" onclick="pickTab('tab-actions')">
+                  <div class="hand-tab-header" id="tab-actions">
                     Actions
                   </div>
-                  <div class="hand-tab-header" id="tab-objects" onclick="pickTab('tab-objects')">
+                  <div class="hand-tab-header" id="tab-objects">
                     Objects
                   </div>
                 </div>
                 <div class="hand-area-set">
                   <div class="hand-area-set-row tab-actions" id="verb-hand">
-                    <!--<div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>
-                    <div class="card-base verb-card" onclick="toggleSelect(this)">Chopping with a blunt axe<div class="card-id">#1234</div></div>//-->
                     <div class="card-base system-card">No cards on your hand.</div>
                   </div>
                   <div class="hand-area-set-row tab-objects" id="object-hand">
-                    <!--<div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>
-                    <div class="card-base object-card" onclick="toggleSelect(this)">Words<div class="card-id">#1234</div></div>//-->
                     <div class="card-base system-card">No cards on your hand.</div>
                   </div>
                 </div>
@@ -140,13 +73,13 @@
         </div>
       </div>
       <div class="match-chat">
-      <input type="text" class="chat-line" id="chatinput" spellcheck="false" maxlength="120">
+      <input type="text" class="chat-line" id="chatinput" spellcheck="false" maxlength="120" autocomplete="off">
       <div class="chat-messages" id="chatlist"></div>
       </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="/js/card.js"></script>
+    <script type="text/javascript" src="/js/toolbox.js"></script>
     <script type="text/javascript" src="/js/matchview.js"></script>
     <script type="text/javascript" src="/js/theme.js"></script>
   </body>

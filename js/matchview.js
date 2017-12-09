@@ -1,237 +1,245 @@
-var sel = [];
-var partResolver = {};
-var chatId = 0;
-var chatLock = false;
-var countDown = 0;
-var ending = false;
-var intervalParticipants;
-var intervalStatus;
-var handResolver = {
-  OBJECT: {},
-  VERB: {}
-};
+(function(){
+  var mSelectedCards = [];
+  var mParticipantResolver = {};
+  var mMinimumChatId = 0;
+  var mChatLock = false;
+  var mCountDown = 0;
+  var mEnding = false;
+  var mHandResolver = {
+    OBJECT: {},
+    VERB: {}
+  };
+  var mIntervalParticipants = 0;
+  var mIntervalStatus = 0;
 
-function pickTab(tab) {
-  $(".hand-tab-header").removeClass("active-tab-header");
-  $(".hand-area-set-row").css("display", "none");
-  $("." + tab).css("display", "inherit");
-  $("#" + tab).addClass("active-tab-header");
-}
+  function startTasks() {
+    mIntervalParticipants = setInterval(loadParticipants, 5000);
+    mIntervalStatus = setInterval(loadStatus, 2000);
+  }
 
-function sendChat() {
-  var text = $("#chatinput").val();
-  $("#chatinput").val("");
-  if (text.length > 0) {
+  function loadStatus() {
     $.ajax({
       method: "POST",
-      url: "/global.php?page=match&action=chatsend",
-      data: {
-        message: text
+      url: "/global.php?page=match&action=status",
+      dataType: "json",
+      success: function(data) {
+        mCountDown = data["timer"];
+        $("#matchstatus").html(data["status"]);
+        mEnding = data["ending"];
+        if (mEnding) {
+          clearInterval(mIntervalParticipants);
+          clearInterval(mIntervalStatus);
+        }
+
+        var elem = $("#match-statement");
+        if (data["hasCard"]) {
+          var format = getFormatted(data["cardText"]);
+          elem.html(format);
+          if (elem.hasClass("system-card")) {
+            $("#match-statement").addClass("statement-card")
+              .removeClass("system-card");
+          }
+        } else {
+          elem.text("Waiting...");
+          if (elem.hasClass("statement-card")) {
+            $("#match-statement").removeClass("statement-card")
+              .addClass("system-card");
+          }
+        }
+
+        updateHand(data["hand"]["OBJECT"], "OBJECT");
+        updateHand(data["hand"]["VERB"], "VERB");
       }
     });
   }
-}
 
-function loadStatus() {
-  $.ajax({
-    method: "POST",
-    url: "/global.php?page=match&action=status",
-    data: {}
-  }).done(function(msg) {
-    var jdata = JSON.parse(msg);
-    countDown = jdata["timer"];
-    $("#matchstatus").html(jdata["status"]);
-    ending = jdata["ending"];
-    if (ending) {
-      clearInterval(intervalParticipants);
-      clearInterval(intervalStatus);
-    }
+  function updateHand(hand, type) {
+    var lowerType = type.toLowerCase();
+    var container = $("#" + lowerType + "-hand");
+    var resolver = mHandResolver[type];
 
-    var elem = $("#match-statement");
-    if (jdata["hasCard"]) {
-      var format = getFormatted(jdata["cardText"]);
-      elem.html(format);
-      if (elem.hasClass("system-card")) {
-        $("#match-statement").addClass("statement-card");
-        $("#match-statement").removeClass("system-card");
-      }
-    } else {
-      elem.html("Waiting...");
-      if (elem.hasClass("statement-card")) {
-        $("#match-statement").removeClass("statement-card");
-        $("#match-statement").addClass("system-card");
-      }
-    }
+    var diff = symmetricKeyDifference(resolver, hand);
 
-    updateHand(jdata["hand"]["OBJECT"], "OBJECT");
-    updateHand(jdata["hand"]["VERB"], "VERB");
-  });
-}
-
-function updateHand(hand, type) {
-  var lowerType = type.toLowerCase();
-  var container = $("#" + lowerType + "-hand");
-
-  var marks = {};
-  for (var handId in handResolver[type]) {
-    marks[handId] = true;
-  }
-
-  for (var handId in hand) {
-    if (!marks.hasOwnProperty(handId)) {
-      var elem = $("<div></div>");
-      elem.addClass("card-base").addClass(lowerType + "-card");
+    for (var i = 0; i < diff.onlyB.length; i++) {
+      var handId = diff.onlyB[i];
+      var elem = $("<div></div>")
+        .addClass("card-base")
+        .addClass(lowerType + "-card");
       (function(){
-        var htmlElem = elem[0];
+        var htmlElem = elem;
         elem.click(function(){
           toggleSelect(htmlElem);
         });
       })();
       elem.html(getFormatted(hand[handId]));
       container.append(elem);
-      handResolver[type][handId] = elem;
+      resolver[handId] = elem;
     }
-    if (marks.hasOwnProperty(handId)) {
-      delete marks[handId];
+
+    for (var i = 0; i < diff.onlyA.length; i++) {
+      resolver[diff.onlyA[i]].remove();
+    }
+
+    var needsSystemCard = true;
+    for (var handId in resolver) {
+      needsSystemCard = false;
+      container.children(".system-card").remove();
+      break;
+    }
+    if (needsSystemCard) {
+      var sysCard = $("<div></div>")
+        .addClass("card-base")
+        .addClass("system-card")
+        .text("No cards on your hand.");
+      container.empty().append(sysCard);
     }
   }
 
-  for (var handId in marks) {
-    handResolver[type][handId].remove();
-  }
-
-  var needsSystemCard = true;
-  for (var handId in handResolver[type]) {
-    needsSystemCard = false;
-    container.children(".system-card").remove();
-    break;
-  }
-  if (needsSystemCard) {
-    var sysCard = $("<div></div>");
-    sysCard.addClass("card-base").addClass("system-card");
-    sysCard.html("No cards on your hand.");
-    container.empty().append(sysCard);
-  }
-}
-
-function loadChat() {
-  if (chatLock) {
-    return;
-  }
-  chatLock = true;
-  $.ajax({
-    method: "POST",
-    url: "/global.php?page=match&action=chat",
-    data: {
-      offset: chatId
+  function loadChat() {
+    if (mChatLock) {
+      return;
     }
-  }).done(function(msg) {
-    var list = $("#chatlist");
-    var shouldScroll =
-      list.scrollTop() + list.innerHeight() >= list.get(0).scrollHeight - 50;
-    var jdata = JSON.parse(msg);
-    for (var i = 0; i < jdata.length; i++) {
-      var part = jdata[i];
-      var elem = $("<div><img><span></span></div>");
-      elem.children("img").attr("src",
-        part["type"] == "SYSTEM" ? "/img/bang.svg" : "/img/message.svg");
-      elem.children("img").addClass("chat-svg");
-      elem.children("span").addClass("chat-msg").html(part["message"]);
+    mChatLock = true;
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=match&action=chat",
+      data: {
+        offset: mMinimumChatId
+      },
+      dataType: "json",
+      success: function(data) {
+        var list = $("#chatlist");
+        var shouldScroll = list.scrollTop()
+          + list.innerHeight() >= list.get(0).scrollHeight - 50;
+        for (var i = 0; i < data.length; i++) {
+          var img = $("<img>")
+            .attr("src", data[i].type == "SYSTEM"
+              ? "/img/bang.svg" : "/img/message.svg")
+            .addClass("chat-svg");
+          var span = $("<span></span>")
+            .addClass("chat-msg")
+            .html(data[i].message);
+          var elem = $("<div></div>").append(img).append(span);
 
-      chatId = part["id"] + 1;
-      jdata[i] = elem;
-    }
-    list.append(jdata);
-    if (shouldScroll && jdata.length > 0) {
-      list.scrollTop(list.get(0).scrollHeight + list.innerHeight());
-    }
-    chatLock = false;
-  });
-}
-
-function loadParticipants() {
-  $.ajax({
-    method: "POST",
-    url: "/global.php?page=match&action=participants",
-    data: {}
-  }).done(function(msg) {
-    var list = $("#partlist");
-    var jdata = JSON.parse(msg);
-    for (var i = 0; i < jdata.length; i++) {
-      var part = jdata[i];
-      if (!partResolver.hasOwnProperty(part["id"])) {
-        var newElem =
-          $("<div><div></div><div></div><div></div><div></div></div>");
-        partResolver[part["id"]] = newElem;
-        newElem.addClass("part");
-        newElem.children("div").eq(0).addClass("part-name");
-        newElem.children("div").eq(1).addClass("part-score");
-        newElem.children("div").eq(2).addClass("part-type");
-        newElem.children("div").eq(3).addClass("part-status");
+          mMinimumChatId = data[i].id + 1;
+          data[i] = elem;
+        }
+        list.append(data);
+        if (shouldScroll && data.length > 0) {
+          list.scrollTop(list.get(0).scrollHeight + list.innerHeight());
+        }
+        mChatLock = false;
       }
-      var elem = $(partResolver[part["id"]]);
-      elem.children("div").eq(0).html(part["name"]);
-      elem.children("div").eq(1).html("<b>" + part["score"] + "pts</b>");
-      if (part["picking"]) {
-        elem.children("div").eq(2).html("<i>Picking</i>");
-      } else {
-        elem.children("div").eq(2).html("<i>&nbsp;</i>");
+    });
+  }
+
+  function loadParticipants() {
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=match&action=participants",
+      dataType: "json",
+      success: function(data) {
+        var list = $("#partlist");
+        for (var i = 0; i < data.length; i++) {
+          if (!mParticipantResolver.hasOwnProperty(data[i].id)) {
+            var name = $("<div></div>").addClass("part-name");
+            var score = $("<div></div>").addClass("part-score");
+            var type = $("<div></div>").addClass("part-type");
+            var status = $("<div></div>").addClass("part-status");
+            var newElem = $("<div></div>")
+              .addClass("part")
+              .append(name)
+              .append(score)
+              .append(type)
+              .append(status);
+            mParticipantResolver[data[i].id] = newElem;
+          }
+          var elem = mParticipantResolver[data[i].id];
+          elem.children("div").eq(0).text(data[i].name);
+          elem.children("div").eq(1).text(data[i].score + "pts");
+          elem.children("div").eq(2)
+            .text(data[i].picking ? "Picking" : "");
+          elem.children("div").eq(3).text("???");
+          data[i] = elem;
+        }
+        list.empty().append(data);
       }
-      elem.children("div").eq(3).html("<i>???</i>");
-      jdata[i] = elem;
+    });
+  }
+
+  function toggleSelect(card) {
+    var remove = false;
+    for (var i = 0; i < mSelectedCards.length; i++) {
+      if (mSelectedCards[i] == card || remove) {
+        // Need sync with server
+        mSelectedCards[i].removeClass("card-selected")
+          .children(".card-select").eq(0).remove();
+        mSelectedCards.splice(i--, 1);
+        remove = true;
+      }
     }
-    list.empty().append(jdata);
+    if (!remove) {
+      if (mSelectedCards.length < 3) { // TODO magic
+        mSelectedCards.push(card);
+        var select = $("<div></div>").addClass("card-select").text("?");
+        card.addClass("card-selected").prepend(select);
+      }
+    }
+    for (var i = 0; i < mSelectedCards.length; i++) {
+      mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
+    }
+  }
+
+  function updateCountdown() {
+    var minutes = (Math.max(0, Math.floor(mCountDown / 60)) + "")
+      .padStart(2, "0");
+    var seconds = (Math.max(0, mCountDown) % 60 + "").padStart(2, "0");
+    $("#countdown").text(minutes + ":" + seconds);
+  }
+
+  function pickTab(tab) {
+    $(".hand-tab-header").removeClass("active-tab-header");
+    $(".hand-area-set-row").css("display", "none");
+    $("." + tab).css("display", "inherit");
+    $("#" + tab).addClass("active-tab-header");
+  }
+
+  $('#chatinput').keypress(function (e) {
+    var key = e.which;
+    if (key == 13) {
+      var text = $("#chatinput").val();
+      $("#chatinput").val("");
+      if (text.length > 0) {
+        $.ajax({
+          method: "POST",
+          url: "/global.php?page=match&action=chatsend",
+          data: {
+            message: text
+          }
+        });
+      }
+    }
   });
-}
 
-function toggleSelect(o) {
-  var remove = false;
-  for (var i = 0; i < sel.length; i++) {
-    if (sel[i] == o || remove) {
-      // Need sync with server
-      $(sel[i]).children(".card-select").eq(0).remove();
-      $(sel[i]).removeClass("card-selected");
-      sel.splice(i--, 1);
-      remove = true;
+  $("#tab-actions").click(function() {
+    pickTab("tab-actions");
+  });
+
+  $("#tab-objects").click(function() {
+    pickTab("tab-objects");
+  });
+
+  loadStatus();
+  loadParticipants();
+  startTasks();
+  pickTab('tab-actions');
+
+  setInterval(loadChat, 500);
+  setInterval(function() {
+    mCountDown--;
+    updateCountdown();
+    if (mCountDown == 0 && mEnding) {
+      window.location.assign("/global.php");
     }
-  }
-  if (!remove) {
-    if (sel.length < 3) { // TODO magic
-      sel.push(o);
-      $(o).addClass("card-selected");
-      $(o).prepend($("<div class=\"card-select\">?</div>"));
-    }
-  }
-  for (var i = 0; i < sel.length; i++) {
-    $(sel[i]).children(".card-select").eq(0).html(i + 1);
-  }
-}
-
-function updateCountdown() {
-  var minutes = (Math.max(0, Math.floor(countDown / 60)) + "").padStart(2, "0");
-  var seconds = (Math.max(0, countDown) % 60 + "").padStart(2, "0");
-  $("#countdown").html(minutes + ":" + seconds);
-}
-
-$('#chatinput').keypress(function (e) {
-  var key = e.which;
-  if (key == 13) {
-    sendChat();
-  }
-});
-
-pickTab('tab-actions');
-loadStatus();
-loadParticipants();
-
-intervalParticipants = setInterval(loadParticipants, 5000);
-setInterval(loadChat, 500);
-intervalStatus = setInterval(loadStatus, 2000);
-
-setInterval(function() {
-  countDown--;
-  updateCountdown();
-  if (countDown == 0 && ending) {
-    window.location.assign("/global.php");
-  }
-}, 1000);
+  }, 1000);
+})();

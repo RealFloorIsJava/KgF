@@ -56,7 +56,7 @@
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="/js/download.js"></script>
-    <script type="text/javascript" src="/js/card.js"></script>
+    <script type="text/javascript" src="/js/toolbox.js"></script>
     <script type="text/javascript" src="/js/deck.js"></script>
     <script type="text/javascript" src="/js/theme.js"></script>
   </body>

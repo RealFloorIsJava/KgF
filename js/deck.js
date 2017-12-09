@@ -1,86 +1,50 @@
-var deckjs = new (function(){
-  /**
-   * The file reader that is used for deck parsing
-   */
-  this.fileReader = null;
-  /**
-   * The ID for the next card
-   */
-  this.idCounter = 1;
-  /**
-   * The cards as TSV arrays
-   */
-  this.cards = [];
-  /**
-   * The jQuery elements representing the cards
-   */
-  this.cardNodes = [];
-  /**
-   * The ID of the card currently being edited
-   */
-  this.editId = 1;
+(function(){
+  var mFileReader = null;
+  var mIdCounter = 1;
+  var mCards = [];
+  var mCardNodes = [];
+  var mEditId = 1;
 
-  /**
-   * Marks the deck editor as dirty and requires a close confirmation
-   */
-  this.markDirty = function() {
+  function markDirty() {
     window.onbeforeunload = function() {
         return 'Please make sure you save all unsaved data you want to keep!';
     };
-  };
+  }
 
-  /**
-   * Marks the deck editor as clean
-   */
-  this.markClean = function() {
+  function markClean() {
     window.onbeforeunload = null;
-  };
+  }
 
-  /**
-   * Opens the deck file
-   */
-  this.openDeck = function() {
+  function openDeck() {
     var elem = $("#deckinput")[0];
     if (elem.files && elem.files[0]) {
       var file = elem.files[0];
-      this.fileReader = new FileReader();
-      this.fileReader.onload = (function() {
-        this.displayDeck();
-      }).bind(this);
-      this.fileReader.readAsText(file);
+      mFileReader = new FileReader();
+      mFileReader.onload = displayDeck;
+      mFileReader.readAsText(file);
     }
-  };
+  }
 
-  /**
-   * Displays the deck that was read by the FileReader
-   */
-  this.displayDeck = function() {
-    var lines = this.fileReader.result.split(/\r|\n|\r\n/);
-    this.clearCards();
+  function displayDeck() {
+    var lines = mFileReader.result.split(/\r|\n|\r\n/);
+    clearCards();
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (line.length == 0) {
         continue;
       }
-      this.displayCard(line.split(/\t/));
+      displayCard(line.split(/\t/));
     }
-  };
+  }
 
-  /**
-   * Clears all cards from the card display
-   */
-  this.clearCards = function() {
+  function clearCards() {
     $("#deck-display").empty();
-    this.cards = [];
-    this.cardNodes = [];
-    this.idCounter = 1;
-  };
+    mCcards = [];
+    mCardNodes = [];
+    mIdCounter = 1;
+  }
 
-  /**
-   * Creates a card from the given TSV array with the given ID.
-   * If armed is set to true then the card will contain the editing tools.
-   */
-  this.createCard = function(tsv, curId, armed) {
+  function createCard(tsv, curId, armed) {
     var node = $("<div></div>")
       .addClass("card-base")
       .addClass(tsv[1].toLowerCase() + "-card")
@@ -96,71 +60,62 @@ var deckjs = new (function(){
         .addClass("knob-" + tsv[1].toLowerCase())
         .attr("href", "#")
         .html("&nbsp;&nbsp;&nbsp;&nbsp;")
-        .click((function() {
-          node.removeClass(this.cards[curId][1].toLowerCase() + "-card");
-          typeKnob.removeClass("knob-" + this.cards[curId][1].toLowerCase());
-          if (this.cards[curId][1] == "STATEMENT") {
-            this.cards[curId][1] = "OBJECT";
-          } else if (this.cards[curId][1] == "OBJECT") {
-            this.cards[curId][1] = "VERB";
-          } else if (this.cards[curId][1] == "VERB") {
-            this.cards[curId][1] = "STATEMENT";
+        .click(function() {
+          node.removeClass(mCards[curId][1].toLowerCase() + "-card");
+          typeKnob.removeClass("knob-" + mCards[curId][1].toLowerCase());
+          if (mCards[curId][1] == "STATEMENT") {
+            mCards[curId][1] = "OBJECT";
+          } else if (mCards[curId][1] == "OBJECT") {
+            mCards[curId][1] = "VERB";
+          } else if (mCards[curId][1] == "VERB") {
+            mCards[curId][1] = "STATEMENT";
           }
-          typeKnob.addClass("knob-" + this.cards[curId][1].toLowerCase());
-          node.addClass(this.cards[curId][1].toLowerCase() + "-card");
-          this.markDirty();
-        }).bind(this));
+          typeKnob.addClass("knob-" + mCards[curId][1].toLowerCase());
+          node.addClass(mCards[curId][1].toLowerCase() + "-card");
+          markDirty();
+        });
       tools.append(typeKnob).append(" - ");
 
       var editLink = $("<a></a>")
         .attr("href", "#")
         .html("Edit")
-        .click((function() {
-          this.editId = curId;
-          this.openEditor();
-        }).bind(this));
+        .click(function() {
+          mEditId = curId;
+          openEditor();
+        });
       tools.append(editLink).append(" - ");
 
       var deleteLink = $("<a></a>")
         .attr("href", "#")
         .html("Delete")
-        .click((function() {
+        .click(function() {
           node.remove();
-          this.cards[curId] = false;
-          this.markDirty();
-        }).bind(this));
+          mCards[curId] = false;
+          markDirty();
+        });
       tools.append(deleteLink).append(" - ");
     }
 
     node.append(tools.append("#" + curId));
     return node;
-  };
+  }
 
-  /**
-   * Displays the given card in the deck card list
-   */
-  this.displayCard = function(tsv) {
-    var curId = this.idCounter++;
-    var node = this.createCard(tsv, curId, true);
+  function displayCard(tsv) {
+    var curId = mIdCounter++;
+    var node = createCard(tsv, curId, true);
     $("#deck-display").append(node);
-    this.cards[curId] = tsv;
-    this.cardNodes[curId] = node;
-  };
+    mCards[curId] = tsv;
+    mCardNodes[curId] = node;
+  }
 
-  /**
-   * Adds a new card to the deck and opens it for editing
-   */
-  this.addCard = function() {
-    this.displayCard(["Text", "STATEMENT"]);
-    this.editId = this.idCounter - 1;
-    this.openEditor();
-  };
+  function addCard() {
+    displayCard(["Card Text", "STATEMENT"]);
+    mEditId = mIdCounter - 1;
+    openEditor();
+  }
 
-  /**
-   * Sorts the cards by card type
-   */
-  this.sortCards = function() {
-    var sorting = this.cards.slice(0);
+  function sortCards() {
+    var sorting = mCards.slice(0);
     sorting.sort(function(a, b) {
       if (!a || !b) {
         return (!a && !b) ? 0 : (!a ? -1 : 1);
@@ -168,62 +123,54 @@ var deckjs = new (function(){
       return (a[1] == b[1]) ? 0 : (a[1] == "VERB" ? 1
         : (a[1] == "STATEMENT" ? -1 : (b[1] == "STATEMENT" ? 1 : -1)));
     });
-    this.clearCards();
+    clearCards();
     for (var i = 0; i < sorting.length; i++) {
       if (sorting[i]) {
-        this.displayCard(sorting[i]);
+        displayCard(sorting[i]);
       }
     }
-    this.markDirty();
-  };
+    markDirty();
+  }
 
-  /**
-   * Exports the current deck to a file
-   */
-  this.exportDeck = function() {
+  function exportDeck() {
     var data = "";
-    for (var i = 0; i < this.idCounter; i++) {
-      if (this.cards[i]) {
-        data += this.cards[i].join("\t") + "\n";
+    for (var i = 0; i < mIdCounter; i++) {
+      if (mCards[i]) {
+        data += mCards[i].join("\t") + "\n";
       }
     }
     if (data != "") {
       // hack for utf8
-      download(unescape(encodeURIComponent(data)), "deck.tsv", "text/tab-separated-values");
+      download(unescape(encodeURIComponent(data)), "deck.tsv",
+        "text/tab-separated-values");
     }
-    this.markClean();
-  };
+    markClean();
+  }
 
-  /**
-   * Opens the card editor
-   */
-  this.openEditor = function() {
+  function openEditor() {
     $(".card-editor-container").css("display", "flex");
     $(".card-editor-card-display").empty().append(
-      this.createCard(this.cards[this.editId], this.editId, false));
-    $("#card-text-input").val(this.cards[this.editId][0]);
+      createCard(mCards[mEditId], mEditId, false));
+    $("#card-text-input").val(mCards[mEditId][0]);
     $("#card-text-input").focus();
-  };
+  }
 
-  /**
-   * Closes the card editor
-   */
-  this.closeEditor = function() {
+  function closeEditor() {
     $(".card-editor-container").css("display", "none");
-    this.cards[this.editId][0] = $("#card-text-input").val();
-    this.cardNodes[this.editId].children("span").eq(0).html(
-      getFormatted(this.cards[this.editId][0]));
-  };
+    mCards[mEditId][0] = $("#card-text-input").val();
+    mCardNodes[mEditId].children("span").eq(0).html(
+      getFormatted(mCards[mEditId][0]));
+  }
+
+  $("#openDeckButton").click(openDeck);
+  $("#addCardButton").click(addCard);
+  $("#sortCardsButton").click(sortCards);
+  $("#exportDeckButton").click(exportDeck);
+  $("#closeEditorButton").click(closeEditor);
+
+  $("#card-text-input").bind("input", function() {
+    var str = getFormatted($("#card-text-input").val());
+    $(".card-editor-card-display").children("div").children("span").eq(0)
+      .html(str);
+  });
 })();
-
-$("#openDeckButton").click(deckjs.openDeck.bind(deckjs));
-$("#addCardButton").click(deckjs.addCard.bind(deckjs));
-$("#sortCardsButton").click(deckjs.sortCards.bind(deckjs));
-$("#exportDeckButton").click(deckjs.exportDeck.bind(deckjs));
-$("#closeEditorButton").click(deckjs.closeEditor.bind(deckjs));
-
-$("#card-text-input").bind("input", function() {
-  var str = getFormatted($("#card-text-input").val());
-  $(".card-editor-card-display").children("div").children("span").eq(0)
-    .html(str);
-});
