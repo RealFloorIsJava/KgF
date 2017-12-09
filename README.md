@@ -6,11 +6,14 @@ This software is using [download.js by dandavis](https://github.com/rndme/downlo
 
 ## Installation
 
-1. Rename the `config-default` folder to `config`. Inside, set your MySQL
+1. Note that this project uses submodules which need to be initialized when
+cloning. See [Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+
+2. Rename the `config-default` folder to `config`. Inside, set your MySQL
 credentials in the `db.php` file. Enter the site password as plain text in the
 `site_password` file.
 
-2. Upload the contents of the source folder to your web server.
+3. Upload the contents of the source folder to your web server.
 
 ## License of download.js
 
