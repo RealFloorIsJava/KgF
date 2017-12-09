@@ -1,0 +1,3 @@
+[submodule "src/lib/minify"]
+	path = src/lib/minify
+	url = https://github.com/matthiasmullie/minify
