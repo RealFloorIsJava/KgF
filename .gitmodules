@@ -1,3 +1,6 @@
 [submodule "src/lib/minify"]
 	path = src/lib/minify
 	url = https://github.com/matthiasmullie/minify
+[submodule "src/lib/path-converter"]
+	path = src/lib/path-converter
+	url = https://github.com/matthiasmullie/path-converter.git
