@@ -3,7 +3,7 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="shortcut icon" href="/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/css/min/main.css">
     <?= $this->mUser->getThemeLoader() ?>
   </head>
   <body>
@@ -79,8 +79,8 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="/js/toolbox.js"></script>
-    <script type="text/javascript" src="/js/matchview.js"></script>
-    <script type="text/javascript" src="/js/theme.js"></script>
+    <script type="text/javascript" src="/js/min/toolbox.js"></script>
+    <script type="text/javascript" src="/js/min/matchview.js"></script>
+    <script type="text/javascript" src="/js/min/theme.js"></script>
   </body>
 </html>

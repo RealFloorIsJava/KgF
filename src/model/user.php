@@ -31,7 +31,7 @@
      * Fetches the theme loader, HTML that will initialize the user's theme
      */
     public function getThemeLoader() {
-      $loader = '<link rel="stylesheet" type="text/css" href="/css/'.
+      $loader = '<link rel="stylesheet" type="text/css" href="/css/min/'.
         $this->mTheme.'.css" id="theme">';
       $loader .= '<script type="text/javascript"> var theme = "'.$this->mTheme.
         '"; </script>';
