@@ -2,7 +2,15 @@
 
 This software is using [download.js by dandavis](https://github.com/rndme/download)
 
-# License of download.js
+## Installation
+
+1. Rename the `config-default` folder to `config`. Inside, set your MySQL
+credentials in the `db.php` file. Enter the site password in plain text in the
+`site_password` file.
+
+2. Upload the contents of the source folder to your web server.
+
+## License of download.js
 
 MIT License
 
