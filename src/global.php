@@ -7,6 +7,9 @@
   // Initialize the upload directory
   require_once "includes/upload.php";
 
+  // Minify CSS and JS assets, if needed
+  require_once "includes/minifyassets.php";
+
   // Initialize the session
   require_once "model/user.php";
   require_once "includes/session.php";

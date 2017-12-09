@@ -1,5 +1,7 @@
 # KgF
 
+KgF is licensed under the MIT license.
+
 This software is using [download.js by dandavis](https://github.com/rndme/download),
 [minify by Matthias Mullie](https://github.com/matthiasmullie/minify/),
 [path-converter by Matthias Mullie](https://github.com/matthiasmullie/path-converter)
@@ -14,6 +16,9 @@ credentials in the `db.php` file. Enter the site password as plain text in the
 `site_password` file.
 
 3. Upload the contents of the source folder to your web server.
+
+4. Change the permissions of the `js` and `css` folder so that PHP can create
+subdirectories and elements (e.g. UNIX file permissions `0777`)
 
 ## License of download.js
 
