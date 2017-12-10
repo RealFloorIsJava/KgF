@@ -9,9 +9,11 @@
       .addClass("rightFloat")
       .append($("<button></button>")
         .text("Join match")
-        .click(function() {
+        .on("click", {
+          "id": id
+        }, function(event) {
           window.location.assign("/global.php?page=match&action=join&match="
-            + id);
+            + event.data["id"]);
         })
       );
 
@@ -29,7 +31,9 @@
       .append(" participants");
 
     elem.append(matchElem.clone()
-      .append(" &mdash; Starting in ").append($("<b></b>")).append(" seconds...")
+      .append(" &mdash; Starting in ")
+      .append($("<b></b>"))
+      .append(" seconds...")
       .append(startingMatchButton)
       .append(matchFloatClear)
     );
@@ -37,6 +41,7 @@
       .append(runningMatchButton)
       .append(matchFloatClear.clone())
     );
+
     return elem;
   }
 

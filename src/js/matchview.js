@@ -11,6 +11,7 @@
   };
   var mIntervalParticipants = 0;
   var mIntervalStatus = 0;
+  var mNumGaps = 0;
 
   function startTasks() {
     mIntervalParticipants = setInterval(loadParticipants, 5000);
@@ -49,6 +50,8 @@
 
         updateHand(data["hand"]["OBJECT"], "OBJECT");
         updateHand(data["hand"]["VERB"], "VERB");
+
+        mNumGaps = data["gaps"];
       }
     });
   }
@@ -169,22 +172,28 @@
 
   function toggleSelect(card) {
     var remove = false;
+    // Remove card picks
     for (var i = 0; i < mSelectedCards.length; i++) {
       if (mSelectedCards[i] == card || remove) {
-        // Need sync with server
+        // Need sync with server TODO
         mSelectedCards[i].removeClass("card-selected")
           .children(".card-select").eq(0).remove();
         mSelectedCards.splice(i--, 1);
         remove = true;
       }
     }
+
+    // Mark new picks
     if (!remove) {
-      if (mSelectedCards.length < 3) { // TODO magic
+      if (mSelectedCards.length < mNumGaps) {
+        // sync this TODO
         mSelectedCards.push(card);
         var select = $("<div></div>").addClass("card-select").text("?");
         card.addClass("card-selected").prepend(select);
       }
     }
+
+    // Update the numbers on the cards
     for (var i = 0; i < mSelectedCards.length; i++) {
       mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
     }

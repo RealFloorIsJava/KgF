@@ -8,6 +8,26 @@
      */
     const MINIMUM_PLAYERS = 4;
     /**
+     * Minimum amount of cards of each type
+     */
+    const MINIMUM_STATEMENT_CARDS = 10;
+    const MINIMUM_OBJECT_CARDS = 10;
+    const MINIMUM_VERB_CARDS = 10;
+    /**
+     * Timer constants, all values in seconds
+     */
+    const INITIAL_MATCH_TIMER = 60;
+    const USERADD_REPLENISH_AMOUNT = 30;
+    const STATE_CHOOSING_TIME = 60;
+    const STATE_PICKING_TIME = 60;
+    const STATE_COOLDOWN_TIME = 15;
+    const STATE_ENDING_TIME = 20;
+    /**
+     * Timer thresholds, all values in seconds
+     */
+    const USERADD_REPLENISH_THRESHOLD = 30;
+    const PENDING_REFRESH_THRESHOLD = 10;
+    /**
      * Prepared SQL queries
      */
     private static $sSqlQueries;
@@ -168,9 +188,10 @@
     /**
      * Creates an empty match
      */
-    public static function createEmpty($startTime) {
+    public static function createEmpty() {
       $q = self::$sSqlQueries["createEmpty"];
-      $q->bindValue(":timer", $startTime, PDO::PARAM_INT);
+      $q->bindValue(":timer", time() + self::INITIAL_MATCH_TIMER,
+        PDO::PARAM_INT);
       $q->execute();
 
       // We're in a transaction, so this should be the one we just created
@@ -215,8 +236,8 @@
       $this->getChat()->sendMessage("SYSTEM",
         "<b>".$user->getNickname()." joined</b>");
 
-      if ($this->mTimer - time() < 30) {
-        $this->setTimer(time() + 30);
+      if ($this->mTimer - time() < self::USERADD_REPLENISH_THRESHOLD) {
+        $this->setTimer(time() + self::USERADD_REPLENISH_AMOUNT);
       }
     }
 
@@ -228,9 +249,9 @@
       $tsvData = preg_split("/\n|\r|\r\n/", $tsvData);
 
       $minimumCardLimit = array(
-        "STATEMENT" => 10,
-        "OBJECT" => 10,
-        "VERB" => 10
+        "STATEMENT" => self::MINIMUM_STATEMENT_CARDS,
+        "OBJECT" => self::MINIMUM_OBJECT_CARDS,
+        "VERB" => self::MINIMUM_VERB_CARDS
       );
 
       // Limit to 2000 cards
@@ -255,9 +276,16 @@
         $underscores = substr_count($text, "_");
         if ($underscores > 0) {
           if ($type !== "STATEMENT") {
+            // Underscores on a non-statement card
             continue;
           }
           if ($underscores > 3) {
+            // Too many underscores
+            continue;
+          }
+        } else {
+          if ($type === "STATEMENT") {
+            // Statement card without underscores
             continue;
           }
         }
@@ -426,9 +454,9 @@
      */
     public function refreshTimerIfNecessary() {
       if ($this->mState === "PENDING") {
-        if ($this->mTimer - time() < 10) {
+        if ($this->mTimer - time() < self::PENDING_REFRESH_THRESHOLD) {
           if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
-            $this->setTimer(time() + 60);
+            $this->setTimer(time() + self::INITIAL_MATCH_TIMER);
           }
         }
       }
@@ -438,18 +466,30 @@
      * Updates the state of this match if the needed conditions are met
      */
     public function updateState() {
-      if ($this->mState === "PENDING") {
-        if ($this->mTimer <= time()) {
-          $this->selectPicker();
+      $timerUp = $this->mTimer <= time();
+      if ($timerUp) {
+        if ($this->mState === "PENDING") {
+          $this->selectNextPicker();
           $this->selectMatchCard();
           foreach ($this->mParticipants as $part) {
             $part->replenishHand();
           }
           $this->setState("CHOOSING");
-          $this->setTimer(time() + 60);
-        }
-      } else if ($this->mState === "ENDING") {
-        if ($this->mTimer <= time()) {
+          $this->setTimer(time() + self::STATE_CHOOSING_TIME);
+        } else if ($this->mState == "CHOOSING") {
+          // TODO maybe check if a playable selection was submitted, otherwise
+          // jump directly to cooldown?
+          // $this->setState("PICKING"); TODO
+          $this->setTimer(time() + self::STATE_PICKING_TIME);
+          // TODO dynamic for amount of cards
+        } else if ($this->mState == "PICKING") {
+          $this->setState("COOLDOWN");
+          $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
+        } else if ($this->mState == "COOLDOWN") {
+          // TODO check if match should end
+          $this->setState("CHOOSING");
+          $this->setTimer(time() + self::STATE_CHOOSING_TIME);
+        } else if ($this->mState === "ENDING") {
           $this->delete();
         }
       }
@@ -457,7 +497,7 @@
       if ($this->mState !== "PENDING" && $this->mState !== "ENDING") {
         if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
           $this->setState("ENDING");
-          $this->setTimer(time() + 30);
+          $this->setTimer(time() + self::STATE_ENDING_TIME);
         }
       }
     }
@@ -465,7 +505,7 @@
     /**
      * Select the next person to pick cards
      */
-    private function selectPicker() {
+    private function selectNextPicker() {
       $first = $this->mParticipants[0];
       $next = false;
       foreach ($this->mParticipants as $part) {
@@ -488,6 +528,17 @@
     private function selectMatchCard() {
       $card = Card::getRandomStatementForMatch($this);
       $this->setCurrentCard($card);
+    }
+
+    /**
+     * Returns the number of gaps on the currently selected card (at least 1
+     * at all times)
+     */
+    public function getCardGapCount() {
+      if (is_null($this->mCurrentCard)) {
+        return 1;
+      }
+      return max(1, substr_count($this->mCurrentCard->getText(), "_"));
     }
   }
 ?>

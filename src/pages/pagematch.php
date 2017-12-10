@@ -114,7 +114,7 @@
       }
       chmod($fileName, 0644);
 
-      $match = Match::createEmpty(time() + 60);
+      $match = Match::createEmpty();
       $match->addUser($this->mUser, time() + 15);
       $match->createMatchDeck($fileName);
       unlink($fileName);
@@ -202,7 +202,8 @@
         "hand" => array(
           "OBJECT" => array(),
           "VERB" => array()
-        )
+        ),
+        "gaps" => $this->mMatch->getCardGapCount()
       );
       if ($this->mMatch->hasCard()) {
         $data["cardText"] = $this->mMatch->getCard()->getText();

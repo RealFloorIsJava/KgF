@@ -51,6 +51,10 @@
      * The hand cards of this participant
      */
     private $mHand;
+    /**
+     * The hand card IDs of the picked cards in order
+     */
+    private $mPicked;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
@@ -110,8 +114,8 @@
         ),
         "replenishCardType" => $dbh->prepare(
           "INSERT INTO `kgf_hand` ".
-            "(`hand_id`, `hand_participant`, `hand_card`) ".
-            "SELECT NULL, :partid, `card_id` ".
+            "(`hand_id`, `hand_participant`, `hand_card`, `hand_pick`) ".
+            "SELECT NULL, :partid, `card_id`, NULL ".
             "FROM `kgf_cards` ".
             "WHERE `card_id` NOT IN (".
               "SELECT `hand_card` ".
@@ -233,6 +237,7 @@
      */
     private function loadHand() {
       $this->mHand = array();
+      $this->mPicked = array();
       $q = self::$sSqlQueries["loadHand"];
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
       $q->execute();
@@ -240,6 +245,9 @@
       foreach ($rows as $row) {
         $this->mHand[$row["hand_id"]] = Card::getByIdForMatch($row["hand_card"],
           $this->mMatch);
+        if (!is_null($row["hand_pick"])) {
+          $this->mPicked[$row["hand_pick"]] = $row["hand_id"];
+        }
       }
     }
 
