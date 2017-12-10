@@ -67,10 +67,11 @@
       var handId = diff.onlyB[i];
       var elem = $("<div></div>")
         .addClass("card-base")
-        .addClass(lowerType + "-card");
+        .addClass(lowerType + "-card")
+        .attr("id", "hand-id-" + handId);
       (function(){
         var htmlElem = elem;
-        elem.click(function(){
+        container.on("click", "#hand-id-" + handId, {}, function() {
           toggleSelect(htmlElem);
         });
       })();

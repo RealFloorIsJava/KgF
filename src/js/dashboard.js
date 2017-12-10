@@ -1,7 +1,7 @@
 (function(){
   var mMatchResolver = {};
 
-  function createMatchDIV(id) {
+  function createMatchDIV(anchor, id) {
     var elem = $("<div></div>").addClass("match-box");
 
     var matchFloatClear = $("<div></div>").addClass("clearAfterFloat");
@@ -9,13 +9,12 @@
       .addClass("rightFloat")
       .append($("<button></button>")
         .text("Join match")
-        .on("click", {
-          "id": id
-        }, function(event) {
-          window.location.assign("/global.php?page=match&action=join&match="
-            + event.data["id"]);
-        })
+        .attr("id", "id-joinmatch-" + id)
       );
+
+    anchor.on("click", "#id-joinmatch-" + id, {}, function() {
+      window.location.assign("/global.php?page=match&action=join&match=" + id);
+    });
 
     var runningMatchButton = $("<div></div>")
       .addClass("rightFloat")
@@ -50,7 +49,7 @@
     for (var i = 0; i < json.length; i++) {
       var match = json[i];
       if (!mMatchResolver.hasOwnProperty(match["id"])) {
-        mMatchResolver[match["id"]] = createMatchDIV(match["id"]);
+        mMatchResolver[match["id"]] = createMatchDIV(matchList, match["id"]);
       }
       var elem = mMatchResolver[match["id"]];
 

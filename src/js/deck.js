@@ -44,7 +44,7 @@
     mIdCounter = 1;
   }
 
-  function createCard(tsv, curId, armed) {
+  function createCard(anchor, tsv, curId, armed) {
     var node = $("<div></div>")
       .addClass("card-base")
       .addClass(tsv[1].toLowerCase() + "-card")
@@ -59,8 +59,33 @@
       var typeKnob = $("<a></a>")
         .addClass("knob-" + tsv[1].toLowerCase())
         .attr("href", "#")
-        .html("&nbsp;&nbsp;&nbsp;&nbsp;")
-        .click(function() {
+        .attr("id", "knob-id-" + curId)
+        .html("&nbsp;&nbsp;&nbsp;&nbsp;");
+      tools.append(typeKnob).append(" - ");
+
+      var editLink = $("<a></a>")
+        .attr("href", "#")
+        .html("Edit")
+        .attr("id", "edit-id-" + curId);
+      tools.append(editLink).append(" - ");
+
+      var deleteLink = $("<a></a>")
+        .attr("href", "#")
+        .attr("id", "del-id-" + curId)
+        .html("Delete");
+      tools.append(deleteLink).append(" - ");
+
+      if (anchor != null) {
+        anchor.on("click", "#del-id-" + curId, {}, function() {
+          node.remove();
+          mCards[curId] = false;
+          markDirty();
+        });
+        anchor.on("click", "#edit-id-" + curId, {}, function() {
+          mEditId = curId;
+          openEditor();
+        });
+        anchor.on("click", "#knob-id-" + curId, {}, function() {
           node.removeClass(mCards[curId][1].toLowerCase() + "-card");
           typeKnob.removeClass("knob-" + mCards[curId][1].toLowerCase());
           if (mCards[curId][1] == "STATEMENT") {
@@ -74,26 +99,7 @@
           node.addClass(mCards[curId][1].toLowerCase() + "-card");
           markDirty();
         });
-      tools.append(typeKnob).append(" - ");
-
-      var editLink = $("<a></a>")
-        .attr("href", "#")
-        .html("Edit")
-        .click(function() {
-          mEditId = curId;
-          openEditor();
-        });
-      tools.append(editLink).append(" - ");
-
-      var deleteLink = $("<a></a>")
-        .attr("href", "#")
-        .html("Delete")
-        .click(function() {
-          node.remove();
-          mCards[curId] = false;
-          markDirty();
-        });
-      tools.append(deleteLink).append(" - ");
+      }
     }
 
     node.append(tools.append("#" + curId));
@@ -102,7 +108,7 @@
 
   function displayCard(tsv) {
     var curId = mIdCounter++;
-    var node = createCard(tsv, curId, true);
+    var node = createCard($("#deck-display"), tsv, curId, true);
     $("#deck-display").append(node);
     mCards[curId] = tsv;
     mCardNodes[curId] = node;
@@ -150,7 +156,7 @@
   function openEditor() {
     $(".card-editor-container").css("display", "flex");
     $(".card-editor-card-display").empty().append(
-      createCard(mCards[mEditId], mEditId, false));
+      createCard(null, mCards[mEditId], mEditId, false));
     $("#card-text-input").val(mCards[mEditId][0]);
     $("#card-text-input").focus();
   }
