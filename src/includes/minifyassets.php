@@ -33,7 +33,11 @@
         $originalMTime = filemtime($tuple["orig"]);
         $outMTime = filemtime($tuple["min"]);
         if ($originalMTime > $outMTime) {
-          $minifyThis = true;
+          // To prevent modification while the file is still uploading, check
+          // with the current time
+          if ($originalMTime < time() - 2) {
+            $minifyThis = true;
+          }
         }
       }
       if ($minifyThis) {
