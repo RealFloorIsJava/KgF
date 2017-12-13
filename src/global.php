@@ -1,8 +1,9 @@
 <?php
   header("Content-Type: text/html; charset=utf-8");
 
-  // Initialize error logging
+  // Initialize error/debug logging
   require_once "includes/error.php";
+  require_once "includes/debug.php";
 
   // Initialize the upload directory
   require_once "includes/upload.php";

@@ -361,9 +361,10 @@
       if (!isset($this->mHand[$id])) {
         return;
       }
+
       $pick = 0;
       foreach ($this->mPicked as $pickId => $handId) {
-        if ($handId === $id) {
+        if ($handId == $id) {
           $pick = $pickId;
         }
       }
@@ -379,10 +380,11 @@
         foreach ($this->mPicked as $pickId => $handId) {
           $nextPickId = max($pickId + 1, $nextPickId);
         }
-
+#
         $q->bindValue(":pick", $nextPickId, PDO::PARAM_INT);
         $q->bindValue(":handid", $id, PDO::PARAM_INT);
         $q->execute();
+        $this->mPicked[$nextPickId] = intval($id);
       } else {
         $unpickIds = array();
         foreach ($this->mPicked as $pickId => $handId) {
