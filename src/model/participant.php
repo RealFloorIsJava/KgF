@@ -124,6 +124,11 @@
               ") AND `card_type` = :type ".
             "ORDER BY RAND()".
             "LIMIT :num"
+        ),
+        "updatePick" => $dbh->prepare(
+          "UPDATE `kgf_hand` ".
+          "SET `hand_pick` = :pick ".
+          "WHERE `hand_id` = :handid"
         )
       );
     }
@@ -346,6 +351,51 @@
         $q->bindValue(":type", $type, PDO::PARAM_STR);
         $q->bindValue(":num", $needed, PDO::PARAM_INT);
         $q->execute();
+      }
+    }
+
+    /**
+     * Toggles a hand card from picked to not picked and vice versa
+     */
+    public function togglePicked($id) {
+      if (!isset($this->mHand[$id])) {
+        return;
+      }
+      $pick = 0;
+      foreach ($this->mPicked as $pickId => $handId) {
+        if ($handId === $id) {
+          $pick = $pickId;
+        }
+      }
+
+      $q = self::$sSqlQueries["updatePick"];
+      if ($pick === 0) {
+        if (count($this->mPicked) >= $this->mMatch->getCardGapCount()) {
+          // Can't select new cards, too many are already selected
+          return;
+        }
+
+        $nextPickId = 1;
+        foreach ($this->mPicked as $pickId => $handId) {
+          $nextPickId = max($pickId + 1, $nextPickId);
+        }
+
+        $q->bindValue(":pick", $nextPickId, PDO::PARAM_INT);
+        $q->bindValue(":handid", $id, PDO::PARAM_INT);
+        $q->execute();
+      } else {
+        $unpickIds = array();
+        foreach ($this->mPicked as $pickId => $handId) {
+          if ($pickId >= $pick) {
+            $unpickIds[] = $handId;
+          }
+        }
+
+        $q->bindValue(":pick", null, PDO::PARAM_INT);
+        foreach ($unpickIds as $unpickId) {
+          $q->bindValue(":handid", $unpickId, PDO::PARAM_INT);
+          $q->execute();
+        }
       }
     }
   }

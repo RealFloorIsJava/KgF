@@ -6,8 +6,8 @@
   var mCountDown = 0;
   var mEnding = false;
   var mHandResolver = {
-    OBJECT: {},
-    VERB: {}
+    "OBJECT": {},
+    "VERB": {}
   };
   var mIntervalParticipants = 0;
   var mIntervalStatus = 0;
@@ -60,7 +60,6 @@
     var lowerType = type.toLowerCase();
     var container = $("#" + lowerType + "-hand");
     var resolver = mHandResolver[type];
-
     var diff = symmetricKeyDifference(resolver, hand);
 
     for (var i = 0; i < diff.onlyB.length; i++) {
@@ -71,8 +70,10 @@
         .attr("id", "hand-id-" + handId);
       (function(){
         var htmlElem = elem;
-        container.on("click", "#hand-id-" + handId, {}, function() {
-          toggleSelect(htmlElem);
+        container.on("click", "#hand-id-" + handId, {
+          "handId": handId
+        }, function(event) {
+          toggleSelect(event.data["handId"]);
         });
       })();
       elem.html(getFormatted(hand[handId]));
@@ -171,33 +172,44 @@
     });
   }
 
-  function toggleSelect(card) {
-    var remove = false;
-    // Remove card picks
-    for (var i = 0; i < mSelectedCards.length; i++) {
-      if (mSelectedCards[i] == card || remove) {
-        // Need sync with server TODO
-        mSelectedCards[i].removeClass("card-selected")
-          .children(".card-select").eq(0).remove();
-        mSelectedCards.splice(i--, 1);
-        remove = true;
-      }
-    }
+  function toggleSelect(handId) {
+    // TODO inquiry about selected cards on load to sync to previous state
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=match&action=togglepick",
+      data: {
+        "handId": handId
+      },
+      success: function() {
+        var remove = false;
+        var card = mHandResolver["OBJECT"][handId]
+          || mHandResolver["VERB"][handId];
 
-    // Mark new picks
-    if (!remove) {
-      if (mSelectedCards.length < mNumGaps) {
-        // sync this TODO
-        mSelectedCards.push(card);
-        var select = $("<div></div>").addClass("card-select").text("?");
-        card.addClass("card-selected").prepend(select);
-      }
-    }
+        // Remove card picks
+        for (var i = 0; i < mSelectedCards.length; i++) {
+          if (mSelectedCards[i] == card || remove) {
+            mSelectedCards[i].removeClass("card-selected")
+              .children(".card-select").eq(0).remove();
+            mSelectedCards.splice(i--, 1);
+            remove = true;
+          }
+        }
 
-    // Update the numbers on the cards
-    for (var i = 0; i < mSelectedCards.length; i++) {
-      mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
-    }
+        // Mark new picks
+        if (!remove) {
+          if (mSelectedCards.length < mNumGaps) {
+            mSelectedCards.push(card);
+            var select = $("<div></div>").addClass("card-select").text("?");
+            card.addClass("card-selected").prepend(select);
+          }
+        }
+
+        // Update the numbers on the cards
+        for (var i = 0; i < mSelectedCards.length; i++) {
+          mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
+        }
+      }
+    });
   }
 
   function updateCountdown() {

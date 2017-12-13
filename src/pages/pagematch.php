@@ -144,6 +144,18 @@
     }
 
     /**
+     * Toggles a hand card from picked to not picked and vice versa
+     */
+    private function actionTogglePick() {
+      if (isset($_POST["handId"])) {
+        if ($this->mMatch->canPickHandNow()) {
+          $id = intval($_POST["handId"]);
+          $this->mParticipant->togglePicked($id);
+        }
+      }
+    }
+
+    /**
      * Abandons the current match
      */
     private function actionAbandon() {
@@ -152,6 +164,9 @@
       exit();
     }
 
+    /**
+     * Fetches the list of participants
+     */
     private function actionParticipants() {
       $parts = $this->mMatch->getParticipants();
       $toJson = array();
@@ -224,6 +239,8 @@
         $this->actionParticipants();
       } else if ($this->mAction === "chat") {
         $this->actionChat();
+      } else if ($this->mAction === "togglepick") {
+        $this->actionTogglePick();
       } else if ($this->mAction === "chatsend") {
         $this->actionChatSend();
       } else if ($this->mAction === "status") {

@@ -8,7 +8,8 @@
      */
     const MINIMUM_PLAYERS = 4;
     /**
-     * Minimum amount of cards of each type
+     * Minimum amount of cards of each type.
+     * Don't set this lower than 6 for each type.
      */
     const MINIMUM_STATEMENT_CARDS = 10;
     const MINIMUM_OBJECT_CARDS = 10;
@@ -539,6 +540,13 @@
         return 1;
       }
       return max(1, substr_count($this->mCurrentCard->getText(), "_"));
+    }
+
+    /**
+     * Checks whether the picked hand cards may be modified right now
+     */
+    public function canPickHandNow() {
+      return $this->mState === "CHOOSING";
     }
   }
 ?>
