@@ -324,6 +324,19 @@
     }
 
     /**
+     * Checks whether a card is picked. If it is picked the function returns the
+     * pick index. Otherwise the function returns null.
+     */
+    public function getPickIndex($hId) {
+      foreach ($this->mPicked as $pickId => $handId) {
+        if ($handId == $hId) {
+          return $pickId;
+        }
+      }
+      return null;
+    }
+
+    /**
      * Sets whether this participant is picking cards
      */
     public function setPicking($val) {
@@ -380,7 +393,7 @@
         foreach ($this->mPicked as $pickId => $handId) {
           $nextPickId = max($pickId + 1, $nextPickId);
         }
-#
+
         $q->bindValue(":pick", $nextPickId, PDO::PARAM_INT);
         $q->bindValue(":handid", $id, PDO::PARAM_INT);
         $q->execute();

@@ -64,22 +64,34 @@
 
     for (var i = 0; i < diff.onlyB.length; i++) {
       var handId = diff.onlyB[i];
+
       var elem = $("<div></div>")
         .addClass("card-base")
         .addClass(lowerType + "-card")
-        .attr("id", "hand-id-" + handId);
-      (function(){
-        var htmlElem = elem;
-        container.on("click", "#hand-id-" + handId, {
-          "handId": handId
-        }, function(event) {
-          toggleSelect(event.data["handId"]);
-        });
-      })();
-      elem.html(getFormatted(hand[handId]));
+        .attr("id", "hand-id-" + handId)
+        .html(getFormatted(hand[handId]["text"]));
+
+      if (hand[handId]["picked"] != null) {
+        var offset = hand[handId]["picked"];
+        while (mSelectedCards.length < offset) {
+          mSelectedCards.push(null);
+        }
+        mSelectedCards[offset - 1] = elem;
+        var select = $("<div></div>").addClass("card-select").text("?");
+        elem.addClass("card-selected").prepend(select);
+      }
+
+      container.on("click", "#hand-id-" + handId, {
+        "handId": handId
+      }, function(event) {
+        toggleSelect(event.data["handId"]);
+      });
+
       container.append(elem);
       resolver[handId] = elem;
     }
+
+    updateSelectLabels();
 
     for (var i = 0; i < diff.onlyA.length; i++) {
       resolver[diff.onlyA[i]].remove();
@@ -173,7 +185,6 @@
   }
 
   function toggleSelect(handId) {
-    // TODO inquiry about selected cards on load to sync to previous state
     $.ajax({
       method: "POST",
       url: "/global.php?page=match&action=togglepick",
@@ -204,12 +215,16 @@
           }
         }
 
-        // Update the numbers on the cards
-        for (var i = 0; i < mSelectedCards.length; i++) {
-          mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
-        }
+        updateSelectLabels();
       }
     });
+  }
+
+  function updateSelectLabels() {
+    // Update the numbers on the cards
+    for (var i = 0; i < mSelectedCards.length; i++) {
+      mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
+    }
   }
 
   function updateCountdown() {

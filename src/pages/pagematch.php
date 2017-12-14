@@ -224,7 +224,10 @@
         $data["cardText"] = $this->mMatch->getCard()->getText();
       }
       foreach ($this->mParticipant->getHand() as $handId => $card) {
-        $data["hand"][$card->getType()][$handId] = $card->getText();
+        $data["hand"][$card->getType()][$handId] = array(
+          "text" => $card->getText(),
+          "picked" => $this->mParticipant->getPickIndex($handId)
+        );
       }
       echo json_encode($data);
     }
