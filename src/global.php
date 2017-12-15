@@ -1,4 +1,5 @@
 <?php
+  $benchStart = microtime(true);
   header("Content-Type: text/html; charset=utf-8");
 
   // Initialize error/debug logging
@@ -47,4 +48,6 @@
   require_once $source[0];
   $pageclass = $source[1];
   (new $pageclass($_SESSION["user"]))->display();
+
+  takeRandomRequestSample();
 ?>

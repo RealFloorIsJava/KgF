@@ -10,4 +10,17 @@
     $line = $bt[0]["file"].":".$bt[0]["line"].": ".$str."\n";
     file_put_contents($file, file_get_contents($file).$line);
   }
+
+  function takeRandomRequestSample() {
+    global $benchStart;
+    if (rand(0, 100) == 0) {
+      logDebug("Random request metrics:");
+      logDebug("       Date: ".date("Y-m-d H:i:s"));
+      logDebug("        URI: ".$_SERVER["REQUEST_URI"]);
+      logDebug("       Time: ".(microtime(true) - $benchStart));
+      logDebug("        Mem: ".strval(memory_get_usage() / 1024)."K");
+      logDebug("    PeakMem: ".strval(memory_get_peak_usage() / 1024)."K");
+      logDebug("      Limit: ".ini_get("memory_limit"));
+    }
+  }
 ?>
