@@ -24,7 +24,9 @@
         $this->reportStatus("The uploaded file is too big!", false);
       }
 
-      $this->processAction();
+      if ($this->processAction()) {
+        return;
+      }
 
       $this->showTemplate("templates/dashboard.php");
     }
@@ -33,10 +35,14 @@
      * Dispatcher for more specific actions
      */
     private function processAction() {
+      // Prevent templates from being shown by returning true when an action
+      // is processed
       if ($this->mAction === "matchlist") {
         $this->actionMatchList();
-        exit();
+      } else {
+        return false;
       }
+      return true;
     }
 
     /**

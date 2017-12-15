@@ -64,7 +64,6 @@
      */
     protected function failPermissionCheck() {
       header("Location: /global.php");
-      exit();
     }
 
     /**

@@ -12,9 +12,8 @@
     } else {
       header("Location: /?pw_fail=1");
     }
-    exit();
+  } else {
+    // Trying to access the gate.php without the form
+    header("Location: /");
   }
-
-  // Trying to access the gate.php without the form
-  header("Location: /");
 ?>

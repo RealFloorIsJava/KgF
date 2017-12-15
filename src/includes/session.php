@@ -14,6 +14,9 @@
   //  logout)
   if (!isset($_SESSION["login"])) {
     header("Location: /?auth_fail=1");
+
+    // Kill the script because the request can not be processed in any way
+    // without a logged in user
     exit();
   }
 

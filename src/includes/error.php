@@ -15,6 +15,8 @@
       $errline."\n";
     file_put_contents($errorFn, $c.$line);
     echo file_get_contents($errorTpl);
+
+    // Kill the script to prevent errors from getting worse
     exit();
   }
 

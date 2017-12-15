@@ -33,6 +33,7 @@
      * Display the match page
      */
     public function display() {
+      // Process these actions first, as they do not require a valid match
       if ($this->mAction === "create") {
         $this->actionCreate();
       } else if ($this->mAction === "join") {
@@ -43,6 +44,7 @@
       $part = Participant::getParticipant($this->mUser->getId());
       if ($part === null) {
         $this->failPermissionCheck();
+        return;
       }
       $this->mParticipant = $part;
       $this->mMatch = $part->getMatch();
@@ -54,12 +56,15 @@
       // If the match is not valid anymore, abort
       if ($this->mMatch->isDeleted()) {
         $this->failPermissionCheck();
+        return;
       }
 
       // Register a heartbeat for this user
       $this->mParticipant->heartbeat(15);
 
-      $this->processAction();
+      if ($this->processAction()) {
+        return;
+      }
 
       if ($this->mSubpage === "view") {
         $this->showTemplate("templates/match.php");
@@ -77,6 +82,7 @@
           $match = Match::getById($id);
           if ($match === null || $match->hasStarted()) {
             $this->failPermissionCheck();
+            return;
           }
           $match->addUser($this->mUser, time() + 15);
         }
@@ -85,7 +91,6 @@
       // If the user is already in a match just redirect them to the match
       // view anyways to reopen their match.
       header("Location: /global.php?page=match&sub=view");
-      exit();
     }
 
     /**
@@ -96,21 +101,24 @@
       if ($part !== null) {
         // The user is participant in a match. Creating is not allowed.
         $this->failPermissionCheck();
+        return;
       }
 
       // Check if the user provided a deck
       if (!isset($_FILES['deckupload'])) {
         $this->failPermissionCheck();
+        return;
       }
 
       $file = $_FILES['deckupload'];
       if ($file["size"] >= 200000) {
         header("Location: /global.php?page=dashboard&deckfail=1");
-        exit();
+        return;
       }
       $fileName = "./uploads/f".md5(uniqid("f", true));
       if (!move_uploaded_file($file["tmp_name"], $fileName)) {
         $this->failPermissionCheck();
+        return;
       }
       chmod($fileName, 0644);
 
@@ -120,7 +128,6 @@
       unlink($fileName);
 
       header("Location: /global.php?page=match&sub=view");
-      exit();
     }
 
     /**
@@ -161,7 +168,6 @@
     private function actionAbandon() {
       $this->mParticipant->leaveMatch();
       header("Location: /global.php?page=dashboard");
-      exit();
     }
 
     /**
@@ -237,6 +243,8 @@
      * Dispatches actions to the specific handler methods
      */
     private function processAction() {
+      // If any action is taken, return false to indicate that under no
+      // circumstance templates should be shown.
       if ($this->mAction === "abandon") {
         $this->actionAbandon();
       } else if ($this->mAction === "participants") {
@@ -249,7 +257,10 @@
         $this->actionChatSend();
       } else if ($this->mAction === "status") {
         $this->actionStatus();
+      } else {
+        return false;
       }
+      return true;
     }
   }
 ?>
