@@ -150,7 +150,7 @@
       if (isset($_POST["handId"])) {
         if ($this->mMatch->canPickHandNow()) {
           $id = intval($_POST["handId"]);
-          $this->mParticipant->togglePicked($id);
+          $this->mParticipant->getHand()->togglePicked($id);
         }
       }
     }
@@ -223,10 +223,11 @@
       if ($this->mMatch->hasCard()) {
         $data["cardText"] = $this->mMatch->getCard()->getText();
       }
-      foreach ($this->mParticipant->getHand() as $handId => $card) {
-        $data["hand"][$card->getType()][$handId] = array(
-          "text" => $card->getText(),
-          "picked" => $this->mParticipant->getPickIndex($handId)
+      foreach ($this->mParticipant->getHand()->getHandCards()
+        as $handId => $card) {
+        $data["hand"][$card->getCard()->getType()][$handId] = array(
+          "text" => $card->getCard()->getText(),
+          "picked" => $card->getPickId()
         );
       }
       echo json_encode($data);

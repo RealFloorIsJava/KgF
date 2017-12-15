@@ -73,10 +73,10 @@
 
       if (hand[handId]["picked"] != null) {
         var offset = hand[handId]["picked"];
-        while (mSelectedCards.length < offset) {
+        while (mSelectedCards.length < offset + 1) {
           mSelectedCards.push(null);
         }
-        mSelectedCards[offset - 1] = elem;
+        mSelectedCards[offset] = elem;
         var select = $("<div></div>").addClass("card-select").text("?");
         elem.addClass("card-selected").prepend(select);
       }

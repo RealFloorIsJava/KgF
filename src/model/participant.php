@@ -4,10 +4,6 @@
    */
   class Participant {
     /**
-     * The number of cards per type on the hand (excluding STATEMENT)
-     */
-    const HAND_CARD_PER_TYPE = 6;
-    /**
      * Prepared SQL queries
      */
     private static $sSqlQueries;
@@ -48,13 +44,9 @@
      */
     private $mTimeout;
     /**
-     * The hand cards of this participant
+     * The hand of this participant
      */
     private $mHand;
-    /**
-     * The hand card IDs of the picked cards in order
-     */
-    private $mPicked;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
@@ -106,29 +98,6 @@
           "UPDATE `kgf_match_participant` ".
           "SET `mp_picking` = :picking ".
           "WHERE `mp_id` = :partid"
-        ),
-        "loadHand" => $dbh->prepare(
-          "SELECT * ".
-          "FROM `kgf_hand` ".
-          "WHERE `hand_participant` = :partid"
-        ),
-        "replenishCardType" => $dbh->prepare(
-          "INSERT INTO `kgf_hand` ".
-            "(`hand_id`, `hand_participant`, `hand_card`, `hand_pick`) ".
-            "SELECT NULL, :partid, `card_id`, NULL ".
-            "FROM `kgf_cards` ".
-            "WHERE `card_id` NOT IN (".
-              "SELECT `hand_card` ".
-              "FROM `kgf_hand` ".
-              "WHERE `hand_participant` = :partid ".
-              ") AND `card_type` = :type ".
-            "ORDER BY RAND()".
-            "LIMIT :num"
-        ),
-        "updatePick" => $dbh->prepare(
-          "UPDATE `kgf_hand` ".
-          "SET `hand_pick` = :pick ".
-          "WHERE `hand_id` = :handid"
         )
       );
     }
@@ -231,29 +200,10 @@
       $this->mScore = intval($score);
       $this->mPicking = $picking;
       $this->mTimeout = $timeout;
-      $this->loadHand();
+      $this->mHand = Hand::loadHand($this);
 
       self::$sIdCache[$this->mId] = $this;
       self::$sPlayerCache[$this->mPlayerId] = $this;
-    }
-
-    /**
-     * Loads the hand of this participant
-     */
-    private function loadHand() {
-      $this->mHand = array();
-      $this->mPicked = array();
-      $q = self::$sSqlQueries["loadHand"];
-      $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
-      $q->execute();
-      $rows = $q->fetchAll();
-      foreach ($rows as $row) {
-        $this->mHand[$row["hand_id"]] = Card::getByIdForMatch($row["hand_card"],
-          $this->mMatch);
-        if (!is_null($row["hand_pick"])) {
-          $this->mPicked[$row["hand_pick"]] = $row["hand_id"];
-        }
-      }
     }
 
     /**
@@ -324,19 +274,6 @@
     }
 
     /**
-     * Checks whether a card is picked. If it is picked the function returns the
-     * pick index. Otherwise the function returns null.
-     */
-    public function getPickIndex($hId) {
-      foreach ($this->mPicked as $pickId => $handId) {
-        if ($handId == $hId) {
-          return $pickId;
-        }
-      }
-      return null;
-    }
-
-    /**
      * Sets whether this participant is picking cards
      */
     public function setPicking($val) {
@@ -345,73 +282,6 @@
       $q->bindValue(":picking", $this->mPicking ? 1 : 0, PDO::PARAM_INT);
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
       $q->execute();
-    }
-
-    /**
-     * Replenishes the hand cards of this participant
-     */
-    public function replenishHand() {
-      $counts = array(
-        "OBJECT" => self::HAND_CARD_PER_TYPE,
-        "VERB" => self::HAND_CARD_PER_TYPE
-      );
-      foreach ($this->mHand as $handId => $card) {
-        $counts[$card->getType()]--;
-      }
-      foreach ($counts as $type => $needed) {
-        $q = self::$sSqlQueries["replenishCardType"];
-        $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
-        $q->bindValue(":type", $type, PDO::PARAM_STR);
-        $q->bindValue(":num", $needed, PDO::PARAM_INT);
-        $q->execute();
-      }
-    }
-
-    /**
-     * Toggles a hand card from picked to not picked and vice versa
-     */
-    public function togglePicked($id) {
-      if (!isset($this->mHand[$id])) {
-        return;
-      }
-
-      $pick = 0;
-      foreach ($this->mPicked as $pickId => $handId) {
-        if ($handId == $id) {
-          $pick = $pickId;
-        }
-      }
-
-      $q = self::$sSqlQueries["updatePick"];
-      if ($pick === 0) {
-        if (count($this->mPicked) >= $this->mMatch->getCardGapCount()) {
-          // Can't select new cards, too many are already selected
-          return;
-        }
-
-        $nextPickId = 1;
-        foreach ($this->mPicked as $pickId => $handId) {
-          $nextPickId = max($pickId + 1, $nextPickId);
-        }
-
-        $q->bindValue(":pick", $nextPickId, PDO::PARAM_INT);
-        $q->bindValue(":handid", $id, PDO::PARAM_INT);
-        $q->execute();
-        $this->mPicked[$nextPickId] = intval($id);
-      } else {
-        $unpickIds = array();
-        foreach ($this->mPicked as $pickId => $handId) {
-          if ($pickId >= $pick) {
-            $unpickIds[] = $handId;
-          }
-        }
-
-        $q->bindValue(":pick", null, PDO::PARAM_INT);
-        foreach ($unpickIds as $unpickId) {
-          $q->bindValue(":handid", $unpickId, PDO::PARAM_INT);
-          $q->execute();
-        }
-      }
     }
   }
 ?>

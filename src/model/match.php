@@ -473,7 +473,7 @@
           $this->selectNextPicker();
           $this->selectMatchCard();
           foreach ($this->mParticipants as $part) {
-            $part->replenishHand();
+            $part->getHand()->replenish();
           }
           $this->setState("CHOOSING");
           $this->setTimer(time() + self::STATE_CHOOSING_TIME);

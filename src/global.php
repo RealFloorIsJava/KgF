@@ -20,6 +20,8 @@
 
   // Initialize stuff
   require_once "model/card.php";
+  require_once "model/hand.php";
+  require_once "model/handcard.php";
   require_once "model/chat.php";
   require_once "model/chatmessage.php";
   require_once "model/match.php";
@@ -30,6 +32,7 @@
   Match::provideDB($dbHandle);
   Chat::provideDB($dbHandle);
   Card::provideDB($dbHandle);
+  HandCard::provideDB($dbHandle);
 
   // First clear old participants, then their matches
   Participant::performHousekeeping();
