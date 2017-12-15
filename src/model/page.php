@@ -48,7 +48,7 @@
      * calculations)
      */
     public function display() {
-      die("Display not implemented!");
+      throw new Exception("Display not implemented!");
     }
 
     /**
