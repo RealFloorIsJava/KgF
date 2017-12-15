@@ -91,11 +91,17 @@
       resolver[handId] = elem;
     }
 
-    updateSelectLabels();
-
     for (var i = 0; i < diff.onlyA.length; i++) {
+      for (var j = 0; j < mSelectedCards.length; j++) {
+        if (resolver[diff.onlyA[j]] == mSelectedCards[j]) {
+          mSelectedCards.splice(j, 1);
+          break;
+        }
+      }
       resolver[diff.onlyA[i]].remove();
     }
+
+    updateSelectLabels();
 
     var needsSystemCard = true;
     for (var handId in resolver) {

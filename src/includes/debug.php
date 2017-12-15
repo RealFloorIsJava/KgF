@@ -13,7 +13,7 @@
 
   function takeRandomRequestSample() {
     global $benchStart;
-    if (rand(0, 100) == 0) {
+    if (rand(0, 500) == 0) {
       logDebug("Random request metrics:");
       logDebug("       Date: ".date("Y-m-d H:i:s"));
       logDebug("        URI: ".$_SERVER["REQUEST_URI"]);
