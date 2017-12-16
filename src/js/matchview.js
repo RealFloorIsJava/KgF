@@ -1,23 +1,28 @@
 (function(){
   var mSelectedCards = [];
-  var mParticipantResolver = {};
-  var mMinimumChatId = 0;
-  var mChatLock = false;
-  var mCountDown = 0;
-  var mEnding = false;
+  var mNumGaps = 0;
   var mHandResolver = {
     "OBJECT": {},
     "VERB": {}
   };
+
+  var mParticipantResolver = {};
+
+  var mMinimumChatId = 0;
+  var mChatLock = false;
+
+  var mCountDown = 0;
+  var mEnding = false;
+
   var mIntervalParticipants = 0;
   var mIntervalStatus = 0;
   var mIntervalFetchCards = 0;
-  var mNumGaps = 0;
+
 
   function startTasks() {
     mIntervalParticipants = setInterval(loadParticipants, 5000);
     mIntervalStatus = setInterval(loadStatus, 2000);
-    mIntervalFetchCards = setInterval(fetchCards, 1000);
+    mIntervalFetchCards = setInterval(fetchCards, 1750);
   }
 
   function fetchCards() {
@@ -28,6 +33,7 @@
       success: function(data) {
         updateHand(data["hand"]["OBJECT"], "OBJECT");
         updateHand(data["hand"]["VERB"], "VERB");
+        updatePlayed(data["played"]);
       }
     });
   }
@@ -68,6 +74,34 @@
     });
   }
 
+  function updatePlayed(played) {
+    var area = $(".card-area-played");
+    var sets = area.children(".card-area-set");
+    if (sets.length == 0) {
+      area.prepend($("<div></div>").addClass("card-area-set"));
+      sets = area.children(".card-area-set");
+    }
+    for (var i = 0; i < played.length; i++) {
+      if (i >= sets.length) {
+        sets.last().after($("<div></div>").addClass("card-area-set"));
+        sets = area.children(".card-area-set");
+      }
+      var set = sets.eq(i);
+      set.empty();
+      for (var j = 0; j < played[i].length; j++) {
+        var card = $("<div></div>").addClass("card-base");
+        if (played[i][j].hasOwnProperty("redacted")) {
+          card.addClass("system-card");
+          card.prepend($("<div></div>").addClass("card-label").text("?"));
+        } else {
+          card.addClass(played[i][j]["type"].toLowerCase() + "-card");
+          card.html(getFormatted(played[i][j]["text"]));
+        }
+        set.append(card);
+      }
+    }
+  }
+
   function updateHand(hand, type) {
     var lowerType = type.toLowerCase();
     var container = $("#" + lowerType + "-hand");
@@ -89,7 +123,7 @@
           mSelectedCards.push(null);
         }
         mSelectedCards[offset] = elem;
-        var select = $("<div></div>").addClass("card-select").text("?");
+        var select = $("<div></div>").addClass("card-label").text("?");
         elem.addClass("card-selected").prepend(select);
       }
 
@@ -218,7 +252,7 @@
         for (var i = 0; i < mSelectedCards.length; i++) {
           if (mSelectedCards[i] == card || remove) {
             mSelectedCards[i].removeClass("card-selected")
-              .children(".card-select").eq(0).remove();
+              .children(".card-label").eq(0).remove();
             mSelectedCards.splice(i--, 1);
             remove = true;
           }
@@ -228,7 +262,7 @@
         if (!remove) {
           if (mSelectedCards.length < mNumGaps) {
             mSelectedCards.push(card);
-            var select = $("<div></div>").addClass("card-select").text("?");
+            var select = $("<div></div>").addClass("card-label").text("?");
             card.addClass("card-selected").prepend(select);
           }
         }
@@ -241,7 +275,7 @@
   function updateSelectLabels() {
     // Update the numbers on the cards
     for (var i = 0; i < mSelectedCards.length; i++) {
-      mSelectedCards[i].children(".card-select").eq(0).text(i + 1);
+      mSelectedCards[i].children(".card-label").eq(0).text(i + 1);
     }
   }
 

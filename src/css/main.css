@@ -95,7 +95,7 @@ body {
   font-size: x-small;
 }
 
-.card-select {
+.card-label {
   margin: 0px 0px 0px -6px;  /* To counteract card padding */
   position: absolute;
   width: 100%;
