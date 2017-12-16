@@ -44,6 +44,11 @@
      */
     private $mTimeout;
     /**
+     * The relative ordering key for this participant. This changes every round
+     * to randomize card display
+     */
+    private $mOrder;
+    /**
      * The hand of this participant
      */
     private $mHand;
@@ -76,8 +81,9 @@
         "addParticipant" => $dbh->prepare(
           "INSERT INTO `kgf_match_participant` ".
             "(`mp_id`, `mp_player`, `mp_name`, `mp_match`, `mp_score`, ".
-              "`mp_picking`, `mp_timeout`) ".
-          "VALUES (NULL, :playerid, :playername, :matchid, 0, 0, :timeout)"
+              "`mp_picking`, `mp_timeout`, `mp_order`) ".
+          "VALUES (NULL, :playerid, :playername, :matchid, 0, 0, :timeout, ".
+            "NULL)"
         ),
         "fetchLatest" => $dbh->prepare(
           "SELECT * ".
@@ -135,7 +141,7 @@
           $parts[] = new Participant($part["mp_id"],
             $part["mp_player"], $part["mp_name"], $match,
             intval($part["mp_score"]), intval($part["mp_picking"]) != 0,
-            intval($part["mp_timeout"]));
+            intval($part["mp_timeout"]), intval($part["mp_order"]));
         } else {
           $parts[] = self::$sIdCache[$id];
         }
@@ -161,7 +167,8 @@
 
       $part = new Participant($row["mp_id"], $player, $row["mp_name"],
         Match::getById($row["mp_match"]), intval($row["mp_score"]),
-        intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]));
+        intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]),
+        intval($row["mp_order"]));
       return $part;
     }
 
@@ -185,14 +192,15 @@
       $pid = $row["mp_player"];
 
       return new Participant($id, $pid, $row["mp_name"], $match,
-        $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"]);
+        $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"],
+        $row["mp_order"]);
     }
 
     /**
      * Private constructor to prevent instance creation
      */
     private function __construct($id, $playerId, $name, $match, $score,
-      $picking, $timeout) {
+      $picking, $timeout, $order) {
       $this->mId = intval($id);
       $this->mPlayerId = $playerId;
       $this->mPlayerName = $name;
@@ -200,6 +208,7 @@
       $this->mScore = intval($score);
       $this->mPicking = $picking;
       $this->mTimeout = $timeout;
+      $this->mOrder = $order;
       $this->mHand = Hand::loadHand($this);
 
       self::$sIdCache[$this->mId] = $this;

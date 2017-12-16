@@ -33,7 +33,8 @@ CREATE TABLE `kgf_match_participant` (
   `mp_match` int(12) UNSIGNED NOT NULL,
   `mp_score` int(12) UNSIGNED NOT NULL,
   `mp_picking` tinyint(1) UNSIGNED NOT NULL,
-  `mp_timeout` bigint(12) UNSIGNED NOT NULL
+  `mp_timeout` bigint(12) UNSIGNED NOT NULL,
+  `mp_order` int(12) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 ALTER TABLE `kgf_cards`
