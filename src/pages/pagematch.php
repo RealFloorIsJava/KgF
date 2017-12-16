@@ -220,15 +220,27 @@
         "status" => $this->mMatch->getStatus(),
         "ending" => $this->mMatch->isEnding(),
         "hasCard" => $this->mMatch->hasCard(),
-        "hand" => array(
-          "OBJECT" => array(),
-          "VERB" => array()
-        ),
         "gaps" => $this->mMatch->getCardGapCount()
       );
       if ($this->mMatch->hasCard()) {
         $data["cardText"] = $this->mMatch->getCard()->getText();
       }
+      echo json_encode($data);
+    }
+
+    /**
+     * Fetches the hand cards and the game cards (not the current match card!)
+     */
+    private function actionFetchCards() {
+      $data = array(
+        "hand" => array(
+          "OBJECT" => array(),
+          "VERB" => array()
+        ),
+        "played" => array()
+      );
+
+      // Load hand cards
       foreach ($this->mParticipant->getHand()->getHandCards()
         as $handId => $card) {
         $data["hand"][$card->getCard()->getType()][$handId] = array(
@@ -236,6 +248,23 @@
           "picked" => $card->getPickId()
         );
       }
+
+      // Load played cards - first sort the participants according to their
+      // order to produce a seemingly random permutation each round
+      $orderParts = array();
+      foreach ($this->mMatch->getParticipants() as $part) {
+        $orderParts[$part->getOrder()] = $part;
+      }
+      ksort($orderParts);
+
+      // Then fetch their pick data
+      foreach ($orderParts as $part) {
+        $hand = $part->getHand();
+        $redacted = !$this->mMatch->canViewOthersPick()
+          && $part !== $this->mParticipant;
+        $data["played"][] = $hand->getPickData($redacted);
+      }
+
       echo json_encode($data);
     }
 
@@ -257,6 +286,8 @@
         $this->actionChatSend();
       } else if ($this->mAction === "status") {
         $this->actionStatus();
+      } else if ($this->mAction === "fetchcards") {
+        $this->actionFetchCards();
       } else {
         return false;
       }

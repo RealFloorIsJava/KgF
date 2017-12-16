@@ -89,5 +89,25 @@
         $hc->pick($nextPickId);
       }
     }
+
+    /**
+     * Fetches the information about the picked cards in this hand
+     */
+    public function getPickData($redacted) {
+      $data = array();
+      foreach ($this->mHandCards as $handId => $handCard) {
+        if ($handCard->isPicked()) {
+          if ($redacted) {
+            $data[$handId] = array();
+          } else {
+            $data[$handId] = array(
+              "type" => $handCard->getCard()->getType(),
+              "text" => $handCard->getCard()->getText()
+            );
+          }
+        }
+      }
+      return $data;
+    }
   }
 ?>

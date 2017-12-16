@@ -11,11 +11,25 @@
   };
   var mIntervalParticipants = 0;
   var mIntervalStatus = 0;
+  var mIntervalFetchCards = 0;
   var mNumGaps = 0;
 
   function startTasks() {
     mIntervalParticipants = setInterval(loadParticipants, 5000);
     mIntervalStatus = setInterval(loadStatus, 2000);
+    mIntervalFetchCards = setInterval(fetchCards, 1000);
+  }
+
+  function fetchCards() {
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=match&action=fetchcards",
+      dataType: "json",
+      success: function(data) {
+        updateHand(data["hand"]["OBJECT"], "OBJECT");
+        updateHand(data["hand"]["VERB"], "VERB");
+      }
+    });
   }
 
   function loadStatus() {
@@ -30,6 +44,7 @@
         if (mEnding) {
           clearInterval(mIntervalParticipants);
           clearInterval(mIntervalStatus);
+          clearInterval(mIntervalFetchCards);
         }
 
         var elem = $("#match-statement");
@@ -47,9 +62,6 @@
               .addClass("system-card");
           }
         }
-
-        updateHand(data["hand"]["OBJECT"], "OBJECT");
-        updateHand(data["hand"]["VERB"], "VERB");
 
         mNumGaps = data["gaps"];
       }

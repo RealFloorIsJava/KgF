@@ -471,6 +471,7 @@
       if ($timerUp) {
         if ($this->mState === "PENDING") {
           $this->selectNextPicker();
+          $this->shuffleParticipantOrder();
           $this->selectMatchCard();
           foreach ($this->mParticipants as $part) {
             $part->getHand()->replenish();
@@ -524,6 +525,19 @@
     }
 
     /**
+     * Shuffles the order of the participants
+     */
+    private function shuffleParticipantOrder() {
+      $order = range(1, count($this->mParticipants));
+      shuffle($order);
+
+      $n = count($order);
+      for ($i = 0; $i < $n; $i++) {
+        $this->mParticipants[$i]->assignOrder($order[$i]);
+      }
+    }
+
+    /**
      * Selects a statement card for the match
      */
     private function selectMatchCard() {
@@ -547,6 +561,13 @@
      */
     public function canPickHandNow() {
       return $this->mState === "CHOOSING";
+    }
+
+    /**
+     * Whether participants can see each others picks yet
+     */
+    public function canViewOthersPick() {
+      return $this->mState == "PICKING" || $this->mState == "COOLDOWN";
     }
   }
 ?>

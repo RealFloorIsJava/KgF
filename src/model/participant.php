@@ -104,6 +104,11 @@
           "UPDATE `kgf_match_participant` ".
           "SET `mp_picking` = :picking ".
           "WHERE `mp_id` = :partid"
+        ),
+        "modifyOrder" => $dbh->prepare(
+          "UPDATE `kgf_match_participant` ".
+          "SET `mp_order` = :newkey ".
+          "WHERE `mp_id` = :partid"
         )
       );
     }
@@ -166,9 +171,13 @@
       }
 
       $part = new Participant($row["mp_id"], $player, $row["mp_name"],
-        Match::getById($row["mp_match"]), intval($row["mp_score"]),
+        null, intval($row["mp_score"]),
         intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]),
         intval($row["mp_order"]));
+
+      // Lazy load match so that this participant is in the cache...
+      $part->mMatch = Match::getById($row["mp_match"]);
+      $part->mHand = Hand::loadHand($part);
       return $part;
     }
 
@@ -209,7 +218,9 @@
       $this->mPicking = $picking;
       $this->mTimeout = $timeout;
       $this->mOrder = $order;
-      $this->mHand = Hand::loadHand($this);
+      if (!is_null($match)) {
+        $this->mHand = Hand::loadHand($this);
+      }
 
       self::$sIdCache[$this->mId] = $this;
       self::$sPlayerCache[$this->mPlayerId] = $this;
@@ -280,6 +291,24 @@
      */
     public function getHand() {
       return $this->mHand;
+    }
+
+    /**
+     * Participant order getter
+     */
+    public function getOrder() {
+      return $this->mOrder;
+    }
+
+    /**
+     * Assigns the given key as the order of this participant
+     */
+    public function assignOrder($key) {
+      $this->mOrder = $key;
+      $q = self::$sSqlQueries["modifyOrder"];
+      $q->bindValue(":newkey", $this->mOrder, PDO::PARAM_INT);
+      $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
     }
 
     /**
