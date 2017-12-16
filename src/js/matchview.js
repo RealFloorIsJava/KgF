@@ -5,6 +5,7 @@
     "OBJECT": {},
     "VERB": {}
   };
+  var selfPicking = false;
 
   var mParticipantResolver = {};
 
@@ -70,6 +71,7 @@
         }
 
         mNumGaps = data["gaps"];
+        selfPicking = data["selfPicking"];
       }
     });
   }
@@ -237,6 +239,10 @@
   }
 
   function toggleSelect(handId) {
+    if (selfPicking) {
+      // Don't allow CHOOSING when player is PICKING.
+      return;
+    }
     $.ajax({
       method: "POST",
       url: "/global.php?page=match&action=togglepick",

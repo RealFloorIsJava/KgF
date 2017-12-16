@@ -155,7 +155,10 @@
      */
     private function actionTogglePick() {
       if (isset($_POST["handId"])) {
-        if ($this->mMatch->canPickHandNow()) {
+        // Note that the person who "isPicking()" actually is only PICKING,
+        // not CHOOSING. Terms are a bit unclear...
+        if ($this->mMatch->canPickHandNow()
+          && !$this->mParticipant->isPicking()) {
           $id = intval($_POST["handId"]);
           $this->mParticipant->getHand()->togglePicked($id);
         }
@@ -220,6 +223,7 @@
         "status" => $this->mMatch->getStatus(),
         "ending" => $this->mMatch->isEnding(),
         "hasCard" => $this->mMatch->hasCard(),
+        "selfPicking" => $this->mParticipant->isPicking(),
         "gaps" => $this->mMatch->getCardGapCount()
       );
       if ($this->mMatch->hasCard()) {
