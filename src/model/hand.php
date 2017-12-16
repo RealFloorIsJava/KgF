@@ -98,9 +98,11 @@
       foreach ($this->mHandCards as $handId => $handCard) {
         if ($handCard->isPicked()) {
           if ($redacted) {
-            $data[$handId] = array();
+            $data[] = array(
+              "redacted" => true
+            );
           } else {
-            $data[$handId] = array(
+            $data[] = array(
               "type" => $handCard->getCard()->getType(),
               "text" => $handCard->getCard()->getText()
             );
