@@ -371,7 +371,7 @@
       if ($this->mState == "ENDING") {
         return false;
       }
-      return $this->mCurrentCard !== null;
+      return !is_null($this->mCurrentCard);
     }
 
     /**

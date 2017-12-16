@@ -42,7 +42,7 @@
 
       // The user has to participate in a match from this point on
       $part = Participant::getParticipant($this->mUser->getId());
-      if ($part === null) {
+      if (is_null($part)) {
         $this->failPermissionCheck();
         return;
       }
@@ -76,11 +76,11 @@
      */
     private function actionJoin() {
       $part = Participant::getParticipant($this->mUser->getId());
-      if ($part === null) {
+      if (is_null($part)) {
         if (isset($_GET["match"])) {
           $id = $_GET["match"];
           $match = Match::getById($id);
-          if ($match === null || $match->hasStarted()) {
+          if (is_null($match) || $match->hasStarted()) {
             $this->failPermissionCheck();
             return;
           }
@@ -98,7 +98,7 @@
      */
     private function actionCreate() {
       $part = Participant::getParticipant($this->mUser->getId());
-      if ($part !== null) {
+      if (!is_null($part)) {
         // The user is participant in a match. Creating is not allowed.
         $this->failPermissionCheck();
         return;
