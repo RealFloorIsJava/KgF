@@ -27,7 +27,7 @@
 
   function logFatalErrors() {
     $err = error_get_last();
-    if ($err["type"] == E_ERROR) {
+    if ($err["type"] === E_ERROR) {
       handleErrors($err["type"], $err["message"], $err["file"],
         $err["line"]);
     }

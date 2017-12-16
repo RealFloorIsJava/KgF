@@ -145,7 +145,7 @@
         if (!isset(self::$sIdCache[$id])) {
           $parts[] = new Participant($part["mp_id"],
             $part["mp_player"], $part["mp_name"], $match,
-            intval($part["mp_score"]), intval($part["mp_picking"]) != 0,
+            intval($part["mp_score"]), intval($part["mp_picking"]) !== 0,
             intval($part["mp_timeout"]), intval($part["mp_order"]));
         } else {
           $parts[] = self::$sIdCache[$id];
@@ -172,7 +172,7 @@
 
       $part = new Participant($row["mp_id"], $player, $row["mp_name"],
         null, intval($row["mp_score"]),
-        intval($row["mp_picking"]) != 0, intval($row["mp_timeout"]),
+        intval($row["mp_picking"]) !== 0, intval($row["mp_timeout"]),
         intval($row["mp_order"]));
 
       // Lazy load match so that this participant is in the cache...
@@ -201,7 +201,7 @@
       $pid = $row["mp_player"];
 
       return new Participant($id, $pid, $row["mp_name"], $match,
-        $row["mp_score"], intval($row["mp_picking"]) != 0, $row["mp_timeout"],
+        $row["mp_score"], intval($row["mp_picking"]) !== 0, $row["mp_timeout"],
         $row["mp_order"]);
     }
 

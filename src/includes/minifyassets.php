@@ -47,9 +47,9 @@
   }
 
   function minifyAsset($from, $to, $type) {
-    if ($type == "js") {
+    if ($type === "js") {
       $minifier = new Minify\JS($from);
-    } else if ($type == "css") {
+    } else if ($type === "css") {
       $minifier = new Minify\CSS($from);
     } else {
       throw new Exception("Invalid minify type: ".$type);

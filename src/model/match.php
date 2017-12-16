@@ -264,7 +264,7 @@
         }
 
         $tsv = preg_split("/\t/", $line);
-        if (count($tsv) != 2) {
+        if (count($tsv) !== 2) {
           continue;
         }
 
@@ -368,7 +368,7 @@
      * Checks whether the current match has a card
      */
     public function hasCard() {
-      if ($this->mState == "ENDING") {
+      if ($this->mState === "ENDING") {
         return false;
       }
       return !is_null($this->mCurrentCard);
@@ -385,11 +385,11 @@
      * Fetches a line about the status of this match
      */
     public function getStatus() {
-      if ($this->mState == "PENDING") {
+      if ($this->mState === "PENDING") {
         return "Waiting for players...";
-      } else if ($this->mState == "CHOOSING") {
+      } else if ($this->mState === "CHOOSING") {
         return "Players are choosing cards...";
-      } else if ($this->mState == "PICKING") {
+      } else if ($this->mState === "PICKING") {
         $picker = "<unknown>";
         foreach ($this->mParticipants as $part) {
           if ($part->isPicking()) {
@@ -398,9 +398,9 @@
           }
         }
         return $picker." is picking a winner...";
-      } else if ($this->mState == "COOLDOWN") {
+      } else if ($this->mState === "COOLDOWN") {
         return "The next round is about to start...";
-      } else if ($this->mState == "ENDING") {
+      } else if ($this->mState === "ENDING") {
         return "The match is ending...";
       }
       return "<State of Match unknown>";
@@ -478,16 +478,16 @@
           }
           $this->setState("CHOOSING");
           $this->setTimer(time() + self::STATE_CHOOSING_TIME);
-        } else if ($this->mState == "CHOOSING") {
+        } else if ($this->mState === "CHOOSING") {
           // TODO maybe check if a playable selection was submitted, otherwise
           // jump directly to cooldown?
           // $this->setState("PICKING"); TODO
           $this->setTimer(time() + self::STATE_PICKING_TIME);
           // TODO dynamic for amount of cards
-        } else if ($this->mState == "PICKING") {
+        } else if ($this->mState === "PICKING") {
           $this->setState("COOLDOWN");
           $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
-        } else if ($this->mState == "COOLDOWN") {
+        } else if ($this->mState === "COOLDOWN") {
           // TODO check if match should end
           $this->setState("CHOOSING");
           $this->setTimer(time() + self::STATE_CHOOSING_TIME);
@@ -567,7 +567,7 @@
      * Whether participants can see each others picks yet
      */
     public function canViewOthersPick() {
-      return $this->mState == "PICKING" || $this->mState == "COOLDOWN";
+      return $this->mState === "PICKING" || $this->mState === "COOLDOWN";
     }
   }
 ?>
