@@ -39,11 +39,6 @@
           </div>
           <div class="area-played-hand">
             <div class="card-area-played">
-              <!--<div class="card-area-set">
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-                <div class="card-base object-card">Words<div class="card-id">#1234</div></div>
-              </div>//-->
               <div class="card-area-boost">&nbsp;</div>
               <div class="card-area-boost">&nbsp;</div>
               <div class="card-area-boost">&nbsp;</div>
