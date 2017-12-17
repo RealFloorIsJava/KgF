@@ -207,7 +207,8 @@
 
       $this->mCurrentCard = null;
       if (!is_null($row["match_card_id"])) {
-        $this->mCurrentCard = Card::getByIdForMatch($row["match_card_id"]);
+        $this->mCurrentCard = Card::getByIdForMatch($row["match_card_id"],
+          $this);
       }
     }
 

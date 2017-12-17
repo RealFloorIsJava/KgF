@@ -100,11 +100,11 @@
      * Private constructor to prevent instance creation
      */
     private function __construct(array $row, array $kwargs = array()) {
-      $this->mId = $row["hand_id"];
+      $this->mId = intval($row["hand_id"]);
 
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mPicked = $row["hand_pick"];
+      $this->mPicked = intval($row["hand_pick"]) !== 0;
 
       assert(isset($kwargs["participant"]), "participant has to be supplied");
       $this->mParticipant = $kwargs["participant"];
