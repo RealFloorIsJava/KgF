@@ -132,7 +132,7 @@
     /**
      * Loads the participants of the given match
      */
-    public static function loadForMatch($match) {
+    public static function loadForMatch(Match $match) {
       $q = self::$sSqlQueries["allForMatch"];
       $q->bindValue(":matchid", $match->getId(), PDO::PARAM_INT);
       $q->execute();
@@ -141,12 +141,10 @@
       $parts = array();
       foreach ($rows as $part) {
         $id = $part["mp_id"];
-        $pid = $part["mp_player"];
         if (!isset(self::$sIdCache[$id])) {
-          $parts[] = new Participant($part["mp_id"],
-            $part["mp_player"], $part["mp_name"], $match,
-            intval($part["mp_score"]), intval($part["mp_picking"]) !== 0,
-            intval($part["mp_timeout"]), intval($part["mp_order"]));
+          $parts[] = new Participant($part, array(
+            "match" => $match
+          ));
         } else {
           $parts[] = self::$sIdCache[$id];
         }
@@ -158,6 +156,7 @@
      * Fetches the participant for this player
      */
     public static function getParticipant($player) {
+      $player = strval($player);
       if (isset(self::$sPlayerCache[$player])) {
         return self::$sPlayerCache[$player];
       }
@@ -170,21 +169,16 @@
         return null;
       }
 
-      $part = new Participant($row["mp_id"], $player, $row["mp_name"],
-        null, intval($row["mp_score"]),
-        intval($row["mp_picking"]) !== 0, intval($row["mp_timeout"]),
-        intval($row["mp_order"]));
-
-      // Lazy load match so that this participant is in the cache...
-      $part->mMatch = Match::getById($row["mp_match"]);
-      $part->mHand = Hand::loadHand($part);
+      $part = new Participant($row);
       return $part;
     }
 
     /**
      * Creates a participant from an User and a Match
      */
-    public static function createFromUserAndMatch($user, $match, $timeout) {
+    public static function createFromUserAndMatch(User $user, Match $match,
+        $timeout) {
+      $timeout = intval($timeout);
       $q = self::$sSqlQueries["addParticipant"];
       $q->bindValue(":playerid", $user->getId(), PDO::PARAM_STR);
       $q->bindValue(":playername", $user->getNickname(), PDO::PARAM_STR);
@@ -195,35 +189,38 @@
       // We're in a transaction, so this should be the one we just created
       $q = self::$sSqlQueries["fetchLatest"];
       $q->execute();
-
       $row = $q->fetch();
-      $id = $row["mp_id"];
-      $pid = $row["mp_player"];
 
-      return new Participant($id, $pid, $row["mp_name"], $match,
-        $row["mp_score"], intval($row["mp_picking"]) !== 0, $row["mp_timeout"],
-        $row["mp_order"]);
+      return new Participant($row, array(
+        "match" => $match
+      ));
     }
 
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($id, $playerId, $name, $match, $score,
-      $picking, $timeout, $order) {
-      $this->mId = intval($id);
-      $this->mPlayerId = $playerId;
-      $this->mPlayerName = $name;
-      $this->mMatch = $match;
-      $this->mScore = intval($score);
-      $this->mPicking = $picking;
-      $this->mTimeout = $timeout;
-      $this->mOrder = $order;
-      if (!is_null($match)) {
-        $this->mHand = Hand::loadHand($this);
-      }
+    private function __construct(array $row, array $kwargs = array()) {
+      $this->mId = intval($row["mp_id"]);
+      $this->mPlayerId = $row["mp_player"];
 
       self::$sIdCache[$this->mId] = $this;
       self::$sPlayerCache[$this->mPlayerId] = $this;
+
+      $this->mPlayerName = $row["mp_name"];
+      $this->mScore = intval($row["mp_score"]);
+      $this->mPicking = intval($row["mp_picking"]) !== 0;
+      $this->mTimeout = intval($row["mp_timeout"]);
+      $this->mOrder = is_null($row["mp_order"])
+        ? null
+        : intval($row["mp_order"]);
+
+      if (isset($kwargs["match"])) {
+        $this->mMatch = $kwargs["match"];
+      } else {
+        $this->mMatch = Match::getById($row["mp_match"]);
+      }
+
+      $this->mHand = Hand::loadHand($this);
     }
 
     /**
@@ -236,6 +233,7 @@
       $q = self::$sSqlQueries["abandon"];
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
       $q->execute();
+
       unset(self::$sIdCache[$this->mId]);
       unset(self::$sPlayerCache[$this->mPlayerId]);
     }
@@ -245,6 +243,7 @@
      * amount of seconds
      */
     public function heartbeat($seconds) {
+      $seconds = intval($seconds);
       $q = self::$sSqlQueries["heartbeat"];
       $q->bindValue(":timeout", time() + $seconds, PDO::PARAM_INT);
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
@@ -304,6 +303,7 @@
      * Assigns the given key as the order of this participant
      */
     public function assignOrder($key) {
+      $key = intval($key);
       $this->mOrder = $key;
       $q = self::$sSqlQueries["modifyOrder"];
       $q->bindValue(":newkey", $this->mOrder, PDO::PARAM_INT);
@@ -315,6 +315,7 @@
      * Sets whether this participant is picking cards
      */
     public function setPicking($val) {
+      $val = boolval($val);
       $this->mPicking = $val;
       $q = self::$sSqlQueries["modifyPicking"];
       $q->bindValue(":picking", $this->mPicking ? 1 : 0, PDO::PARAM_INT);

@@ -42,6 +42,7 @@
      * Theme setter
      */
     public function setTheme($theme) {
+      $theme = strval($theme);
       $this->mTheme = $theme;
     }
 
@@ -49,6 +50,7 @@
      * Nick setter
      */
     public function setNickname($name) {
+      $name = strval($name);
       $this->mNickname = $name;
     }
 
@@ -77,6 +79,7 @@
      * Prevents chatting until the given point in time has passed
      */
     public function preventChatUntil($time) {
+      $time = intval($time);
       $this->mChatCooldown = $time;
     }
   }

@@ -62,7 +62,7 @@
     /**
      * Loads the hand of a participant
      */
-    public static function loadHandCards($participant) {
+    public static function loadHandCards(Participant $participant) {
       $q = self::$sSqlQueries["loadHand"];
       $q->bindValue(":partid", $participant->getId(), PDO::PARAM_INT);
       $q->execute();
@@ -71,9 +71,9 @@
       $res = array();
       foreach ($rows as $row) {
         if (!isset(self::$sIdCache[$row["hand_id"]])) {
-          $res[$row["hand_id"]] = new HandCard($row["hand_id"], $participant,
-            Card::getByIdForMatch($row["hand_card"], $participant->getMatch()),
-            $row["hand_pick"]);
+          $res[$row["hand_id"]] = new HandCard($row, array(
+            "participant" => $participant
+          ));
         } else {
           $res[$row["hand_id"]] = self::$sIdCache[$row["hand_id"]];
         }
@@ -85,7 +85,10 @@
      * Replenishes the hand for the given participant with the given number of
      * cards of the given type
      */
-    public static function replenishHandFor($participant, $type, $num) {
+    public static function replenishHandFor(Participant $participant, $type,
+        $num) {
+      $type = strval($type);
+      $num = intval($num);
       $q = self::$sSqlQueries["replenishCardType"];
       $q->bindValue(":partid", $participant->getId(), PDO::PARAM_INT);
       $q->bindValue(":type", $type, PDO::PARAM_STR);
@@ -96,13 +99,18 @@
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($id, $participant, $card, $pickId) {
-      $this->mId = $id;
-      $this->mCard = $card;
-      $this->mParticipant = $participant;
-      $this->mPicked = $pickId;
+    private function __construct(array $row, array $kwargs = array()) {
+      $this->mId = $row["hand_id"];
 
       self::$sIdCache[$this->mId] = $this;
+
+      $this->mPicked = $row["hand_pick"];
+
+      assert(isset($kwargs["participant"]), "participant has to be supplied");
+      $this->mParticipant = $kwargs["participant"];
+
+      $this->mCard = Card::getByIdForMatch($row["hand_card"],
+        $this->mParticipant->getMatch());
     }
 
     /**
@@ -130,14 +138,16 @@
      * Picks this card
      */
     public function pick($requestedPickId) {
+      $requestedPickId = intval($requestedPickId);
       if ($this->isPicked()) {
         return;
       }
       $q = self::$sSqlQueries["updatePick"];
       $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
       $q->bindValue(":pick", $requestedPickId, PDO::PARAM_INT);
-      $this->mPicked = $requestedPickId;
       $q->execute();
+
+      $this->mPicked = $requestedPickId;
     }
 
     /**
@@ -150,8 +160,9 @@
       $q = self::$sSqlQueries["updatePick"];
       $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
       $q->bindValue(":pick", null, PDO::PARAM_INT);
-      $this->mPicked = null;
       $q->execute();
+
+      $this->mPicked = null;
     }
   }
 ?>

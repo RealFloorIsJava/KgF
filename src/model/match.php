@@ -142,14 +142,7 @@
       foreach ($rows as $match) {
         $id = $match["match_id"];
         if (!isset(self::$sIdCache[$id])) {
-          $matchObj = new Match($match["match_id"], $match["match_timer"],
-            null, $match["match_state"]);
-              $card = $match["match_card_id"];
-          if (!is_null($card)) {
-            $card = Card::getByIdForMatch($card, $matchObj);
-            $matchObj->mCurrentCard = $card;
-          }
-          $matches[] = $matchObj;
+          $matches[] = new Match($match);
         } else {
           $matches[] = self::$sIdCache[$id];
         }
@@ -161,6 +154,7 @@
      * Fetches a match by its ID
      */
     public static function getById($id) {
+      $id = intval($id);
       if (isset(self::$sIdCache[$id])) {
         return self::$sIdCache[$id];
       }
@@ -174,16 +168,7 @@
         return null;
       }
 
-      $match = new Match($row["match_id"], $row["match_timer"], null,
-        $row["match_state"]);
-
-      $card = $row["match_card_id"];
-      if (!is_null($card)) {
-        $card = Card::getByIdForMatch($card, $match);
-        $match->mCurrentCard = $card;
-      }
-
-      return $match;
+      return new Match($row);
     }
 
     /**
@@ -200,8 +185,7 @@
       $q->execute();
       $match = $q->fetch();
 
-      $obj = new Match($match["match_id"], $match["match_timer"], null,
-        $match["match_state"]);
+      $obj = new Match($match);
       $obj->getChat()->sendMessage("SYSTEM", "<b>Match was created</b>");
       return $obj;
     }
@@ -209,16 +193,22 @@
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($id, $timer, $card, $state) {
+    private function __construct(array $row) {
+      $this->mId = intval($row["match_id"]);
+
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mId = intval($id);
-      $this->mTimer = intval($timer);
-      $this->mCurrentCard = $card;
-      $this->mState = $state;
+      $this->mTimer = intval($row["match_timer"]);
+      $this->mState = $row["match_state"];
+      $this->mDeleted = false;
+
       $this->mParticipants = Participant::loadForMatch($this);
       $this->mChat = new Chat($this);
-      $this->mDeleted = false;
+
+      $this->mCurrentCard = null;
+      if (!is_null($row["match_card_id"])) {
+        $this->mCurrentCard = Card::getByIdForMatch($row["match_card_id"]);
+      }
     }
 
     /**
@@ -231,7 +221,8 @@
     /**
      * Adds this user to this match
      */
-    public function addUser($user, $timeout) {
+    public function addUser(User $user, $timeout) {
+      $timeout = intval($timeout);
       $this->mParticipants[] = Participant::createFromUserAndMatch($user, $this,
         $timeout);
       $this->getChat()->sendMessage("SYSTEM",
@@ -246,6 +237,7 @@
      * Reads the given deck file and creates a deck from it
      */
     public function createMatchDeck($file) {
+      $file = strval($file);
       $tsvData = file_get_contents($file);
       $tsvData = preg_split("/\n|\r|\r\n/", $tsvData);
 
@@ -409,7 +401,7 @@
     /**
      *
      */
-    private function setCurrentCard($card) {
+    private function setCurrentCard(Card $card) {
       $this->mCurrentCard = $card;
       $q = self::$sSqlQueries["modifyCard"];
       $q->bindValue(":newcard", $card->getId(), PDO::PARAM_INT);
@@ -421,6 +413,7 @@
      * Changes the match timer to the given value
      */
     private function setTimer($timer) {
+      $timer = intval($timer);
       $this->mTimer = $timer;
       $q = self::$sSqlQueries["modifyTimer"];
       $q->bindValue(":newtimer", $this->mTimer, PDO::PARAM_INT);
@@ -432,6 +425,7 @@
      * Changes the match state to the given value
      */
     private function setState($state) {
+      $state = strval($state);
       $this->mState = $state;
       $q = self::$sSqlQueries["modifyState"];
       $q->bindValue(":newstate", $this->mState, PDO::PARAM_STR);

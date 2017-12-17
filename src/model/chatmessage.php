@@ -19,10 +19,10 @@
     /**
      * Constructor
      */
-    public function __construct($id, $type, $message) {
-      $this->mId = intval($id);
-      $this->mType = $type;
-      $this->mMessage = $message;
+    public function __construct(array $row) {
+      $this->mId = intval($row["chat_id"]);
+      $this->mType = $row["chat_type"];
+      $this->mMessage = $row["chat_message"];
     }
 
     /**

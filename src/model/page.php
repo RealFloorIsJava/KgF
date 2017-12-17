@@ -23,6 +23,7 @@
      * Returns an array (include, classname)
      */
     public static function getPageSource($pageName) {
+      $pageName = strval($pageName);
       $page = "dashboard";
       if (preg_match("/[a-z]+/", $pageName)) {
         $page = $pageName;
@@ -37,7 +38,7 @@
     /**
      * Constructor
      */
-    public function __construct($user) {
+    public function __construct(User $user) {
       $this->mUser = $user;
       $this->mStatus = "";
       $this->mSuccess = true;
@@ -55,6 +56,7 @@
      * Shows a template to the user
      */
     protected function showTemplate($tpl) {
+      $tpl = strval($tpl);
       eval("?>".file_get_contents($tpl));
     }
 
@@ -84,6 +86,8 @@
      * Stores a status for later display
      */
     protected function reportStatus($status, $success) {
+      $status = strval($status);
+      $success = boolval($success);
       $this->mStatus = $status;
       $this->mSuccess = $success;
     }

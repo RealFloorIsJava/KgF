@@ -35,7 +35,7 @@
     /**
      * Constructor
      */
-    public function __construct($match) {
+    public function __construct(Match $match) {
       $this->mMatch = $match;
     }
 
@@ -43,6 +43,8 @@
      * Sends a chat message in this chat
      */
     public function sendMessage($type, $msg) {
+      $type = strval($type);
+      $msg = strval($msg);
       $q = self::$sSqlQueries["addMessage"];
       $q->bindValue(":match", $this->mMatch->getId(), PDO::PARAM_INT);
       $q->bindValue(":type", $type, PDO::PARAM_STR);
@@ -54,6 +56,7 @@
      * Loads the chat messages from the given offset
      */
     public function load($offset) {
+      $offset = intval($offset);
       $q = self::$sSqlQueries["fetchMatchOffset"];
       $q->bindValue(":match", $this->mMatch->getId(), PDO::PARAM_INT);
       $q->bindValue(":offset", $offset, PDO::PARAM_INT);
@@ -62,8 +65,7 @@
 
       $msgs = array();
       foreach ($rows as $msg) {
-        $msgs[] = new ChatMessage($msg["chat_id"], $msg["chat_type"],
-          $msg["chat_message"]);
+        $msgs[] = new ChatMessage($msg);
       }
       return $msgs;
     }

@@ -57,7 +57,9 @@
     /**
      * Creates a card for the given match
      */
-    public static function createForMatch($text, $type, $match) {
+    public static function createForMatch($text, $type, Match $match) {
+      $text = strval($text);
+      $type = strval($type);
       $q = self::$sSqlQueries["createForMatch"];
       $q->bindValue(":text", $text, PDO::PARAM_STR);
       $q->bindValue(":type", $type, PDO::PARAM_STR);
@@ -68,7 +70,8 @@
     /**
      * Fetches a card by its ID for the given match
      */
-    public static function getByIdForMatch($id, $match) {
+    public static function getByIdForMatch($id, Match $match) {
+      $id = intval($id);
       if (isset(self::$sIdCache[$id])) {
         return self::$sIdCache[$id];
       }
@@ -82,14 +85,16 @@
         return null;
       }
 
-      return new Card($row["card_id"], $row["card_text"], $row["card_type"],
-        $match);
+      return new Card($row, array(
+        "match" => $match
+      ));/*$row["card_id"], $row["card_text"], $row["card_type"],
+        $match);*/
     }
 
     /**
      * Fetches a random statement card for the given match
      */
-    public static function getRandomStatementForMatch($match) {
+    public static function getRandomStatementForMatch(Match $match) {
       $q = self::$sSqlQueries["randomStatement"];
       $q->bindValue(":match", $match->getId(), PDO::PARAM_INT);
       $q->execute();
@@ -102,27 +107,32 @@
         return self::$sIdCache[$id];
       }
 
-      return new Card($row["card_id"], $row["card_text"], $row["card_type"],
-        $match);
+      return new Card($row, array(
+        "match" => $match
+      ));
     }
 
     /**
      * Checks whether the given card type is valid
      */
     public static function isValidType($type) {
+      $type = strval($type);
       return $type === "STATEMENT" || $type === "OBJECT" || $type === "VERB";
     }
 
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($id, $text, $type, $match) {
+    private function __construct(array $row, array $kwargs = array()) {
+      $this->mId = intval($row["card_id"]);
+
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mId = intval($id);
-      $this->mText = $text;
-      $this->mType = $type;
-      $this->mMatch = $match;
+      $this->mText = $row["card_text"];
+      $this->mType = $row["card_type"];
+
+      assert(isset($kwargs["match"]), "match has to be supplied");
+      $this->mMatch = $kwargs["match"];
     }
 
     /**

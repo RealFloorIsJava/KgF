@@ -19,14 +19,14 @@
     /**
      * Loads the hand of a participant
      */
-    public static function loadHand($participant) {
+    public static function loadHand(Participant $participant) {
       return new Hand(HandCard::loadHandCards($participant), $participant);
     }
 
     /**
      * Private constructor to prevent instance creation
      */
-    private function __construct($cards, $participant) {
+    private function __construct(array $cards, Participant $participant) {
       $this->mHandCards = $cards;
       $this->mParticipant = $participant;
     }
@@ -59,6 +59,7 @@
      * Toggles a hand card from picked to not picked and vice versa
      */
     public function togglePicked($handId) {
+      $handId = intval($handId);
       if (!isset($this->mHandCards[$handId])) {
         // This hand card does not exist in this hand...
         return;
@@ -94,6 +95,7 @@
      * Fetches the information about the picked cards in this hand
      */
     public function getPickData($redacted) {
+      $redacted = boolval($redacted);
       $data = array();
       foreach ($this->mHandCards as $handId => $handCard) {
         if ($handCard->isPicked()) {
