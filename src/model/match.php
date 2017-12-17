@@ -427,11 +427,14 @@
      */
     private function setState($state) {
       $state = strval($state);
+
+      $state = $this->onStateLeave($state);
       $this->mState = $state;
       $q = self::$sSqlQueries["modifyState"];
       $q->bindValue(":newstate", $this->mState, PDO::PARAM_STR);
       $q->bindValue(":match", $this->mId, PDO::PARAM_INT);
       $q->execute();
+      $this->onStateEnter();
     }
 
     /**
@@ -465,27 +468,13 @@
       $timerUp = $this->mTimer <= time();
       if ($timerUp) {
         if ($this->mState === "PENDING") {
-          $this->selectNextPicker();
-          $this->shuffleParticipantOrder();
-          $this->selectMatchCard();
-          foreach ($this->mParticipants as $part) {
-            $part->getHand()->replenish();
-          }
           $this->setState("CHOOSING");
-          $this->setTimer(time() + self::STATE_CHOOSING_TIME);
         } else if ($this->mState === "CHOOSING") {
-          // TODO maybe check if a playable selection was submitted, otherwise
-          // jump directly to cooldown?
-          // $this->setState("PICKING"); TODO
-          $this->setTimer(time() + self::STATE_PICKING_TIME);
-          // TODO dynamic for amount of cards
+          $this->setState("PICKING");
         } else if ($this->mState === "PICKING") {
           $this->setState("COOLDOWN");
-          $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
         } else if ($this->mState === "COOLDOWN") {
-          // TODO check if match should end
           $this->setState("CHOOSING");
-          $this->setTimer(time() + self::STATE_CHOOSING_TIME);
         } else if ($this->mState === "ENDING") {
           $this->delete();
         }
@@ -494,8 +483,41 @@
       if ($this->mState !== "PENDING" && $this->mState !== "ENDING") {
         if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
           $this->setState("ENDING");
-          $this->setTimer(time() + self::STATE_ENDING_TIME);
         }
+      }
+    }
+
+    /**
+     * Called directly before leaving a state
+     */
+    private function onStateLeave($target) {
+      if ($this->mState === "COOLDOWN") {
+        // TODO check if match should end
+      }
+      return $target;
+    }
+
+    /**
+     * Called directly after entering a state
+     */
+    private function onStateEnter() {
+      if ($this->mState === "CHOOSING") {
+        $this->selectNextPicker();
+        $this->shuffleParticipantOrder();
+        $this->selectMatchCard();
+        foreach ($this->mParticipants as $part) {
+          $part->getHand()->replenish();
+        }
+        $this->setTimer(time() + self::STATE_CHOOSING_TIME);
+      } else if ($this->mState === "PICKING") {
+        // TODO maybe check if a playable selection was submitted, otherwise
+        // jump directly to cooldown?
+        // TODO dynamic for amount of cards
+        $this->setTimer(time() + self::STATE_PICKING_TIME);
+      } else if ($this->mState === "COOLDOWN") {
+        $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
+      } else if ($this->mState === "ENDING") {
+        $this->setTimer(time() + self::STATE_ENDING_TIME);
       }
     }
 
