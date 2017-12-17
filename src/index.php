@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Karten gegen Flops</title>
+    <title>Karten gegen Flopsigkeit</title>
     <link rel="shortcut icon" href="/favicon.ico">
     <style type="text/css">
       .floating-center {
