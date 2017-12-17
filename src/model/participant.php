@@ -122,7 +122,7 @@
       $rows = $q->fetchAll();
       foreach ($rows as $part) {
         Match::getById($part["mp_match"])->getChat()->sendMessage("SYSTEM",
-          "<b>".$part["mp_name"]." timed out</b>");
+          "<b>".$part["mp_name"]." timed out.</b>");
       }
 
       $q = self::$sSqlQueries["housekeeping"];

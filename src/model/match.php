@@ -187,7 +187,7 @@
       $match = $q->fetch();
 
       $obj = new Match($match);
-      $obj->getChat()->sendMessage("SYSTEM", "<b>Match was created</b>");
+      $obj->getChat()->sendMessage("SYSTEM", "<b>Match was created.</b>");
       return $obj;
     }
 
@@ -228,7 +228,7 @@
       $this->mParticipants[] = Participant::createFromUserAndMatch($user, $this,
         $timeout);
       $this->getChat()->sendMessage("SYSTEM",
-        "<b>".$user->getNickname()." joined</b>");
+        "<b>".$user->getNickname()." joined.</b>");
 
       if ($this->mTimer - time() < self::USERADD_REPLENISH_THRESHOLD) {
         $this->setTimer(time() + self::USERADD_REPLENISH_AMOUNT);
@@ -289,9 +289,16 @@
         $minimumCardLimit[$type]--;
       }
 
+      $noteGiven = false;
       foreach ($minimumCardLimit as $type => $value) {
         $orig = $value;
         while ($value-- > 0) {
+          if (!$noteGiven) {
+            $noteGiven = true;
+            $this->getChat()->sendMessage("SYSTEM",
+              "<b>Your deck is insufficient. ".
+              "Placeholder cards have been added to the match.</b>");
+          }
           Card::createForMatch("Your deck needs at least ".$orig.
             " more ".strtolower($type)." cards", $type, $this);
         }
@@ -457,6 +464,9 @@
         if ($this->mTimer - time() < self::PENDING_REFRESH_THRESHOLD) {
           if (count($this->mParticipants) < self::MINIMUM_PLAYERS) {
             $this->setTimer(time() + self::INITIAL_MATCH_TIMER);
+            $this->getChat()->sendMessage("SYSTEM",
+              "<b>There are not enough players, ".
+              "the timer has been restarted!</b>");
           }
         }
       }
@@ -519,6 +529,7 @@
         $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
       } else if ($this->mState === "ENDING") {
         $this->setTimer(time() + self::STATE_ENDING_TIME);
+        $this->getChat()->sendMessage("SYSTEM", "<b>Match is ending.</b>");
       }
     }
 
