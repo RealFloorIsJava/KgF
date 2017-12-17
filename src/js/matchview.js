@@ -5,7 +5,7 @@
     "OBJECT": {},
     "VERB": {}
   };
-  var selfPicking = false;
+  var allowPicks = false;
 
   var mParticipantResolver = {};
 
@@ -71,7 +71,7 @@
         }
 
         mNumGaps = data["gaps"];
-        selfPicking = data["selfPicking"];
+        allowPicks = data["allowPicks"];
       }
     });
   }
@@ -239,8 +239,7 @@
   }
 
   function toggleSelect(handId) {
-    if (selfPicking) {
-      // Don't allow CHOOSING when player is PICKING.
+    if (!allowPicks) {
       return;
     }
     $.ajax({

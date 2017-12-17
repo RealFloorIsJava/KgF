@@ -92,6 +92,19 @@
     }
 
     /**
+     * Returns the number of picked cards on this hand
+     */
+    public function getPickCount() {
+      $n = 0;
+      foreach ($this->mHandCards as $handCard) {
+        if ($handCard->isPicked()) {
+          $n++;
+        }
+      }
+      return $n;
+    }
+
+    /**
      * Fetches the information about the picked cards in this hand
      */
     public function getPickData($redacted) {

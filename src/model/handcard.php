@@ -104,7 +104,9 @@
 
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mPicked = intval($row["hand_pick"]) !== 0;
+      $this->mPicked = is_null($row["hand_pick"])
+        ? null
+        : intval($row["hand_pick"]);
 
       assert(isset($kwargs["participant"]), "participant has to be supplied");
       $this->mParticipant = $kwargs["participant"];

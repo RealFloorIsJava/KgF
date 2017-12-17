@@ -28,6 +28,7 @@
      */
     const USERADD_REPLENISH_THRESHOLD = 30;
     const PENDING_REFRESH_THRESHOLD = 10;
+    const CHOOSING_FINAL_THRESHOLD = 10;
     /**
      * Prepared SQL queries
      */
@@ -585,6 +586,30 @@
      */
     public function canViewOthersPick() {
       return $this->mState === "PICKING" || $this->mState === "COOLDOWN";
+    }
+
+    /**
+     * Checks if each player has chosen sufficiently many cards for choosing to
+     * finish earlier and change the timer accordingly
+     */
+    public function checkIfChoosingDone() {
+      $gaps = $this->getCardGapCount();
+      $done = true;
+      foreach ($this->mParticipants as $part) {
+        if ($part->getHand()->getPickCount() !== $gaps) {
+          $done = false;
+          break;
+        }
+      }
+
+      if (!$done) {
+        return;
+      }
+
+      $timeLeft = $this->mTimer - time();
+      if ($timeLeft > self::CHOOSING_FINAL_THRESHOLD) {
+        $this->setTimer(time() + self::CHOOSING_FINAL_THRESHOLD);
+      }
     }
   }
 ?>
