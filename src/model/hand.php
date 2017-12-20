@@ -105,6 +105,17 @@
     }
 
     /**
+     * Unpicks all cards in this hand
+     */
+    public function unpickAll() {
+      foreach ($this->mHandCards as $handCard) {
+        if ($handCard->isPicked()) {
+          $handCard->unpick();
+        }
+      }
+    }
+
+    /**
      * Fetches the information about the picked cards in this hand
      */
     public function getPickData($redacted) {

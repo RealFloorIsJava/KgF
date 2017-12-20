@@ -460,7 +460,6 @@
      */
     private function setState($state) {
       $state = strval($state);
-
       $state = $this->onStateLeave($state);
       $this->mState = $state;
       $q = self::$sSqlQueries["modifyState"];
@@ -547,8 +546,14 @@
         }
         $this->setTimer(time() + self::STATE_CHOOSING_TIME);
       } else if ($this->mState === "PICKING") {
-        // TODO maybe check if a playable selection was submitted, otherwise
-        // jump directly to cooldown?
+        $this->unpickIncomplete();
+        if (!$this->isPickPossible()) {
+          $this->getChat()->sendMessage("SYSTEM",
+            "<b>Too few valid choices!</b>");
+          $this->setState("COOLDOWN");
+          return;
+        }
+
         // TODO dynamic for amount of cards
         $this->setTimer(time() + self::STATE_PICKING_TIME);
       } else if ($this->mState === "COOLDOWN") {
@@ -623,6 +628,39 @@
     private function selectMatchCard() {
       $card = Card::getRandomStatementForMatch($this);
       $this->setCurrentCard($card);
+    }
+
+    /**
+     * Completely unpicks every incomplete hand.
+     */
+    private function unpickIncomplete() {
+      $gc = $this->getCardGapCount();
+      foreach ($this->mParticipants as $part) {
+        if ($part->isPicking()) {
+          continue;
+        }
+        if ($part->getHand()->getPickCount() < $gc) {
+          $part->getHand()->unpickAll();
+          $this->getChat()->sendMessage("SYSTEM", "<b>".$part->getName().
+            " failed to choose cards!</b>");
+        }
+      }
+    }
+
+    /**
+     * Check whether a pick is possible, i.e. more than one choice is there.
+     */
+    private function isPickPossible() {
+      $k = 0;
+      foreach ($this->mParticipants as $part) {
+        if ($part->getHand()->getPickCount() > 0) {
+          $k++;
+          if ($k == 2) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     /**
