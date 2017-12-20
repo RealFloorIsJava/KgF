@@ -124,9 +124,10 @@
         $match = Match::getById($part["mp_match"]);
         $match->getChat()->sendMessage("SYSTEM",
           "<b>".$part["mp_name"]." timed out.</b>");
+
         $match->removeParticipant($part["mp_id"]);
-        self::$sIdCache[$part["mp_id"]] = null;
-        self::$sPlayerCache[$part["mp_player"]] = null;
+        unset(self::$sIdCache[$part["mp_id"]]);
+        unset(self::$sPlayerCache[$part["mp_player"]]);
       }
 
       $q = self::$sSqlQueries["housekeeping"];
@@ -238,6 +239,7 @@
       $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
       $q->execute();
 
+      $this->mMatch->removeParticipant($this->mId);
       unset(self::$sIdCache[$this->mId]);
       unset(self::$sPlayerCache[$this->mPlayerId]);
     }

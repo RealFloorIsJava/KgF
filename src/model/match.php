@@ -55,7 +55,7 @@
      */
     private $mState;
     /**
-     * The participants of this match
+     * The participants of this match ordered by ID, ascending
      */
     private $mParticipants;
     /**
@@ -239,18 +239,24 @@
      * Removes a participant by ID, but only from the cached match.
      */
     public function removeParticipant($id) {
-      $id = strval($id);
+      $id = intval($id);
       $i = 0;
       for (; $i < count($this->mParticipants); $i++) {
         if ($this->mParticipants[$i]->getId() === $id) {
           break;
         }
       }
+
       if ($i < count($this->mParticipants)) {
+        $old = $this->mParticipants[$i];
         array_splice($this->mParticipants, $i, 1);
-      }
-      if (count($this->mParticipants) < 1) {
-        $this->mDeleted = true;
+        if (count($this->mParticipants) < 1) {
+          $this->mDeleted = true;
+        } else {
+          if ($old->isPicking()) {
+            $this->notifyPickerLeave($id);
+          }
+        }
       }
     }
 
@@ -523,6 +529,7 @@
     private function onStateLeave($target) {
       if ($this->mState === "COOLDOWN") {
         // TODO check if match should end
+        // TODO clear cards
       }
       return $target;
     }
@@ -569,6 +576,31 @@
       }
       if (!$next) {
         $first->setPicking(true);
+      }
+    }
+
+    /**
+     * Handles the situation when the person picking leaves the match
+     */
+    private function notifyPickerLeave($id) {
+      $id = intval($id);
+      $first = $this->mParticipants[0];
+      $found = false;
+      foreach ($this->mParticipants as $part) {
+        if ($part->getId() > $id) {
+          $part->setPicking(true);
+          $found = true;
+          break;
+        }
+      }
+      if (!$found) {
+        $first->setPicking(true);
+      }
+
+      if ($this->mState === "CHOOSING" || $this->mState === "PICKING") {
+        // Cancel the current round
+        $this->setState("COOLDOWN");
+        $this->getChat()->sendMessage("SYSTEM", "<b>The picker left!</b>");
       }
     }
 
