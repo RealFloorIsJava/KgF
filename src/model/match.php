@@ -236,6 +236,25 @@
     }
 
     /**
+     * Removes a participant by ID, but only from the cached match.
+     */
+    public function removeParticipant($id) {
+      $id = strval($id);
+      $i = 0;
+      for (; $i < count($this->mParticipants); $i++) {
+        if ($this->mParticipants[$i]->getId() === $id) {
+          break;
+        }
+      }
+      if ($i < count($this->mParticipants)) {
+        array_splice($this->mParticipants, $i, 1);
+      }
+      if (count($this->mParticipants) < 1) {
+        $this->mDeleted = true;
+      }
+    }
+
+    /**
      * Reads the given deck file and creates a deck from it
      */
     public function createMatchDeck($file) {
@@ -612,7 +631,6 @@
           break;
         }
       }
-
       if (!$done) {
         return;
       }

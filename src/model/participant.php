@@ -121,8 +121,12 @@
       $q->execute();
       $rows = $q->fetchAll();
       foreach ($rows as $part) {
-        Match::getById($part["mp_match"])->getChat()->sendMessage("SYSTEM",
+        $match = Match::getById($part["mp_match"]);
+        $match->getChat()->sendMessage("SYSTEM",
           "<b>".$part["mp_name"]." timed out.</b>");
+        $match->removeParticipant($part["mp_id"]);
+        self::$sIdCache[$part["mp_id"]] = null;
+        self::$sPlayerCache[$part["mp_player"]] = null;
       }
 
       $q = self::$sSqlQueries["housekeeping"];
