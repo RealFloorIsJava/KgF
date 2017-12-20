@@ -55,6 +55,10 @@
           "UPDATE `kgf_hand` ".
           "SET `hand_pick` = :pick ".
           "WHERE `hand_id` = :handid"
+        ),
+        "deleteCard" => $dbh->prepare(
+          "DELETE FROM `kgf_hand` ".
+          "WHERE `hand_id` = :handid"
         )
       );
     }
@@ -165,6 +169,17 @@
       $q->execute();
 
       $this->mPicked = null;
+    }
+
+    /**
+     * Deletes this hand card
+     */
+    public function delete() {
+      $q = self::$sSqlQueries["deleteCard"];
+      $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+
+      unset(self::$sIdCache[$this->mId]);
     }
   }
 ?>

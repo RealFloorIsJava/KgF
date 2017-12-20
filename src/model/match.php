@@ -528,7 +528,11 @@
     private function onStateLeave($target) {
       if ($this->mState === "COOLDOWN") {
         // TODO check if match should end
-        // TODO clear cards
+
+        // Clear all picked cards
+        foreach ($this->mParticipants as $part) {
+          $part->getHand()->deletePicked();
+        }
       }
       return $target;
     }
@@ -694,15 +698,11 @@
      */
     public function checkIfChoosingDone() {
       $gaps = $this->getCardGapCount();
-      $done = true;
       foreach ($this->mParticipants as $part) {
-        if ($part->getHand()->getPickCount() !== $gaps) {
-          $done = false;
-          break;
+        if (!$part->isPicking() && $part->getHand()->getPickCount() !== $gaps) {
+          // Some are still missing...
+          return;
         }
-      }
-      if (!$done) {
-        return;
       }
 
       $timeLeft = $this->mTimer - time();

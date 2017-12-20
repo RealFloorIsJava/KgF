@@ -116,6 +116,22 @@
     }
 
     /**
+     * Deletes all picked cards
+     */
+    public function deletePicked() {
+      $delIds = array();
+      foreach ($this->mHandCards as $handId => $handCard) {
+        if ($handCard->isPicked()) {
+          $delIds[] = $handId;
+          $handCard->delete();
+        }
+      }
+      foreach ($delIds as $id) {
+        unset($this->mHandCards[$id]);
+      }
+    }
+
+    /**
      * Fetches the information about the picked cards in this hand
      */
     public function getPickData($redacted) {
