@@ -151,16 +151,14 @@
     }
 
     /**
-     * Toggles a hand card from picked to not picked and vice versa
+     * Toggles a hand card from chosen to not chosen and vice versa
      */
-    private function actionTogglePick() {
+    private function actionToggleChoose() {
       if (isset($_POST["handId"])) {
-        // Note that the person who "isPicking()" actually is only PICKING,
-        // not CHOOSING. Terms are a bit unclear...
-        if ($this->mMatch->canPickHandNow()
+        if ($this->mMatch->canChooseCardsNow()
             && !$this->mParticipant->isPicking()) {
           $id = intval($_POST["handId"]);
-          $this->mParticipant->getHand()->togglePicked($id);
+          $this->mParticipant->getHand()->toggleChosen($id);
           $this->mMatch->checkIfChoosingDone();
         }
       }
@@ -224,8 +222,8 @@
         "status" => $this->mMatch->getStatus(),
         "ending" => $this->mMatch->isEnding(),
         "hasCard" => $this->mMatch->hasCard(),
-        "allowPicks" => !$this->mParticipant->isPicking()
-          && $this->mMatch->canPickHandNow(),
+        "allowChoose" => !$this->mParticipant->isPicking()
+          && $this->mMatch->canChooseCardsNow(),
         "gaps" => $this->mMatch->getCardGapCount()
       );
       if ($this->mMatch->hasCard()) {
@@ -251,7 +249,7 @@
         as $handId => $card) {
         $data["hand"][$card->getCard()->getType()][$handId] = array(
           "text" => $card->getCard()->getText(),
-          "picked" => $card->getPickId()
+          "chosen" => $card->getChoiceId()
         );
       }
 
@@ -263,12 +261,12 @@
       }
       ksort($orderParts);
 
-      // Then fetch their pick data
+      // Then fetch their choice data
       foreach ($orderParts as $part) {
         $hand = $part->getHand();
-        $redacted = !$this->mMatch->canViewOthersPick()
+        $redacted = !$this->mMatch->canViewOthersChoice()
           && $part !== $this->mParticipant;
-        $data["played"][] = $hand->getPickData($redacted);
+        $data["played"][] = $hand->getChooseData($redacted);
       }
 
       echo json_encode($data);
@@ -286,8 +284,8 @@
         $this->actionParticipants();
       } else if ($this->mAction === "chat") {
         $this->actionChat();
-      } else if ($this->mAction === "togglepick") {
-        $this->actionTogglePick();
+      } else if ($this->mAction === "togglechoose") {
+        $this->actionToggleChoose();
       } else if ($this->mAction === "chatsend") {
         $this->actionChatSend();
       } else if ($this->mAction === "status") {

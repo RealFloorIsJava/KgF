@@ -5,7 +5,7 @@
     "OBJECT": {},
     "VERB": {}
   };
-  var allowPicks = false;
+  var allowChoose = false;
 
   var mParticipantResolver = {};
 
@@ -71,7 +71,7 @@
         }
 
         mNumGaps = data["gaps"];
-        allowPicks = data["allowPicks"];
+        allowChoose = data["allowChoose"];
       }
     });
   }
@@ -119,8 +119,8 @@
         .attr("id", "hand-id-" + handId)
         .html(getFormatted(hand[handId]["text"]));
 
-      if (hand[handId]["picked"] != null) {
-        var offset = hand[handId]["picked"];
+      if (hand[handId]["chosen"] != null) {
+        var offset = hand[handId]["chosen"];
         while (mSelectedCards.length < offset + 1) {
           mSelectedCards.push(null);
         }
@@ -239,12 +239,12 @@
   }
 
   function toggleSelect(handId) {
-    if (!allowPicks) {
+    if (!allowChoose) {
       return;
     }
     $.ajax({
       method: "POST",
-      url: "/global.php?page=match&action=togglepick",
+      url: "/global.php?page=match&action=togglechoose",
       data: {
         "handId": handId
       },
@@ -253,7 +253,7 @@
         var card = mHandResolver["OBJECT"][handId]
           || mHandResolver["VERB"][handId];
 
-        // Remove card picks
+        // Remove card choices
         for (var i = 0; i < mSelectedCards.length; i++) {
           if (mSelectedCards[i] == card || remove) {
             mSelectedCards[i].removeClass("card-selected")
@@ -263,7 +263,7 @@
           }
         }
 
-        // Mark new picks
+        // Mark new choices
         if (!remove) {
           if (mSelectedCards.length < mNumGaps) {
             mSelectedCards.push(card);

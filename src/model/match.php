@@ -529,9 +529,9 @@
       if ($this->mState === "COOLDOWN") {
         // TODO check if match should end
 
-        // Clear all picked cards
+        // Clear all chosen cards
         foreach ($this->mParticipants as $part) {
-          $part->getHand()->deletePicked();
+          $part->getHand()->deleteChosen();
         }
       }
       return $target;
@@ -550,7 +550,7 @@
         }
         $this->setTimer(time() + self::STATE_CHOOSING_TIME);
       } else if ($this->mState === "PICKING") {
-        $this->unpickIncomplete();
+        $this->unchooseIncomplete();
         if (!$this->isPickPossible()) {
           $this->getChat()->sendMessage("SYSTEM",
             "<b>Too few valid choices!</b>");
@@ -635,16 +635,16 @@
     }
 
     /**
-     * Completely unpicks every incomplete hand.
+     * Completely unchooses every incomplete hand.
      */
-    private function unpickIncomplete() {
+    private function unchooseIncomplete() {
       $gc = $this->getCardGapCount();
       foreach ($this->mParticipants as $part) {
         if ($part->isPicking()) {
           continue;
         }
-        if ($part->getHand()->getPickCount() < $gc) {
-          $part->getHand()->unpickAll();
+        if ($part->getHand()->getChoiceCount() < $gc) {
+          $part->getHand()->unchooseAll();
           $this->getChat()->sendMessage("SYSTEM", "<b>".$part->getName().
             " failed to choose cards!</b>");
         }
@@ -657,7 +657,7 @@
     private function isPickPossible() {
       $k = 0;
       foreach ($this->mParticipants as $part) {
-        if ($part->getHand()->getPickCount() > 0) {
+        if ($part->getHand()->getChoiceCount() > 0) {
           $k++;
           if ($k == 2) {
             return true;
@@ -679,16 +679,16 @@
     }
 
     /**
-     * Checks whether the picked hand cards may be modified right now
+     * Checks whether the chosen hand cards may be modified right now
      */
-    public function canPickHandNow() {
+    public function canChooseCardsNow() {
       return $this->mState === "CHOOSING";
     }
 
     /**
-     * Whether participants can see each others picks yet
+     * Whether participants can see each others choices yet
      */
-    public function canViewOthersPick() {
+    public function canViewOthersChoice() {
       return $this->mState === "PICKING" || $this->mState === "COOLDOWN";
     }
 
@@ -699,7 +699,7 @@
     public function checkIfChoosingDone() {
       $gaps = $this->getCardGapCount();
       foreach ($this->mParticipants as $part) {
-        if (!$part->isPicking() && $part->getHand()->getPickCount() !== $gaps) {
+        if (!$part->isPicking() && $part->getHand()->getChoiceCount() !== $gaps) {
           // Some are still missing...
           return;
         }

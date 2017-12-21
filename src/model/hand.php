@@ -56,9 +56,9 @@
     }
 
     /**
-     * Toggles a hand card from picked to not picked and vice versa
+     * Toggles a hand card from chosen to not chosen and vice versa
      */
-    public function togglePicked($handId) {
+    public function toggleChosen($handId) {
       $handId = intval($handId);
       if (!isset($this->mHandCards[$handId])) {
         // This hand card does not exist in this hand...
@@ -66,38 +66,38 @@
       }
 
       $hc = $this->mHandCards[$handId];
-      if ($hc->isPicked()) {
-        $pick = $hc->getPickId();
+      if ($hc->isChosen()) {
+        $choice = $hc->getChoiceId();
         foreach ($this->mHandCards as $handCard) {
-          if ($handCard->isPicked() && $handCard->getPickId() >= $pick) {
-            $handCard->unpick();
+          if ($handCard->isChosen() && $handCard->getChoiceId() >= $choice) {
+            $handCard->unchoose();
           }
         }
       } else {
-        $maxPicked = $this->mParticipant->getMatch()->getCardGapCount();
-        $nPicked = 0;
-        $nextPickId = 0;
+        $maxChoices = $this->mParticipant->getMatch()->getCardGapCount();
+        $nChoices = 0;
+        $nextChoiceId = 0;
         foreach ($this->mHandCards as $handCard) {
-          if ($handCard->isPicked()) {
-            $nPicked++;
-            $nextPickId = max($nextPickId, $handCard->getPickId() + 1);
+          if ($handCard->isChosen()) {
+            $nChoices++;
+            $nextChoiceId = max($nextChoiceId, $handCard->getChoiceId() + 1);
           }
         }
-        if ($nPicked >= $maxPicked) {
-          // Can't pick new cards, too many on hand
+        if ($nChoices >= $maxChoices) {
+          // Can't choose new cards, too many on hand
           return;
         }
-        $hc->pick($nextPickId);
+        $hc->choose($nextChoiceId);
       }
     }
 
     /**
-     * Returns the number of picked cards on this hand
+     * Returns the number of chosen cards on this hand
      */
-    public function getPickCount() {
+    public function getChoiceCount() {
       $n = 0;
       foreach ($this->mHandCards as $handCard) {
-        if ($handCard->isPicked()) {
+        if ($handCard->isChosen()) {
           $n++;
         }
       }
@@ -105,23 +105,23 @@
     }
 
     /**
-     * Unpicks all cards in this hand
+     * Unchooses all cards in this hand
      */
-    public function unpickAll() {
+    public function unchooseAll() {
       foreach ($this->mHandCards as $handCard) {
-        if ($handCard->isPicked()) {
-          $handCard->unpick();
+        if ($handCard->isChosen()) {
+          $handCard->unchoose();
         }
       }
     }
 
     /**
-     * Deletes all picked cards
+     * Deletes all chosen cards
      */
-    public function deletePicked() {
+    public function deleteChosen() {
       $delIds = array();
       foreach ($this->mHandCards as $handId => $handCard) {
-        if ($handCard->isPicked()) {
+        if ($handCard->isChosen()) {
           $delIds[] = $handId;
           $handCard->delete();
         }
@@ -132,13 +132,13 @@
     }
 
     /**
-     * Fetches the information about the picked cards in this hand
+     * Fetches the information about the chosen cards in this hand
      */
-    public function getPickData($redacted) {
+    public function getChooseData($redacted) {
       $redacted = boolval($redacted);
       $data = array();
       foreach ($this->mHandCards as $handId => $handCard) {
-        if ($handCard->isPicked()) {
+        if ($handCard->isChosen()) {
           if ($redacted) {
             $data[] = array(
               "redacted" => true

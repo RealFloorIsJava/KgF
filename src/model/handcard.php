@@ -24,9 +24,9 @@
      */
     private $mParticipant;
     /**
-     * The pick index of the card. This is NULL if the card is not picked
+     * The choice index of the card. This is NULL if the card is not chosen
      */
-    private $mPicked;
+    private $mChosen;
 
     /**
      * Used to provide a DB handle and to initialize all the queries
@@ -108,7 +108,7 @@
 
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mPicked = is_null($row["hand_pick"])
+      $this->mChosen = is_null($row["hand_pick"])
         ? null
         : intval($row["hand_pick"]);
 
@@ -127,40 +127,40 @@
     }
 
     /**
-     * Checks whether this card is picked
+     * Checks whether this card is chosen
      */
-    public function isPicked() {
-      return !is_null($this->mPicked);
+    public function isChosen() {
+      return !is_null($this->mChosen);
     }
 
     /**
-     * Fetches the pick id of this card
+     * Fetches the choice id of this card
      */
-    public function getPickId() {
-      return $this->mPicked;
+    public function getChoiceId() {
+      return $this->mChosen;
     }
 
     /**
-     * Picks this card
+     * Chooses this card
      */
-    public function pick($requestedPickId) {
-      $requestedPickId = intval($requestedPickId);
-      if ($this->isPicked()) {
+    public function choose($requestedChoiceId) {
+      $requestedChoiceId = intval($requestedChoiceId);
+      if ($this->isChosen()) {
         return;
       }
       $q = self::$sSqlQueries["updatePick"];
       $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
-      $q->bindValue(":pick", $requestedPickId, PDO::PARAM_INT);
+      $q->bindValue(":pick", $requestedChoiceId, PDO::PARAM_INT);
       $q->execute();
 
-      $this->mPicked = $requestedPickId;
+      $this->mChosen = $requestedChoiceId;
     }
 
     /**
-     * Unpicks this card
+     * Unchooses this card
      */
-    public function unpick() {
-      if (!$this->isPicked()) {
+    public function unchoose() {
+      if (!$this->isChosen()) {
         return;
       }
       $q = self::$sSqlQueries["updatePick"];
@@ -168,7 +168,7 @@
       $q->bindValue(":pick", null, PDO::PARAM_INT);
       $q->execute();
 
-      $this->mPicked = null;
+      $this->mChosen = null;
     }
 
     /**
