@@ -1,5 +1,7 @@
 (function(){
-  var mSelectedCards = [];
+  var mExternalUpdateAllowed = true;
+  var mSelectedCards = {};
+  var mNumSelected = 0;
   var mNumGaps = 0;
   var mHandResolver = {
     "OBJECT": {},
@@ -110,6 +112,17 @@
     var resolver = mHandResolver[type];
     var diff = symmetricKeyDifference(resolver, hand);
 
+    if (mExternalUpdateAllowed) {
+      for (var handId in hand) {
+        if (hand.hasOwnProperty(handId)) {
+          if (hand[handId]["chosen"] == null
+              && resolver.hasOwnProperty(handId)) {
+            unselectHandCard(resolver[handId]);
+          }
+        }
+      }
+    }
+
     for (var i = 0; i < diff.onlyB.length; i++) {
       var handId = diff.onlyB[i];
 
@@ -120,13 +133,7 @@
         .html(getFormatted(hand[handId]["text"]));
 
       if (hand[handId]["chosen"] != null) {
-        var offset = hand[handId]["chosen"];
-        while (mSelectedCards.length < offset + 1) {
-          mSelectedCards.push(null);
-        }
-        mSelectedCards[offset] = elem;
-        var select = $("<div></div>").addClass("card-label").text("?");
-        elem.addClass("card-selected").prepend(select);
+        selectHandCard(elem, hand[handId]["chosen"]);
       }
 
       container.on("click", "#hand-id-" + handId, {
@@ -140,22 +147,17 @@
     }
 
     for (var i = 0; i < diff.onlyA.length; i++) {
-      for (var j = 0; j < mSelectedCards.length; j++) {
-        if (resolver[diff.onlyA[j]] == mSelectedCards[j]) {
-          mSelectedCards.splice(j, 1);
-          break;
-        }
-      }
+      unselectHandCard(resolver[diff.onlyA[i]]);
       resolver[diff.onlyA[i]].remove();
     }
 
-    updateSelectLabels();
-
     var needsSystemCard = true;
     for (var handId in resolver) {
-      needsSystemCard = false;
-      container.children(".system-card").remove();
-      break;
+      if (resolver.hasOwnProperty(handId)) {
+        needsSystemCard = false;
+        container.children(".system-card").remove();
+        break;
+      }
     }
     if (needsSystemCard) {
       var sysCard = $("<div></div>")
@@ -249,38 +251,57 @@
         "handId": handId
       },
       success: function() {
+        mExternalUpdateAllowed = false;
+        setTimeout(function(){
+          mExternalUpdateAllowed = true;
+        }, 1000);
         var remove = false;
         var card = mHandResolver["OBJECT"][handId]
           || mHandResolver["VERB"][handId];
 
         // Remove card choices
-        for (var i = 0; i < mSelectedCards.length; i++) {
+        for (var i = 0; i < 4; i++) {
+          if (!mSelectedCards.hasOwnProperty(i)) {
+            continue;
+          }
           if (mSelectedCards[i] == card || remove) {
-            mSelectedCards[i].removeClass("card-selected")
-              .children(".card-label").eq(0).remove();
-            mSelectedCards.splice(i--, 1);
+            unselectHandCard(mSelectedCards[i]);
             remove = true;
           }
         }
 
         // Mark new choices
         if (!remove) {
-          if (mSelectedCards.length < mNumGaps) {
-            mSelectedCards.push(card);
-            var select = $("<div></div>").addClass("card-label").text("?");
-            card.addClass("card-selected").prepend(select);
+          if (mNumSelected < mNumGaps) {
+            selectHandCard(card, mNumSelected);
           }
         }
-
-        updateSelectLabels();
       }
     });
   }
 
-  function updateSelectLabels() {
-    // Update the numbers on the cards
-    for (var i = 0; i < mSelectedCards.length; i++) {
-      mSelectedCards[i].children(".card-label").eq(0).text(i + 1);
+  function selectHandCard(card, k) {
+    if (card.children(".card-label").length == 0) {
+      card.prepend($("<div></div>").addClass("card-label").text("" + (k + 1)));
+    } else {
+      card.children(".card-label").text("" + (k + 1));
+    }
+    card.addClass("card-selected");
+    mSelectedCards[k] = card;
+    mNumSelected++;
+  }
+
+  function unselectHandCard(card) {
+    card.children(".card-label").remove();
+    card.removeClass("card-selected");
+    for (var key in mSelectedCards) {
+      if (mSelectedCards.hasOwnProperty(key)) {
+        if (mSelectedCards[key] == card) {
+          delete mSelectedCards[key];
+          mNumSelected--;
+          break;
+        }
+      }
     }
   }
 
