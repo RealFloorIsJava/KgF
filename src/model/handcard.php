@@ -40,7 +40,7 @@
         ),
         "replenishCardType" => $dbh->prepare(
           "INSERT INTO `kgf_hand` ".
-            "(`hand_id`, `hand_participant`, `hand_card`, `hand_pick`) ".
+            "(`hand_id`, `hand_participant`, `hand_card`, `hand_choice`) ".
             "SELECT NULL, :partid, `card_id`, NULL ".
             "FROM `kgf_cards` ".
             "WHERE `card_id` NOT IN ( ".
@@ -51,9 +51,9 @@
             "ORDER BY RAND() ".
             "LIMIT :num"
         ),
-        "updatePick" => $dbh->prepare(
+        "updateChoice" => $dbh->prepare(
           "UPDATE `kgf_hand` ".
-          "SET `hand_pick` = :pick ".
+          "SET `hand_choice` = :choice ".
           "WHERE `hand_id` = :handid"
         ),
         "deleteCard" => $dbh->prepare(
@@ -108,9 +108,9 @@
 
       self::$sIdCache[$this->mId] = $this;
 
-      $this->mChosen = is_null($row["hand_pick"])
+      $this->mChosen = is_null($row["hand_choice"])
         ? null
-        : intval($row["hand_pick"]);
+        : intval($row["hand_choice"]);
 
       assert(isset($kwargs["participant"]), "participant has to be supplied");
       $this->mParticipant = $kwargs["participant"];
@@ -148,9 +148,9 @@
       if ($this->isChosen()) {
         return;
       }
-      $q = self::$sSqlQueries["updatePick"];
+      $q = self::$sSqlQueries["updateChoice"];
       $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
-      $q->bindValue(":pick", $requestedChoiceId, PDO::PARAM_INT);
+      $q->bindValue(":choice", $requestedChoiceId, PDO::PARAM_INT);
       $q->execute();
 
       $this->mChosen = $requestedChoiceId;
@@ -163,9 +163,9 @@
       if (!$this->isChosen()) {
         return;
       }
-      $q = self::$sSqlQueries["updatePick"];
+      $q = self::$sSqlQueries["updateChoice"];
       $q->bindValue(":handid", $this->mId, PDO::PARAM_INT);
-      $q->bindValue(":pick", null, PDO::PARAM_INT);
+      $q->bindValue(":choice", null, PDO::PARAM_INT);
       $q->execute();
 
       $this->mChosen = null;

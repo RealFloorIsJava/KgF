@@ -9,7 +9,7 @@ CREATE TABLE `kgf_hand` (
   `hand_id` int(12) UNSIGNED NOT NULL,
   `hand_participant` int(12) UNSIGNED NOT NULL,
   `hand_card` int(12) UNSIGNED NOT NULL,
-  `hand_pick` tinyint(3) UNSIGNED DEFAULT NULL
+  `hand_choice` tinyint(3) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `kgf_match` (
