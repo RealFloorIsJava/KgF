@@ -230,7 +230,7 @@
           elem.children("div").eq(1).text(data[i].score + "pts");
           elem.children("div").eq(2)
             .text(data[i].picking ? "Picking" : "");
-          elem.children("div").eq(3).text("???");
+          // elem.children("div").eq(3).text("???");
           data[i] = elem;
         }
         list.empty().append(data);
