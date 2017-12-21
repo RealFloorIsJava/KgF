@@ -552,8 +552,12 @@
       } else if ($this->mState === "PICKING") {
         $this->unchooseIncomplete();
         if (!$this->isPickPossible()) {
+          // Notify the chat, unchoose all chosen cards, end the round
           $this->getChat()->sendMessage("SYSTEM",
             "<b>Too few valid choices!</b>");
+          foreach ($this->mParticipants as $part) {
+            $part->getHand()->unchooseAll();
+          }
           $this->setState("COOLDOWN");
           return;
         }
