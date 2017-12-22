@@ -140,18 +140,19 @@
       foreach ($this->mHandCards as $handId => $handCard) {
         if ($handCard->isChosen()) {
           if ($redacted) {
-            $data[] = array(
+            $data[$handCard->getChoiceId()] = array(
               "redacted" => true
             );
           } else {
-            $data[] = array(
+            $data[$handCard->getChoiceId()] = array(
               "type" => $handCard->getCard()->getType(),
               "text" => $handCard->getCard()->getText()
             );
           }
         }
       }
-      return $data;
+      ksort($data);
+      return array_values($data);
     }
   }
 ?>

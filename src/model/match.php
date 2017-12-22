@@ -583,15 +583,13 @@
       foreach ($this->mParticipants as $part) {
         if ($next) {
           $part->setPicking(true);
-          break;
+          return;
         } else if ($part->isPicking()) {
           $next = true;
           $part->setPicking(false);
         }
       }
-      if (!$next) {
-        $first->setPicking(true);
-      }
+      $first->setPicking(true);
     }
 
     /**
