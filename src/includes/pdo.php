@@ -8,6 +8,7 @@
   }
   unset($dbUser, $dbPw, $dbHost, $dbName);
 
+  $dbHandle->query("SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE");
   $dbHandle->beginTransaction();
 
   function dbhAutocommit() {
