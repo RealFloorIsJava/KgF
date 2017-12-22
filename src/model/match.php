@@ -23,6 +23,7 @@
     const STATE_PICKING_TIME = 60;
     const STATE_COOLDOWN_TIME = 15;
     const STATE_ENDING_TIME = 20;
+    const PICKING_TIME_PER_PLAYER = 7;
     /**
      * Timer thresholds, all values in seconds
      */
@@ -562,8 +563,9 @@
           return;
         }
 
-        // TODO dynamic for amount of cards
-        $this->setTimer(time() + self::STATE_PICKING_TIME);
+        $pickTime = self::STATE_PICKING_TIME
+          + self::PICKING_TIME_PER_PLAYER * count($this->mParticipants);
+        $this->setTimer(time() + $pickTime);
       } else if ($this->mState === "COOLDOWN") {
         $this->setTimer(time() + self::STATE_COOLDOWN_TIME);
       } else if ($this->mState === "ENDING") {
