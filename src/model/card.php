@@ -104,7 +104,7 @@
       }
 
       if (isset(self::$sIdCache[$row["card_id"]])) {
-        return self::$sIdCache[$id];
+        return self::$sIdCache[$row["card_id"]];
       }
 
       return new Card($row, array(
