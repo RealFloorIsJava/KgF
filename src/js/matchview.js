@@ -92,6 +92,7 @@
       }
       var set = sets.eq(i);
       set.empty();
+      set.css("display", "none");
       for (var j = 0; j < played[i].length; j++) {
         var card = $("<div></div>").addClass("card-base");
         if (played[i][j].hasOwnProperty("redacted")) {
@@ -102,6 +103,7 @@
           card.html(getFormatted(played[i][j]["text"]));
         }
         set.append(card);
+        set.css("display", "flex");
       }
     }
   }
