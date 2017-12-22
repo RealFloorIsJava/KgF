@@ -6,7 +6,7 @@
     /**
      * The minimum amount of players for a match
      */
-    const MINIMUM_PLAYERS = 4;
+    const MINIMUM_PLAYERS = 3;
     /**
      * Minimum amount of cards of each type.
      * Don't set this lower than 6 for each type.
