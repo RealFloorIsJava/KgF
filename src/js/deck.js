@@ -56,21 +56,20 @@
       .addClass("card-id");
 
     if (armed) {
-      var typeKnob = $("<a></a>")
+      var typeKnob = $("<span></span>")
         .addClass("knob-" + tsv[1].toLowerCase())
-        .attr("href", "#")
         .attr("id", "knob-id-" + curId)
         .html("&nbsp;&nbsp;&nbsp;&nbsp;");
       tools.append(typeKnob).append(" - ");
 
-      var editLink = $("<a></a>")
-        .attr("href", "#")
+      var editLink = $("<span></span>")
+        .addClass("fake-anchor")
         .html("Edit")
         .attr("id", "edit-id-" + curId);
       tools.append(editLink).append(" - ");
 
-      var deleteLink = $("<a></a>")
-        .attr("href", "#")
+      var deleteLink = $("<span></span>")
+        .addClass("fake-anchor")
         .attr("id", "del-id-" + curId)
         .html("Delete");
       tools.append(deleteLink).append(" - ");

@@ -329,6 +329,23 @@ body {
   border-radius: 5px;
 }
 
+.fake-anchor {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.knob-statement {
+  cursor: pointer;
+}
+
+.knob-object {
+  cursor: pointer;
+}
+
+.knob-verb {
+  cursor: pointer;
+}
+
 .card-editor-card-display {
   margin: 0px 0px 20px 0px;
   width: 100%;
