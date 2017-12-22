@@ -8,6 +8,7 @@
     "VERB": {}
   };
   var allowChoose = false;
+  var allowPick = false;
 
   var mParticipantResolver = {};
 
@@ -74,6 +75,20 @@
 
         mNumGaps = data["gaps"];
         allowChoose = data["allowChoose"];
+        allowPick = data["allowPick"];
+      }
+    });
+  }
+
+  function onPlayedClick(event) {
+    if (!allowPick) {
+      return;
+    }
+    $.ajax({
+      method: "POST",
+      url: "/global.php?page=match&action=pickwinner",
+      data: {
+        "playedId": event.data["playedId"]
       }
     });
   }
@@ -82,28 +97,45 @@
     var area = $(".card-area-played");
     var sets = area.children(".card-area-set");
     if (sets.length == 0) {
-      area.prepend($("<div></div>").addClass("card-area-set"));
+      var set = $("<div></div>")
+        .addClass("card-area-set")
+        .css("display", "none")
+        .attr("id", "played-id-1");
+      area.prepend(set);
       sets = area.children(".card-area-set");
+      area.on("click", "#played-id-1", {
+        "playedId": 1
+      }, onPlayedClick);
     }
-    for (var i = 0; i < played.length; i++) {
-      if (i >= sets.length) {
-        sets.last().after($("<div></div>").addClass("card-area-set"));
-        sets = area.children(".card-area-set");
-      }
-      var set = sets.eq(i);
-      set.empty();
-      set.css("display", "none");
-      for (var j = 0; j < played[i].length; j++) {
-        var card = $("<div></div>").addClass("card-base");
-        if (played[i][j].hasOwnProperty("redacted")) {
-          card.addClass("system-card");
-          card.prepend($("<div></div>").addClass("card-label").text("?"));
-        } else {
-          card.addClass(played[i][j]["type"].toLowerCase() + "-card");
-          card.html(getFormatted(played[i][j]["text"]));
+
+    for (var key in played) {
+      if (played.hasOwnProperty(key)) {
+        while (key > sets.length) {
+          var set = $("<div></div>")
+            .addClass("card-area-set")
+            .css("display", "none")
+            .attr("id", "played-id-" + key);
+          sets.last().after(set);
+          sets = area.children(".card-area-set");
+          area.on("click", "#played-id-" + key, {
+            "playedId": key
+          }, onPlayedClick);
         }
-        set.append(card);
-        set.css("display", "flex");
+        var set = sets.eq(key - 1);
+        set.empty();
+        set.css("display", "none");
+        for (var j = 0; j < played[key].length; j++) {
+          var card = $("<div></div>").addClass("card-base");
+          if (played[key][j].hasOwnProperty("redacted")) {
+            card.addClass("system-card");
+            card.prepend($("<div></div>").addClass("card-label").text("?"));
+          } else {
+            card.addClass(played[key][j]["type"].toLowerCase() + "-card");
+            card.html(getFormatted(played[key][j]["text"]));
+          }
+          set.append(card);
+          set.css("display", "flex");
+        }
       }
     }
   }

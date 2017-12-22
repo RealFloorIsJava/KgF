@@ -109,6 +109,11 @@
           "UPDATE `kgf_match_participant` ".
           "SET `mp_order` = :newkey ".
           "WHERE `mp_id` = :partid"
+        ),
+        "increaseScore" => $dbh->prepare(
+          "UPDATE `kgf_match_participant` ".
+          "SET `mp_score` = `mp_score` + 1 ".
+          "WHERE `mp_id` = :partid"
         )
       );
     }
@@ -303,6 +308,16 @@
      */
     public function getOrder() {
       return $this->mOrder;
+    }
+
+    /**
+     * Increases the score of this participant
+     */
+    public function increaseScore() {
+      $this->mScore++;
+      $q = self::$sSqlQueries["increaseScore"];
+      $q->bindValue(":partid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
     }
 
     /**

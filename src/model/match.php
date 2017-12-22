@@ -8,6 +8,10 @@
      */
     const MINIMUM_PLAYERS = 3;
     /**
+     * The amount of points to win the game
+     */
+    const WIN_CONDITION = 8;
+    /**
      * Minimum amount of cards of each type.
      * Don't set this lower than 6 for each type.
      */
@@ -528,11 +532,19 @@
      */
     private function onStateLeave($target) {
       if ($this->mState === "COOLDOWN") {
-        // TODO check if match should end
-
         // Clear all chosen cards
         foreach ($this->mParticipants as $part) {
           $part->getHand()->deleteChosen();
+        }
+
+        foreach ($this->mParticipants as $part) {
+          if ($part->getScore() >= self::WIN_CONDITION) {
+            // This participant wins the game
+            $this->getChat()->sendMessage("SYSTEM", "<b>Game over!</b>");
+            $this->getChat()->sendMessage("SYSTEM", "<b>".$part->getName().
+              " won the match!</b>");
+            return "ENDING";
+          }
         }
       }
       return $target;
@@ -690,6 +702,13 @@
     }
 
     /**
+     * Checks whether the winner for the current round may be picked right now
+     */
+    public function canPickWinnerNow() {
+      return $this->mState === "PICKING";
+    }
+
+    /**
      * Whether participants can see each others choices yet
      */
     public function canViewOthersChoice() {
@@ -712,6 +731,41 @@
       $timeLeft = $this->mTimer - time();
       if ($timeLeft > self::CHOOSING_FINAL_THRESHOLD) {
         $this->setTimer(time() + self::CHOOSING_FINAL_THRESHOLD);
+      }
+    }
+
+    public function declareRoundWinner($orderId) {
+      $orderId = intval($orderId);
+
+      $winner = null;
+      $gc = $this->getCardGapCount();
+      foreach ($this->mParticipants as $part) {
+        if ($part->isPicking()) {
+          continue;
+        }
+        if ($part->getHand()->getChoiceCount() < $gc) {
+          continue;
+        }
+        if ($part->getOrder() === $orderId) {
+          $winner = $part;
+          break;
+        }
+      }
+
+      if (is_null($winner)) {
+        return;
+      }
+
+      foreach ($this->mParticipants as $part) {
+        if ($part->getOrder() === $orderId) {
+          $part->increaseScore();
+          $this->setState("COOLDOWN");
+          $this->getChat()->sendMessage("SYSTEM", "<b>".$part->getName().
+            " won the round!</b>");
+        } else {
+          // Already delete others cards to highlight the winner
+          $part->getHand()->deleteChosen();
+        }
       }
     }
   }

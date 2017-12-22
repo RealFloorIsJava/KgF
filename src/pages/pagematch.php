@@ -151,6 +151,19 @@
     }
 
     /**
+     * Picks the winner for the current round
+     */
+    private function actionPickWinner() {
+      if (isset($_POST["playedId"])) {
+        if ($this->mMatch->canPickWinnerNow()
+            && $this->mParticipant->isPicking()) {
+          $id = intval($_POST["playedId"]);
+          $this->mMatch->declareRoundWinner($id);
+        }
+      }
+    }
+
+    /**
      * Toggles a hand card from chosen to not chosen and vice versa
      */
     private function actionToggleChoose() {
@@ -224,6 +237,8 @@
         "hasCard" => $this->mMatch->hasCard(),
         "allowChoose" => !$this->mParticipant->isPicking()
           && $this->mMatch->canChooseCardsNow(),
+        "allowPick" => $this->mParticipant->isPicking()
+          && $this->mMatch->canPickWinnerNow(),
         "gaps" => $this->mMatch->getCardGapCount()
       );
       if ($this->mMatch->hasCard()) {
@@ -266,7 +281,7 @@
         $hand = $part->getHand();
         $redacted = !$this->mMatch->canViewOthersChoice()
           && $part !== $this->mParticipant;
-        $data["played"][] = $hand->getChooseData($redacted);
+        $data["played"][$part->getOrder()] = $hand->getChooseData($redacted);
       }
 
       echo json_encode($data);
@@ -284,6 +299,8 @@
         $this->actionParticipants();
       } else if ($this->mAction === "chat") {
         $this->actionChat();
+      } else if ($this->mAction === "pickwinner") {
+        $this->actionPickWinner();
       } else if ($this->mAction === "togglechoose") {
         $this->actionToggleChoose();
       } else if ($this->mAction === "chatsend") {
