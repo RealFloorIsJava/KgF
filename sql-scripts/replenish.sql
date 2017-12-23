@@ -1,5 +1,8 @@
 DELIMITER //
 
+/**
+ * Replenish the cards in the hands in the given match
+ */
 DROP PROCEDURE IF EXISTS ReplenishMatch//
 CREATE PROCEDURE ReplenishMatch(IN pMatch INT UNSIGNED)
 BEGIN
@@ -7,6 +10,9 @@ BEGIN
   CALL ReplenishMatchType(pMatch, 'VERB');
 END//
 
+/**
+ * Replenishes the cards of the given type in all hands in the match
+ */
 DROP PROCEDURE IF EXISTS ReplenishMatchType//
 CREATE PROCEDURE ReplenishMatchType(IN pMatch INT UNSIGNED,
   IN pType ENUM('STATEMENT', 'OBJECT', 'VERB'))
@@ -29,6 +35,9 @@ BEGIN
   CLOSE vCur;
 END//
 
+/**
+ * Replenishes the hand cards for the given participant
+ */
 DROP PROCEDURE IF EXISTS ReplenishHandCards//
 CREATE PROCEDURE ReplenishHandCards(IN pParticipant INT UNSIGNED,
   IN pType ENUM('STATEMENT', 'OBJECT', 'VERB'))
