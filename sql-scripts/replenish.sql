@@ -45,6 +45,9 @@ BEGIN
   DECLARE vMaxCards INT UNSIGNED DEFAULT 6;
   DECLARE vNeedCards INT UNSIGNED;
 
+  -- Put the read and write into one transaction to prevent race conditions
+  START TRANSACTION;
+
   SELECT vMaxCards - COUNT(*)
   INTO vNeedCards
   FROM `kgf_hand`
@@ -63,6 +66,8 @@ BEGIN
       ) AND `card_type` = pType
     ORDER BY RAND()
     LIMIT vNeedCards;
+
+  COMMIT;
 END//
 
 DELIMITER ;
