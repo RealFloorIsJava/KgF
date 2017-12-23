@@ -120,6 +120,9 @@
         ),
         "replenishMatch" => $dbh->prepare(
           "CALL KgfReplenishMatch(:matchid)"
+        ),
+        "selectNextPicker" => $dbh->prepare(
+          "CALL KgfSelectNextPicker(:matchid)"
         )
       );
     }
@@ -588,18 +591,9 @@
      * Select the next person to pick cards
      */
     private function selectNextPicker() {
-      $first = $this->mParticipants[0];
-      $next = false;
-      foreach ($this->mParticipants as $part) {
-        if ($next) {
-          $part->setPicking(true);
-          return;
-        } else if ($part->isPicking()) {
-          $next = true;
-          $part->setPicking(false);
-        }
-      }
-      $first->setPicking(true);
+      $q = self::$sSqlQueries["selectNextPicker"];
+      $q->bindValue(":matchid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
     }
 
     /**
