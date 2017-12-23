@@ -4,10 +4,6 @@
    */
   class Hand {
     /**
-     * The number of cards per type on the hand (excluding STATEMENT)
-     */
-    const HAND_CARD_PER_TYPE = 6;
-    /**
      * The cards in this hand
      */
     private $mHandCards;
@@ -39,19 +35,9 @@
     }
 
     /**
-     * Replenishes the hand
+     * Reloads the hand
      */
-    public function replenish() {
-      $counts = array(
-        "OBJECT" => self::HAND_CARD_PER_TYPE,
-        "VERB" => self::HAND_CARD_PER_TYPE
-      );
-      foreach ($this->mHandCards as $handCard) {
-        $counts[$handCard->getCard()->getType()]--;
-      }
-      foreach ($counts as $type => $needed) {
-        HandCard::replenishHandFor($this->mParticipant, $type, $needed);
-      }
+    public function reload() {
       $this->mHandCards = HandCard::loadHandCards($this->mParticipant);
     }
 

@@ -38,19 +38,6 @@
           "FROM `kgf_hand` ".
           "WHERE `hand_participant` = :partid"
         ),
-        "replenishCardType" => $dbh->prepare(
-          "INSERT INTO `kgf_hand` ".
-            "(`hand_id`, `hand_participant`, `hand_card`, `hand_choice`) ".
-            "SELECT NULL, :partid, `card_id`, NULL ".
-            "FROM `kgf_cards` ".
-            "WHERE `card_id` NOT IN ( ".
-              "SELECT `hand_card` ".
-              "FROM `kgf_hand` ".
-              "WHERE `hand_participant` = :partid ".
-              ") AND `card_type` = :type ".
-            "ORDER BY RAND() ".
-            "LIMIT :num"
-        ),
         "updateChoice" => $dbh->prepare(
           "UPDATE `kgf_hand` ".
           "SET `hand_choice` = :choice ".
@@ -83,21 +70,6 @@
         }
       }
       return $res;
-    }
-
-    /**
-     * Replenishes the hand for the given participant with the given number of
-     * cards of the given type
-     */
-    public static function replenishHandFor(Participant $participant, $type,
-        $num) {
-      $type = strval($type);
-      $num = intval($num);
-      $q = self::$sSqlQueries["replenishCardType"];
-      $q->bindValue(":partid", $participant->getId(), PDO::PARAM_INT);
-      $q->bindValue(":type", $type, PDO::PARAM_STR);
-      $q->bindValue(":num", $num, PDO::PARAM_INT);
-      $q->execute();
     }
 
     /**

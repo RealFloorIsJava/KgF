@@ -124,6 +124,9 @@
           "UPDATE `kgf_match` ".
           "SET `match_card_id` = :newcard ".
           "WHERE `match_id` = :match"
+        ),
+        "replenishMatch" => $dbh->prepare(
+          "CALL ReplenishMatch(:matchid)"
         )
       );
     }
@@ -558,9 +561,7 @@
         $this->selectNextPicker();
         $this->shuffleParticipantOrder();
         $this->selectMatchCard();
-        foreach ($this->mParticipants as $part) {
-          $part->getHand()->replenish();
-        }
+        $this->replenishAllHands();
         $this->setTimer(time() + self::STATE_CHOOSING_TIME);
       } else if ($this->mState === "PICKING") {
         $this->unchooseIncomplete();
@@ -583,6 +584,18 @@
       } else if ($this->mState === "ENDING") {
         $this->setTimer(time() + self::STATE_ENDING_TIME);
         $this->getChat()->sendMessage("SYSTEM", "<b>Match is ending.</b>");
+      }
+    }
+
+    /**
+     * Replenishes all hands
+     */
+    private function replenishAllHands() {
+      $q = self::$sSqlQueries["replenishMatch"];
+      $q->bindValue(":matchid", $this->mId, PDO::PARAM_INT);
+      $q->execute();
+      foreach ($this->mParticipants as $part) {
+        $part->getHand()->reload();
       }
     }
 
