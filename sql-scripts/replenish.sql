@@ -3,18 +3,18 @@ DELIMITER //
 /**
  * Replenish the cards in the hands in the given match
  */
-DROP PROCEDURE IF EXISTS ReplenishMatch//
-CREATE PROCEDURE ReplenishMatch(IN pMatch INT UNSIGNED)
+DROP PROCEDURE IF EXISTS KgfReplenishMatch//
+CREATE PROCEDURE KgfReplenishMatch(IN pMatch INT UNSIGNED)
 BEGIN
-  CALL ReplenishMatchType(pMatch, 'OBJECT');
-  CALL ReplenishMatchType(pMatch, 'VERB');
+  CALL KgfReplenishMatchType(pMatch, 'OBJECT');
+  CALL KgfReplenishMatchType(pMatch, 'VERB');
 END//
 
 /**
  * Replenishes the cards of the given type in all hands in the match
  */
-DROP PROCEDURE IF EXISTS ReplenishMatchType//
-CREATE PROCEDURE ReplenishMatchType(IN pMatch INT UNSIGNED,
+DROP PROCEDURE IF EXISTS KgfReplenishMatchType//
+CREATE PROCEDURE KgfReplenishMatchType(IN pMatch INT UNSIGNED,
   IN pType ENUM('STATEMENT', 'OBJECT', 'VERB'))
 BEGIN
   DECLARE vDone INT DEFAULT 0;
@@ -29,7 +29,7 @@ BEGIN
   REPEAT
     FETCH vCur INTO vPartId;
     IF NOT vDone THEN
-      CALL ReplenishHandCards(vPartId, pType);
+      CALL KgfReplenishHandCards(vPartId, pType);
     END IF;
   UNTIL vDone END REPEAT;
   CLOSE vCur;
@@ -38,8 +38,8 @@ END//
 /**
  * Replenishes the hand cards for the given participant
  */
-DROP PROCEDURE IF EXISTS ReplenishHandCards//
-CREATE PROCEDURE ReplenishHandCards(IN pParticipant INT UNSIGNED,
+DROP PROCEDURE IF EXISTS KgfReplenishHandCards//
+CREATE PROCEDURE KgfReplenishHandCards(IN pParticipant INT UNSIGNED,
   IN pType ENUM('STATEMENT', 'OBJECT', 'VERB'))
 BEGIN
   DECLARE vMaxCards INT UNSIGNED DEFAULT 6;

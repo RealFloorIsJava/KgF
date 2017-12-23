@@ -126,7 +126,7 @@
           "WHERE `match_id` = :match"
         ),
         "replenishMatch" => $dbh->prepare(
-          "CALL ReplenishMatch(:matchid)"
+          "CALL KgfReplenishMatch(:matchid)"
         )
       );
     }
