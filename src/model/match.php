@@ -77,13 +77,6 @@
      */
     public static function provideDB($dbh) {
       self::$sSqlQueries = array(
-        "housekeeping" => $dbh->prepare(
-          "DELETE FROM `kgf_match` ".
-          "WHERE ".
-            "(SELECT COUNT(*) ".
-              "FROM `kgf_match_participant` mp ".
-              "WHERE mp.`mp_match` = `match_id`) < 1 "
-        ),
         "deleteMatch" => $dbh->prepare(
           "DELETE FROM `kgf_match` ".
           "WHERE `match_id` = :match"
@@ -129,14 +122,6 @@
           "CALL KgfReplenishMatch(:matchid)"
         )
       );
-    }
-
-    /**
-     * Performs housekeeping tasks
-     */
-    public static function performHousekeeping() {
-      $q = self::$sSqlQueries["housekeeping"];
-      $q->execute();
     }
 
     /**

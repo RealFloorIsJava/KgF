@@ -58,15 +58,6 @@
      */
     public static function provideDB($dbh) {
       self::$sSqlQueries = array(
-        "housekeepingFind" => $dbh->prepare(
-          "SELECT * ".
-          "FROM `kgf_match_participant` ".
-          "WHERE `mp_timeout` <= UNIX_TIMESTAMP()"
-        ),
-        "housekeeping" => $dbh->prepare(
-          "DELETE FROM `kgf_match_participant` ".
-          "WHERE `mp_timeout` <= UNIX_TIMESTAMP()"
-        ),
         "allForMatch" => $dbh->prepare(
           "SELECT * ".
           "FROM `kgf_match_participant` ".
@@ -116,27 +107,6 @@
           "WHERE `mp_id` = :partid"
         )
       );
-    }
-
-    /**
-     * Performs housekeeping tasks
-     */
-    public static function performHousekeeping() {
-      $q = self::$sSqlQueries["housekeepingFind"];
-      $q->execute();
-      $rows = $q->fetchAll();
-      foreach ($rows as $part) {
-        $match = Match::getById($part["mp_match"]);
-        $match->getChat()->sendMessage("SYSTEM",
-          "<b>".$part["mp_name"]." timed out.</b>");
-
-        $match->removeParticipant($part["mp_id"]);
-        unset(self::$sIdCache[$part["mp_id"]]);
-        unset(self::$sPlayerCache[$part["mp_player"]]);
-      }
-
-      $q = self::$sSqlQueries["housekeeping"];
-      $q->execute();
     }
 
     /**

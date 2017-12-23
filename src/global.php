@@ -35,9 +35,8 @@
   Card::provideDB($dbHandle);
   HandCard::provideDB($dbHandle);
 
-  // First clear old participants, then their matches
-  Participant::performHousekeeping();
-  Match::performHousekeeping();
+  // Perform database housekeeping tasks
+  $dbHandle->query("CALL KgfPerformHousekeeping()");
 
   require_once "model/page.php";
   // Fetch the page source (include/class array)
