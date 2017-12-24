@@ -73,8 +73,8 @@
 
   function loadMatches() {
     $.ajax({
-      method: "POST",
-      url: "/global.php?page=dashboard&action=matchlist",
+      method: "GET",
+      url: "/api/matchlist",
       dataType: "json",
       success: displayMatches
     });

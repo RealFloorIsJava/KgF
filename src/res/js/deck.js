@@ -117,6 +117,7 @@
     displayCard(["Card Text", "STATEMENT"]);
     mEditId = mIdCounter - 1;
     openEditor();
+    markDirty();
   }
 
   function sortCards() {
@@ -165,6 +166,7 @@
     mCards[mEditId][0] = $("#card-text-input").val();
     mCardNodes[mEditId].children("span").eq(0).html(
       getFormatted(mCards[mEditId][0]));
+    markDirty();
   }
 
   $("#openDeckButton").click(openDeck);

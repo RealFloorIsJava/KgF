@@ -7,7 +7,6 @@ Author: LordKorea
 from html import escape
 
 from pages.controller import Controller
-from pages.templates.engine import Parser
 
 
 class OptionsController(Controller):
