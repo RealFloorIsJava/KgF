@@ -4,7 +4,7 @@ Part of KgF.
 Author: LordKorea
 """
 
-from cgi import FieldStorage, MiniFieldStorage
+import cgi
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
@@ -13,6 +13,10 @@ from urllib.parse import parse_qs
 
 from kgf import print
 from web.session import Session
+
+
+# Set the maximum request length, in bytes: 8 MiB
+cgi.maxlen = 8 * 1024 * 1024
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -214,15 +218,19 @@ class ServerHandler(BaseHTTPRequestHandler):
             return {"data": data.decode()}
         elif type == "multipart/form-data" and "boundary" in args:
             # POST data is a HTTP file upload
-            fs = FieldStorage(BytesIO(data),
-                              headers=self.headers,
-                              environ={'REQUEST_METHOD': 'POST'},
-                              keep_blank_values=True)
+            try:
+                fs = cgi.FieldStorage(BytesIO(data),
+                                      headers=self.headers,
+                                      environ={'REQUEST_METHOD': 'POST'},
+                                      keep_blank_values=True)
+            except ValueError:
+                print("File upload was too big!")
+                return {}
             d = {}
             for key in fs:
                 x = fs[key]
                 if not x.filename:
-                    if isinstance(x, (FieldStorage, MiniFieldStorage)):
+                    if isinstance(x, (cgi.FieldStorage, cgi.MiniFieldStorage)):
                         # MiniFieldStorage can result from an additional
                         # query string
                         d[x.name] = x.value
@@ -238,6 +246,11 @@ class ServerHandler(BaseHTTPRequestHandler):
                 else:
                     # In the case of the key having a file just use the
                     # result of the field storage parsing
+                    fp = x.file
+                    fp.seek(0, 2)
+                    size = fp.tell()
+                    fp.seek(0)
+                    print("File upload: '%s', %i bytes" % (x.filename, size))
                     d[x.name] = x
             return d
         else:
