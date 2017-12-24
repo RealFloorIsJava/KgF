@@ -90,7 +90,7 @@
       $("#username").text(newName);
       $.ajax({
         method: "POST",
-        url: "/global.php?page=ajax&action=rename",
+        url: "/options",
         data: {
           name: newName
         }

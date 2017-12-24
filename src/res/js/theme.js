@@ -1,12 +1,12 @@
 $("#lightLabel").click(function() {
   theme = (theme == "dark") ? "light" : "dark";
   checkLights();
-  document.getElementById("theme").href = '/css/min/' + theme + '.css';
+  document.getElementById("theme").href = '/res/css-' + theme + '-css';
   $.ajax({
     method: "POST",
-    url: "/global.php?page=ajax&action=settheme",
+    url: "/options",
     data: {
-      selection: theme
+      "theme": theme
     }
   });
 });

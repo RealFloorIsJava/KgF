@@ -8,6 +8,7 @@ Author: LordKorea
 from pages.leafs.dashboard import DashboardController
 from pages.leafs.deckedit import DeckeditController
 from pages.leafs.index import IndexController
+from pages.leafs.options import OptionsController
 from pages.leafs.resource import ResourceController
 
 
@@ -29,5 +30,7 @@ class Leafs:
         mctrl.add_leaf("deckedit", DeckeditController())
         # Index controller, the default landing page
         mctrl.add_leaf("index", IndexController())
+        # Options controller, API for user options
+        mctrl.add_leaf("options", OptionsController())
         # Resource loader for css/js/images
         mctrl.add_leaf("res", ResourceController())
