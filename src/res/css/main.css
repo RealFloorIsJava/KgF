@@ -1,0 +1,359 @@
+/** Link formatting **/
+a, a:link, a:visited, a:hover, a:active {
+  text-decoration: underline;
+}
+
+/** Page formatting **/
+body {
+  margin: 0px 0px 20px 0px;  /* To allow for scrolling further than
+                                the content would normally allow    */
+  padding: 0px;
+  font-family: 'Helvetica';
+}
+
+/** Aligning / Justifying **/
+.rightFloat {
+  float: right;
+}
+
+.clearAfterFloat {
+  clear: both;
+}
+
+/** Visibility **/
+.invisible {
+  display: none;
+}
+
+.inlineVisible {
+  display: inline;
+}
+
+/** Form elements **/
+.largeTextButton {
+  font-size: large;
+}
+
+/** Site header **/
+.cupboard {
+  margin: 0px 0px 20px 0px;
+  padding: 16px 20px 16px 20px;
+  position: relative;
+  font-size: 16px;
+  line-height: 22px;
+  z-index: 10;  /* To appear in front of the chat input */
+}
+
+/** Status display (error/success messages) **/
+.status-box {
+  margin: 20px 50px 20px 50px;
+  padding: 10px 10px 10px 20px;
+}
+
+/** Match listings **/
+.match-box {
+  margin: 20px 100px 20px 100px;
+  padding: 20px 30px 20px 30px;
+  border-radius: 5px;
+}
+
+/** Text content container **/
+.default-container {
+  padding: 0px 0px 0px 20px;
+}
+
+/** Unstructured card container **/
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/** Card display **/
+.card-base:hover, .card-base.card-selected {
+  transform: scale(1.05);
+}
+
+.card-base {
+  margin: 6px;
+  padding: 6px;
+  position: relative;
+  width: 128px;
+  height: 150px;
+  border-radius: 5px;
+  font-family: 'Arial';
+  transition-property: transform;
+  transition-duration: 200ms;
+  cursor: default;
+  overflow: hidden;
+}
+
+.card-id {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  font-size: x-small;
+}
+
+.card-label {
+  margin: 0px 0px 0px -6px;  /* To counteract card padding */
+  position: absolute;
+  width: 100%;
+  font-family: 'Arial';
+  font-size: 128px;
+  text-align: center;
+  opacity: 0.2;
+}
+
+/** Chat messages **/
+.chat-svg {
+  margin: 0px 5px 0px 0px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.chat-msg {
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+/** Match view **/
+.match-container {
+  margin: -20px 0px 0px 0px;  /* To undo the margin of the header */
+  height: 100%;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.match-view {
+  margin: 20px 0px 0px 0px;  /* Redo the margin of the header */
+  height: 100%;
+}
+
+.match-chat {
+  margin: 0px 0px -20px 0px;
+  padding: 0px 0px 10px 0px;
+  width: 20%;
+  height: 80vh;
+  min-width: 256px;
+  position: sticky;
+  top: 0px;
+  font-size: small;
+}
+
+.chat-messages {
+  padding: 5px 5px 0px 5px;
+  height: calc(100% - 30px);  /* 30: height of the chat line */
+  position: relative;
+  overflow: auto;
+}
+
+.chat-line {
+  padding: 5px 4px 3px 4px;
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  border: 0px;
+  z-index: 1;
+}
+
+.part-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.part {
+  margin: 3px 6px 7px 6px;
+  width: 256px;
+  height: 48px;
+  position: relative;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.part-name {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: small;
+}
+
+.part-score {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: small;
+  font-weight: bold;
+}
+
+.part-type {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  font-size: small;
+  font-style: italic;
+}
+
+.part-status {
+  position: absolute;
+  bottom: 5px;
+  left: 7px;
+  font-size: small;
+  font-style: italic;
+}
+
+.match-status {
+  margin: 0px 10px 10px 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.hand-area {
+  margin: 30px 0px 0px 0px;
+  position: sticky;
+  bottom: 0px;
+  display: flex;
+  justify-content: center;
+}
+
+.hand-area-set {
+  margin-bottom: -20px;  /* To counteract body margin */
+  padding: 20px 20px 40px 20px;
+  position: relative;
+  border-radius: 0px 5px 0px 0px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 0;
+}
+
+.hand-area-set-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hand-tabs {
+  position: absolute;
+  top: -27px;
+  display: flex;
+  line-height: 20px;
+}
+
+.hand-tab-header {
+  margin: 0px 4px 0px 0px;
+  padding: 3px 10px 4px 10px;
+  height: 27px;
+  border-radius: 5px 5px 0px 0px;
+  cursor: pointer;
+}
+
+.active-tab-header {
+  z-index: 1;
+}
+
+.card-area {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.card-area-statement {
+  padding: 100px 10px 0px 60px;
+}
+
+.card-area-played {
+  padding: 40px 20px 0px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  /* For nice display of the hand even without played cards */
+  min-height: 100vh;
+  align-content: flex-start;
+}
+
+.card-area-boost {
+  min-width: 486px;
+  width: 100%;
+}
+
+.card-area-set {
+  padding: 0px 15px 20px 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.side-slider {
+  position: sticky;
+  top: 20px;
+}
+
+.countdown-clock {
+  margin: 0px 0px 20px 0px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 45px;
+}
+
+/** Deck upload and editor **/
+.upload-hint {
+  font-size: small;
+  margin: 0px 20px 0px 10px;
+}
+
+.card-editor-container {
+  position: fixed;
+  top: 25vh;
+  width: 100%;
+  display: none;
+  justify-content: center;
+}
+
+.card-editor-cover {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.card-editor {
+  padding: 20px;
+  z-index: 101;
+  border-radius: 5px;
+}
+
+.fake-anchor {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.knob-statement {
+  cursor: pointer;
+}
+
+.knob-object {
+  cursor: pointer;
+}
+
+.knob-verb {
+  cursor: pointer;
+}
+
+.card-editor-card-display {
+  margin: 0px 0px 20px 0px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.card-text-edit {
+  border-radius: 5px;
+  margin: 10px 0px 10px 0px;
+}

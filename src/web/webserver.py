@@ -31,7 +31,6 @@ class Webserver(Thread):
         # Whether SSL shall be used for connections
         self._use_ssl = kconfig().get("use_ssl", True)
 
-    def run(self):
         # Set up the controller for routing
         m = MasterController()
 
@@ -41,6 +40,7 @@ class Webserver(Thread):
         # Set the master for the server handler
         ServerHandler.set_master(m)
 
+    def run(self):
         # Initialize the server
         socket_pair = ('', self._port)
         self._httpd = MultithreadedHTTPServer(socket_pair, ServerHandler)

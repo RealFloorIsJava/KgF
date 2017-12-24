@@ -5,6 +5,7 @@ Author: LordKorea
 """
 
 # Import controllers for leafs here
+from pages.leafs.dashboard import DashboardController
 from pages.leafs.index import IndexController
 from pages.leafs.resource import ResourceController
 
@@ -21,6 +22,8 @@ class Leafs:
         To register a leaf, add a line of the form
         > mctrl.add_leaf("test", TestController())
         """
+        # Dashboard controller, the dashboard with the match view
+        mctrl.add_leaf("dashboard", DashboardController())
         # Index controller, the default landing page
         mctrl.add_leaf("index", IndexController())
         # Resource loader for css/js/images

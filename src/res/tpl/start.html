@@ -15,6 +15,16 @@
           <label for="pw">Secret password:</label> <input type="password" id="pw" name="pw" size="20"><br>
           <input type="submit" value="Sign In">
         </form>
+        <br>
+        {isset authfail}
+          <span class="auth-error">Login required.</span>
+        {/isset}
+        {isset pwfail}
+          <span class="auth-error">Incorrect password.</span>
+        {/isset}
+        {isset logout}
+          <span class="auth-ok">Successfully logged out.</span>
+        {/isset}
       </div>
     </div>
   </body>

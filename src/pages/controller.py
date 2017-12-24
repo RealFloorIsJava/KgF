@@ -103,7 +103,11 @@ class Controller:
                 continue
 
             # Endpoint matches, call endpoint callback
-            return callback(session_data, path, params, headers)
+            res = callback(session_data, path, params, headers)
+            if res is None:
+                # Fall through, the next endpoint should be considered
+                continue
+            return res
 
         # Last resort if there is no matching endpoint
         return (404,  # 404 Not Found
