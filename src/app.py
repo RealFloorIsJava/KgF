@@ -1,7 +1,7 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
 from kgf import KgF

@@ -1,15 +1,16 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
-from os.path import isdir
-from os import mkdir
-from sys import exit
-from log import Log
-from config import Config
 import builtins
+from os import mkdir
+from os.path import isdir
+from sys import exit
+
+from config import Config
+from log import Log
 
 
 def print(str, *args, **kwargs):
@@ -22,27 +23,34 @@ def print(str, *args, **kwargs):
 
 # Exports
 def kconfig():
+    """ Shortcut to get the configuration """
     return KgF.kconfig
 
 
 def klog():
+    """ Shortcut to get the logger """
     return KgF.klog
 
 
 class KgF:
     """
-        The main part of the application. Manages the web server and the
-        minimal console.
+    The main part of the application. Manages the web server and the
+    minimal console.
     """
 
+    # The logger
     klog = None
+
+    # The configuration
     kconfig = None
 
     def __init__(self):
         self._webserver = None
 
     def setup(self):
-        # Late imports
+        """ Sets up the application """
+        # Late imports to prevent circular dependencies when other modules
+        # need configuration or logger
         from web.webserver import Webserver
 
         print("Setting up environment...")
@@ -59,10 +67,13 @@ class KgF:
         # Setup configuration
         KgF.kconfig = Config()
 
-        # Additional setup happens here!
+        # Additional setup happens here
 
         # Setup web server
         self._webserver = Webserver()
+
+        # Check whether the webserver should be started or whether it is just
+        # an initialization run
         if KgF.kconfig.get("dry-run", True):
             print("Dry run. Exiting...")
             exit(0)

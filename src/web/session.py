@@ -1,59 +1,75 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
 from threading import RLock
-from uuid import uuid4
 from time import time
+from uuid import uuid4
+
 from kgf import kconfig
 
 
 class Session:
     """ Represents a client session """
 
+    # The MutEx for the session pool
+    # Locking this MutEx can't cause any other MutExes to be locked.
     _pool_lock = RLock()
 
-    # The currently existing sessions
+    # The session pool, all currently existing sessions, sid->session
     _sessions = {}
 
     @staticmethod
     def get_session(ip, sid=None):
         """
-            Get an existing session or create a new one.
-            Returns: (session, created?)
-            A new session is created iff
-                 - sid is None
-              or - sid is unknown to the pool
-              or - old session is expired
-              or - the given ip is not the owner of the session
+        Get an existing session or create a new one.
+        Returns: (session, newly created?)
+        A new session is created iff at least one of the following conditions
+        holds:
+             - sid is None
+             - sid is unknown to the pool
+             - old session is expired
+             - the given ip is not the owner of the session
         """
+        # Create new session if it was explicitly requested
         if sid is None:
             return Session(ip), True
+
+        # Now search the pool for existing sessions
         with Session._pool_lock:
+            # Unknown SID -> new session
             if sid not in Session._sessions:
                 return Session(ip), True
+
+            # Fetch (maybe invalid) session
             session = Session._sessions[sid]
             create = False
+
+            # A session expires when it was not used for some time or the
+            # IP of the owner changes (basic hijacking protection)
             if session.is_expired() or not session.is_owner(ip):
+                # Delete the old session and create a new one
                 del Session._sessions[sid]
                 session = Session(ip)
                 create = True
             return session, create
 
     def __init__(self, ip):
+        # The MutEx for an individual session
+        # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
 
-        # Generate a random session ID
+        # Generate a random session ID and store the session owner's IP
         self._sid = str(uuid4())
         self._ip = ip
 
-        # Expires X minutes in the future
+        # Expires X minutes into the future
         self._expires = 0
         self.refresh()
 
-        # Session data
+        # Initialize session data
         self._data = SessionData()
 
         # Insert this session into the pool
@@ -73,7 +89,7 @@ class Session:
     def refresh(self):
         """ Refresh the session: reset expiration time """
         with self._lock:
-            expire_time = int(kconfig().get("expire_time", "15"))
+            expire_time = kconfig().get("expire_time", 15)
             self._expires = time() + expire_time * 60
 
     def get_id(self):
@@ -91,10 +107,12 @@ class SessionData:
     """ Represents session data as a thread-safe dictionary """
 
     def __init__(self):
+        # The MutEx for the session data
+        # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
+
+        # The internals of the session data
         self._internal = {}
-        self._nonce = None
-        self.update_nonce()
 
     def remove(self, key):
         with self._lock:
@@ -119,26 +137,3 @@ class SessionData:
     def __contains__(self, item):
         with self._lock:
             return item in self._internal
-
-    def check_nonce(self, nonce):
-        """
-            Compares the provided to the current nonce.
-            True if equal, False otherwise
-        """
-        with self._lock:
-            return self._nonce == nonce
-
-    def get_nonce(self):
-        """
-            Gets the current nonce
-        """
-        with self._lock:
-            return self._nonce
-
-    def update_nonce(self):
-        """
-            Overwrites the old nonce with a new one and returns it
-        """
-        with self._lock:
-            self._nonce = str(uuid4())
-            return self._nonce
