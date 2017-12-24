@@ -81,6 +81,16 @@ class Match:
             Match._id += 1
             return Match._id
 
+    @staticmethod
+    def perform_housekeeping():
+        """ Performs housekeeping tasks like checking timers """
+        matches = Match.get_all()
+        for match in matches:
+            if match.get_num_participants() == 0:
+                Match.remove_match(match.get_id())
+            else:
+                match.check_participants()
+
     def __init__(self):
         # MutEx for the current match
         # Locking this MutEx can cause the following mutexes to be locked:
@@ -103,7 +113,7 @@ class Match:
         self._participants = OrderedDict()
 
         # The chat of this match, tuples with type/message
-        self._chat = []
+        self._chat = [("SYSTEM", "<b>Match was created.</b>")]
 
         # Release the match into the pool
         Match.add_match(self._id, self)
@@ -116,7 +126,7 @@ class Match:
     def get_owner_nick(self):
         """ Retrieves the nickname of the owner """
         with self._lock:
-            return self._participants[0].get_nickname()  # TODO
+            return self._participants[0].get_nickname()
 
     def get_num_participants(self):
         """ Retrieves the number of participants in the match """
@@ -132,3 +142,14 @@ class Match:
         """ Retrieves the number of seconds to the next phase (state) """
         with self._lock:
             return self._timer - time()
+
+    def check_participants(self):
+        """ Checks the timeout timers of all participants """
+        with self._lock:
+            for id in self._participants.copy():
+                part = self._participants[id]
+                if part.timed_out():
+                    self._chat.append((
+                        "SYSTEM",
+                        "<b>%s timed out.</b>" % part.get_nickname()))
+                    del self._participants[id]

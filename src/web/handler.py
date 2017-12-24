@@ -12,6 +12,7 @@ from traceback import extract_tb
 from urllib.parse import parse_qs
 
 from kgf import print
+from server.match import Match
 from web.session import Session
 
 
@@ -38,6 +39,9 @@ class ServerHandler(BaseHTTPRequestHandler):
         pass
 
     def do_request(self, params):
+        # Perform tasks for every request here
+        Match.perform_housekeeping()
+
         # Setup results
         head = {}
 
