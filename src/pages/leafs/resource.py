@@ -11,9 +11,7 @@ from pages.controller import Controller
 
 
 class ResourceController(Controller):
-    """
-    Leaf /res
-    """
+    """ Leaf /res """
 
     # The number of seconds for which a resource is cached
     _MAX_CACHE = 180

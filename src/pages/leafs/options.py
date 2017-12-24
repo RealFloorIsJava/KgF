@@ -11,9 +11,7 @@ from pages.templates.engine import Parser
 
 
 class OptionsController(Controller):
-    """
-    Leaf /options
-    """
+    """ Leaf /options """
 
     def __init__(self):
         super().__init__()
@@ -26,15 +24,11 @@ class OptionsController(Controller):
         self.add_endpoint(self.name, params_restrict={"name"})
 
     def check_access(self, session, path, params, headers):
-        """
-        Checks whether the user is logged in
-        """
+        """ Checks whether the user is logged in """
         return "login" in session
 
     def fail_permission(self, session, path, params, headers):
-        """
-        Called when the user is not authorized
-        """
+        """ Called when the user is not authorized """
         return (403,  # 403 Forbidden
                 {"Content-Type": "text/plain"},
                 "Not authenticated")

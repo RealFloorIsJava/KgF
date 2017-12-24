@@ -13,9 +13,7 @@ from pages.templates.engine import Parser
 
 
 class IndexController(Controller):
-    """
-    Leaf /index
-    """
+    """ Leaf /index """
 
     def __init__(self):
         super().__init__()
@@ -47,9 +45,7 @@ class IndexController(Controller):
         return None  # Fall through
 
     def index(self, session, path, params, headers):
-        """
-        The index page /index
-        """
+        """ The index page /index """
         # If the user is already logged in, send him to the dashboard
         if "login" in session:
             return (303,  # 303 See Other

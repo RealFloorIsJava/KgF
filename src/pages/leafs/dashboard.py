@@ -9,9 +9,7 @@ from pages.templates.engine import Parser
 
 
 class DashboardController(Controller):
-    """
-    Leaf /dashboard
-    """
+    """ Leaf /dashboard """
 
     def __init__(self):
         super().__init__()
@@ -23,23 +21,17 @@ class DashboardController(Controller):
         self.add_endpoint(self.dashboard)
 
     def check_access(self, session, path, params, headers):
-        """
-        Checks whether the user is logged in
-        """
+        """ Checks whether the user is logged in """
         return "login" in session
 
     def fail_permission(self, session, path, params, headers):
-        """
-        Called when the user is not authorized
-        """
+        """ Called when the user is not authorized """
         return (303,  # 303 See Other
                 {"Location": "/index/authfail"},
                 "")
 
     def dashboard(self, session, path, params, headers):
-        """
-        The dashboard page /dashboard
-        """
+        """ The dashboard page /dashboard """
         # Populate symbol table
         symtab = {
             "nickname": session["nickname"],
