@@ -81,7 +81,7 @@
   }
 
   $("#deckEditButton").click(function() {
-    window.location.assign("/global.php?page=deckedit");
+    window.location.assign("/deckedit");
   });
 
   $("#nameChangeLabel").click(function() {

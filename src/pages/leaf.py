@@ -6,6 +6,7 @@ Author: LordKorea
 
 # Import controllers for leafs here
 from pages.leafs.dashboard import DashboardController
+from pages.leafs.deckedit import DeckeditController
 from pages.leafs.index import IndexController
 from pages.leafs.resource import ResourceController
 
@@ -24,6 +25,8 @@ class Leafs:
         """
         # Dashboard controller, the dashboard with the match view
         mctrl.add_leaf("dashboard", DashboardController())
+        # Deckedit controller, the deck editor
+        mctrl.add_leaf("deckedit", DeckeditController())
         # Index controller, the default landing page
         mctrl.add_leaf("index", IndexController())
         # Resource loader for css/js/images
