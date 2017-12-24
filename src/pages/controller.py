@@ -1,67 +1,68 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
 
 class Controller:
     """
-        Represents a page controller, managing access restrictions and
-        endpoints
+    Represents a page controller, managing access restrictions and
+    endpoints
     """
 
     def __init__(self):
+        # Access restrictions
         self._restrictions = []
+        # Endpoints
         self._endpoints = []
+        # The default access denied handler
         self._access_denied = lambda x, y, z, h: (
-            403,
+            403,  # 403 Forbidden
             {"Content-Type": "text/plain"},
-            "Access denied"
-        )
+            "Access denied")
 
     def add_access_restriction(self, chk):
         """
-            Adds an access restriction for this controller.
-            Parameter is a function
-                (session_data, path, params, headers) -> (bool)
-            with True for access granted, False for access denied
-            Access is denied iff a denying restriction exists.
+        Adds an access restriction for this controller.
+        The restriction is a function
+            (session_data, path, params, headers) -> (bool)
+        with True for access granted, False for access denied
+        Access is denied iff a denying restriction exists.
         """
         self._restrictions.append(chk)
 
     def set_permission_fail_handler(self, point):
         """
-            This will be called as an endpoint if access checks fail.
-            For signature, see add_endpoint()
+        This will be called as an endpoint if access checks fail.
+        For signature, see add_endpoint()
         """
         self._access_denied = point
 
     def add_endpoint(self, point, path_restrict=None, params_restrict=None):
         """
-            Adds an endpoint for this controller.
-            For "point" to be called, path_restrict must be present in the
-            path and params_restrict must be existing keys in the parameters.
-            The endpoint has to return an integer (http status code),
-            a dictionary (http headers) and a string (http response):
-            point: (session, path, params, headers) -> (int, dict, str)
+        Adds an endpoint for this controller.
+        For "point" to be called, path_restrict must be present in the
+        path and params_restrict must be existing keys in the parameters.
+        The endpoint has to return an integer (http status code),
+        a dictionary (http headers) and a string (http response):
+
+        (session, path, params, headers) -> (status, headers, response)
         """
+        # Default path restriction is no restriction
         if path_restrict is None:
             path_restrict = set()
+
+        # Default parameter restriction is no restriction
         if params_restrict is None:
             params_restrict = set()
 
         # Structure: [(path,param) -> (endpoint)]
-        self._endpoints.append(
-            (
-                (path_restrict, params_restrict),
-                point
-            )
-        )
+        self._endpoints.append(((path_restrict, params_restrict), point))
 
     def call_endpoint(self, session_data, path, params, headers):
         """
-            Calls an endpoint and returns the results.
+        Calls an endpoint and returns the results.
         """
         # Access check
         passed = True
@@ -74,7 +75,7 @@ class Controller:
         if not passed:
             return self._access_denied(session_data, path, params, headers)
 
-        # Find endpoint [ O(|points|*|restrictions|*max(|path|,|params|)) ]
+        # Find endpoint
         for point in self._endpoints:
             path_restrict = point[0][0]
             params_restrict = point[0][1]
@@ -87,7 +88,7 @@ class Controller:
                     fail = True
                     break
 
-            # Early bail out
+            # Early bailout
             if fail:
                 continue
 
@@ -101,12 +102,10 @@ class Controller:
             if fail:
                 continue
 
-            # Call endpoint callback
+            # Endpoint matches, call endpoint callback
             return callback(session_data, path, params, headers)
 
         # Last resort if there is no matching endpoint
-        return (
-            404,
-            {"Content-Type": "text/plain"},
-            "No applicable endpoint found"
-        )
+        return (404,  # 404 Not Found
+                {"Content-Type": "text/plain"},
+                "No applicable endpoint found")

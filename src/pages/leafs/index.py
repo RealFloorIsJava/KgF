@@ -1,7 +1,7 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
 from pages.controller import Controller
@@ -10,7 +10,7 @@ from pages.templates.engine import Parser
 
 class IndexController(Controller):
     """
-        Leaf /index
+    Leaf /index
     """
 
     def __init__(self):
@@ -19,17 +19,15 @@ class IndexController(Controller):
 
     def index(self, session, path, params, headers):
         """
-            The index page /index
+        The index page /index
         """
-        # Populate symbolic table
+        # Populate symbol table
         symtab = {}
         if "login" in session:
             symtab['login'] = True
 
         # Parse the template
-        data = Parser.get_template("./pages/templates/start.html", symtab)
-        return (
-            200,
-            {"Content-Type": "text/html"},
-            data
-        )
+        data = Parser.get_template("./res/tpl/start.html", symtab)
+        return (200,  # 200 OK
+                {"Content-Type": "text/html"},
+                data)

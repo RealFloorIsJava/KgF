@@ -1,7 +1,7 @@
 """
-    Part of KgF.
+Part of KgF.
 
-    Author: LordKorea
+Author: LordKorea
 """
 
 from html import escape
@@ -9,15 +9,17 @@ from html import escape
 
 class Parser:
     """
-        Used to parse templates to HTML output
+    Used to parse templates to HTML output
     """
 
+    # List of opening command tags
     _opening = [
         "iterate",
         "isset",
         "isnot"
     ]
 
+    # List of closing command tags
     _closing = [
         "/iterate",
         "/isset",
@@ -27,8 +29,8 @@ class Parser:
     @staticmethod
     def get_template(path, symtab):
         """
-            Parses the given template input to HTML.
-            The given symbolic table is used to resolve variables, datasets
+        Parses the given template input to HTML.
+        The given symbol table is used to resolve variables and datasets
         """
         # Get the template data
         data = ""
@@ -41,32 +43,31 @@ class Parser:
 
     @staticmethod
     def parse_template(raw, symtab):
-        """
-            Parses template data to HTML.
-
-            {OBR} -> {
-            {CBR} -> }
-            {echo xyz}      -> Print $xyz
-            {html xyz}      -> Print $xyz (HTML encoded)
-            {iterate xyz}   -> begin iteration through dataset $xyz
-                               imports entries as $xyz.key
-            {/iterate}      -> marks end of iteration
-            {isset xyz}     -> if $xyz is set
-            {/isset}        -> ends isset
-            {isnot xyz}     -> if $xyz is not set
-            {/isnot}        -> ends isnot
+        """ Parses template data to HTML.
+        The following command tags exist:
+        {OBR}           -> {
+        {CBR}           -> }
+        {echo xyz}      -> Print $xyz (No escaping)
+        {html xyz}      -> Print $xyz (HTML escaped, for use in tags)
+        {iterate xyz}   -> begin iteration through dataset xyz
+                           imports entries as xyz.key
+        {/iterate}      -> marks end of iteration
+        {isset xyz}     -> contents are only evaluated if xyz is set
+        {/isset}        -> ends isset
+        {isnot xyz}     -> contents are only evaluated if xyz is not set
+        {/isnot}        -> ends isnot
         """
 
         # Add the beginning marker to the data
         raw = "{__BEGIN}" + raw
 
-        # Prepare symbolic table
+        # Prepare symbol table (remove empty datasets)
         Parser._modify_dataset([symtab])
 
         # Get the tokens from the data
         tokens = Parser._fetch_tokens(raw)
 
-        # Generate the derivation tree
+        # Generate the AST
         syntree = Parser._create_tree(tokens)
 
         # Execute the program tree and yield results
@@ -74,11 +75,10 @@ class Parser:
 
     @staticmethod
     def _modify_dataset(dataset):
-        """
-            Removes empty sub-datasets at any depth recursively
-        """
+        """ Removes empty sub-datasets at any depth recursively """
         for i in range(len(dataset)):
             entry = dataset[i]
+            # Iterate over copy because keys are being removed inside
             for key in entry.copy():
                 val = entry[key]
                 if isinstance(val, list):
@@ -90,13 +90,13 @@ class Parser:
     @staticmethod
     def _fetch_tokens(raw):
         """
-            Fetches the tokens in a raw sample.
-            Returns a list of tokens.
-            Token format:
-              Text tokens: ('txt', value)
-              Command tokens: ('cmd', value)
+        Fetches the tokens in a raw sample.
+        Returns a list of tokens.
+        Token format:
+          Text tokens: ('txt', value)
+          Command tokens: ('cmd', value)
 
-            Command tokens are added without enclosing braces
+        Command tokens are added without enclosing braces
         """
 
         # Command mode: If true, current lexical token is a command ({...})
@@ -121,7 +121,7 @@ class Parser:
                     tokens.append(('cmd', tmp))
                     tmp = ""
 
-            # Or if command is starting
+            # Check if command is starting
             elif not command_mode and char == "{":
                 command_mode = True
                 # Command started. Finish token, start next one
@@ -144,16 +144,18 @@ class Parser:
     @staticmethod
     def _create_tree(toks):
         """
-            Create the derivation tree which is used to determine
-            the program flow.
-            This is done by creating an in-memory tree and
-            adding tokens to it.
-            Scope tokens (Parser._opening) create new child trees.
-            The parser keeps track of the current position by using a
-            linked pointer tuple:
-              (node, parent_pointer)
-            with the parent_pointer being None for the top level node.
-            The tree itself is a list with nested lists inside.
+        Create the AST which is used to determine the program flow.
+        This is done by creating an in-memory tree and
+        adding tokens to it.
+        Scope tokens (Parser._opening) create new child trees.
+        The parser keeps track of the current position by using a
+        linked pointer tuple:
+          (node, parent_pointer)
+        with the parent_pointer being None for the top level node.
+        The tree itself is a list with nested lists inside.
+
+        Command tags which have their own scope are placed at the beginning of
+        their scope.
         """
 
         # Create tree and node pointer
@@ -178,18 +180,18 @@ class Parser:
                 q = val.split(" ", 1)
                 cmd = q[0]
 
-                # Step back to the parent node
                 if cmd in Parser._closing:
+                    # Step back to the parent node
                     synptr = synptr[1]
-
-                # Create a new child tree
                 elif cmd in Parser._opening:
+                    # Create a new child tree
                     child = [token]
                     # Add the child tree and enter it
                     synptr[0].append(child)
                     synptr = (child, synptr)
 
-                # Flat command. Add to the current tree node.
+                # Flat (non-scope-holding) command. Add to the current
+                # tree node.
                 else:
                     synptr[0].append(token)
 
@@ -199,16 +201,16 @@ class Parser:
     @staticmethod
     def _parse_command(tree, symtab):
         """
-            Recursively parse the given derivation tree to generate
-            the result using the given symbolic table
+        Recursively parse the given AST to generate
+        the result using the given symbol table
         """
         val = ""
 
-        # Is this child a sub-tree?
         if isinstance(tree, list):
+            # This child is a subtree
             init = tree[0][1]  # Sub-Tree initializers are always commands
 
-            # Get command/arguments
+            # Get command and arguments
             q = init.split(" ", 1)
             if len(q) == 2:
                 cmd, args = q
@@ -216,7 +218,7 @@ class Parser:
                 cmd = q[0]
                 args = ""
 
-            # Mock beginning token
+            # Handle beginning token
             if cmd == "__BEGIN":
                 pass  # Template begin
                 for elem in tree[1:]:
@@ -243,23 +245,25 @@ class Parser:
 
             # Is not set
             elif cmd == "isnot":
+                # Note that 'not existing' also includes being set to None
                 var_name = args
                 var = symtab.get(var_name, None)
-                if var is None:  # Might be set, but set to None!
+                if var is None:
                     for elem in tree[1:]:
                         val += Parser._parse_command(elem, symtab)
 
             # Is set
             elif cmd == "isset":
+                # Note that 'existing' does not include being set to None
                 var_name = args
                 var = symtab.get(var_name, None)
                 if var is not None:
                     for elem in tree[1:]:
                         val += Parser._parse_command(elem, symtab)
-
-        # Or a leaf of the tree?
         else:
-            # Leaf / Text node: Just add contents to result
+            # This child is a leaf of the tree
+
+            # Text node: Just add contents to result
             if tree[0] == "txt":
                 val += tree[1]
             else:

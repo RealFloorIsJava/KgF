@@ -67,7 +67,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         leaf = path[0]
         path = path[1:]
 
-        # Add the leaf parameter to the params
+        # Add the magic leaf parameter to the params
         ServerHandler._master.decorate_params(leaf, params)
 
         # Call the leaf/endpoint
