@@ -282,13 +282,19 @@ class ServerHandler(BaseHTTPRequestHandler):
         """ Send a HTTP response """
         self.server_version = "KgF/2.0"
         self.sys_version = "TeaPot/1.33.7"
+        self.protocol_version = 'HTTP/1.1'
         try:
             # Send HTTP status code
             self.send_response(code)
 
             # Send headers
             for key in headers:
-                self.send_header(key, headers[key])
+                if key != "Content-Length":
+                    self.send_header(key, headers[key])
+
+            # Send content length header
+            self.send_header("Content-Length", str(max(1, len(data))))
+
             self.end_headers()
 
             # Send reply

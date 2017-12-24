@@ -15,6 +15,9 @@ class ResourceController(Controller):
     Leaf /res
     """
 
+    # The number of seconds for which a resource is cached
+    _MAX_CACHE = 180
+
     def __init__(self):
         super().__init__()
         # Use the same ETag for all requests. Because the ETag is regenerated
@@ -43,9 +46,10 @@ class ResourceController(Controller):
 
         # Check if the response can be a "Not Modified"
         if "if-none-match" in headers:
-            if headers["if-none-match"] == self._etag:
+            if headers["if-none-match"] == "\"%s\"" % self._etag:
                 return (304,  # 304 Not Modified
-                        {"Cache-Control": "max-age=180, public",
+                        {"Cache-Control": "max-age=%i, public"
+                         % ResourceController._MAX_CACHE,
                          "ETag": "\"%s\"" % self._etag},
                         b"\0")
 
@@ -62,7 +66,8 @@ class ResourceController(Controller):
             return 404, {"Content-Type": "text/plain"}, "Not found"
 
         head = {"Content-Type": mime,
-                "Cache-Control": "max-age=180, public",
+                "Cache-Control": "max-age=%i, public"
+                % ResourceController._MAX_CACHE,
                 "ETag": "\"%s\"" % self._etag}
         # 200 OK
         return 200, head, r
