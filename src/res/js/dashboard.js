@@ -13,7 +13,7 @@
       );
 
     anchor.on("click", "#id-joinmatch-" + id, {}, function() {
-      window.location.assign("/global.php?page=match&action=join&match=" + id);
+      window.location.assign("/match/join/" + id);
     });
 
     var runningMatchButton = $("<div></div>")
@@ -74,7 +74,7 @@
   function loadMatches() {
     $.ajax({
       method: "GET",
-      url: "/api/matchlist",
+      url: "/api/list",
       dataType: "json",
       success: displayMatches
     });

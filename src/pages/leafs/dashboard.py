@@ -38,6 +38,9 @@ class DashboardController(Controller):
             "theme": session["theme"]
         }
 
+        if "filesizefail" in path:
+            symtab["filesizefail"] = True
+
         # Parse the template
         data = Parser.get_template("./res/tpl/dashboard.html", symtab)
         return (200,  # 200 OK

@@ -44,8 +44,8 @@
 
   function loadStatus() {
     $.ajax({
-      method: "POST",
-      url: "/global.php?page=match&action=status",
+      method: "GET",
+      url: "/api/status",
       dataType: "json",
       success: function(data) {
         mCountDown = data["timer"];

@@ -21,8 +21,10 @@
       </div>
       <div class="clearAfterFloat"></div>
     </div>
-    {isset status}
-      {echo status}
+    {isset filesizefail}
+      <div class="status-box failure-box">
+        The file you uploaded was too large!
+      </div>
     {/isset}
 
     <div id="matchlist">
