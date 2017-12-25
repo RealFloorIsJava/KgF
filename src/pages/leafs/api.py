@@ -22,6 +22,7 @@ class APIController(Controller):
 
         self.add_endpoint(self.api_list, path_restrict={"list"})
         self.add_endpoint(self.api_status, path_restrict={"status"})
+        self.add_endpoint(self.api_chat, path_restrict={"chat"})
 
     def check_access(self, session, path, params, headers):
         """ Checks whether the user is logged in """
@@ -32,6 +33,30 @@ class APIController(Controller):
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"not authenticated\"}")
+
+    def api_chat(self, session, path, params, headers):
+        """
+        Retrieves the chat history (either the complete history or starting
+        at the given offset)
+        """
+        match = Match.get_match(session["id"])
+        if match is None:
+            return self.fail_permission(session, path, params, headers)
+
+        # Check whether a message offset was supplied
+        offset = 0
+        if "offset" in params:
+            try:
+                offset = int(params["offset"])
+            except ValueError:
+                pass
+
+        # Fetch the chat data
+        data = match.retrieve_chat(offset)
+
+        return (200,  # 200 OK
+                {"Content-Type": "application/json; charset=utf-8"},
+                dumps(data))
 
     def api_status(self, session, path, params, headers):
         """ Retrieves the status of the current match """

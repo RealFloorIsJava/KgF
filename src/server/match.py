@@ -344,3 +344,15 @@ class Match:
             if self._current_card is None:
                 return 1
             return self._current_card[1].count("_")
+
+    def retrieve_chat(self, offset=0):
+        """ Retrieves the chat beginning at the given offset """
+        offset = max(0, offset)
+        res = []
+        with self._lock:
+            for id, msg in enumerate(self._chat):
+                if id >= offset:
+                    res.append({"id": id,
+                                "type": msg[0],
+                                "message": msg[1]})
+        return res

@@ -29,7 +29,8 @@ class ResourceController(Controller):
                           "png": "image/png",
                           "txt": "text/plain",
                           "ico": "image/x-icon",
-                          "jpg": "image/jpeg"}
+                          "jpg": "image/jpeg",
+                          "svg": "image/svg+xml"}
 
         # Register the resource delivery endpoint
         self.add_endpoint(self.resource_dealer)

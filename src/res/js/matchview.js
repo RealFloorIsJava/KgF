@@ -209,7 +209,7 @@
     mChatLock = true;
     $.ajax({
       method: "POST",
-      url: "/global.php?page=match&action=chat",
+      url: "/api/chat",
       data: {
         offset: mMinimumChatId
       },
@@ -221,7 +221,7 @@
         for (var i = 0; i < data.length; i++) {
           var img = $("<img>")
             .attr("src", data[i].type == "SYSTEM"
-              ? "/img/bang.svg" : "/img/message.svg")
+              ? "/res/images-bang-svg" : "/res/images-message-svg")
             .addClass("chat-svg");
           var span = $("<span></span>")
             .addClass("chat-msg")
