@@ -4,7 +4,9 @@ Part of KgF.
 Author: LordKorea
 """
 
+from html import escape
 from json import dumps
+from time import time
 
 from pages.controller import Controller
 from server.match import Match
@@ -22,6 +24,9 @@ class APIController(Controller):
 
         self.add_endpoint(self.api_list, path_restrict={"list"})
         self.add_endpoint(self.api_status, path_restrict={"status"})
+        self.add_endpoint(self.api_chat_send,
+                          path_restrict={"chat", "send"},
+                          params_restrict={"message"})
         self.add_endpoint(self.api_chat, path_restrict={"chat"})
 
     def check_access(self, session, path, params, headers):
@@ -33,6 +38,35 @@ class APIController(Controller):
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"not authenticated\"}")
+
+    def api_chat_send(self, session, path, params, headers):
+        """ Sends a chat message """
+        msg = escape(params["message"])
+        match = Match.get_match(session["id"])
+        if match is None:
+            return self.fail_permission(session, path, params, headers)
+        part = match.get_participant(session["id"])
+
+        # Check whether the user may send a message now
+        if "chatcooldown" in session:
+            if session["chatcooldown"] > time():
+                return {403,  # 403 Forbidden
+                        {"Content-Type": "application/json; charset=utf-8"},
+                        "{\"status\":\"spam rejected\"}"}
+        session["chatcooldown"] = time() + 1
+
+        # Check the chat message for sanity
+        if len(msg) > 0 and len(msg) < 200:
+            # Send the message
+            nick = part.get_nickname()
+            match.send_message(nick, msg)
+            return (200,  # 200 OK
+                    {"Content-Type": "application/json; charset=utf-8"},
+                    "{\"status\":\"sent\"}")
+
+        return (403,  # 403 Forbidden
+                {"Content-Type": "application/json; charset=utf-8"},
+                "{\"status\":\"invalid size\"}")
 
     def api_chat(self, session, path, params, headers):
         """

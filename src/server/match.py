@@ -356,3 +356,9 @@ class Match:
                                 "type": msg[0],
                                 "message": msg[1]})
         return res
+
+    def send_message(self, nick, msg):
+        """ Sends a user message to the chat of this match """
+        with self._lock:
+            self._chat.append(("USER",
+                               "<b>%s</b>: %s" % (nick, msg)))

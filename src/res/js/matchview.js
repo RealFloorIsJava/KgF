@@ -361,7 +361,7 @@
       if (text.length > 0) {
         $.ajax({
           method: "POST",
-          url: "/global.php?page=match&action=chatsend",
+          url: "/api/chat/send",
           data: {
             message: text
           }
