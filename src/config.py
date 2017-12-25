@@ -1,7 +1,24 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
+MIT License
+Copyright (c) 2017 LordKorea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
 from json import dump, load
@@ -10,12 +27,17 @@ from threading import RLock
 
 
 class Config:
-    """ Manages the JSON configuration file """
+    """Manages the JSON configuration file.
+
+    Class Attributes:
+        _CONFIG_FILE (str): The path to the configuration file.
+    """
 
     # The configuration file where keys and values will be stored
     _CONFIG_FILE = "./data/kgf.json"
 
     def __init__(self):
+        """Constructor."""
         # MutEx for configuration access.
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
@@ -32,9 +54,14 @@ class Config:
             self._configuration = load(f)
 
     def get(self, key, default):
-        """
-        Fetches the value for the given key or sets the value to the given
-        default
+        """Gets the value for the given configuration key.
+
+        If the configuration key has no associated value then a default value
+        will be set.
+
+        Args:
+            key (str): The configuration key.
+            default (any): The default value for the configuration key.
         """
         with self._lock:
             # Set the default and write-back
