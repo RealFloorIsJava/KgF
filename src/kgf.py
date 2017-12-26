@@ -44,9 +44,9 @@ def print(msg, *args, **kwargs):
             compatibility.
     """
     if KgF.klog is None:
-        builtins.print(str)
+        builtins.print(msg)
     else:
-        KgF.klog.log(str)
+        KgF.klog.log(msg)
 
 
 # Exports
