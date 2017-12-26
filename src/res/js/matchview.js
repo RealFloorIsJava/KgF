@@ -31,8 +31,8 @@
 
   function fetchCards() {
     $.ajax({
-      method: "POST",
-      url: "/global.php?page=match&action=fetchcards",
+      method: "GET",
+      url: "/api/cards",
       dataType: "json",
       success: function(data) {
         updateHand(data["hand"]["OBJECT"], "OBJECT");
@@ -86,7 +86,7 @@
     }
     $.ajax({
       method: "POST",
-      url: "/global.php?page=match&action=pickwinner",
+      url: "/api/pick",
       data: {
         "playedId": event.data["playedId"]
       }
@@ -242,8 +242,8 @@
 
   function loadParticipants() {
     $.ajax({
-      method: "POST",
-      url: "/global.php?page=match&action=participants",
+      method: "GET",
+      url: "/api/participants",
       dataType: "json",
       success: function(data) {
         var list = $("#partlist");
@@ -280,7 +280,7 @@
     }
     $.ajax({
       method: "POST",
-      url: "/global.php?page=match&action=togglechoose",
+      url: "/api/choose",
       data: {
         "handId": handId
       },
@@ -388,7 +388,7 @@
     mCountDown--;
     updateCountdown();
     if (mCountDown == 0 && mEnding) {
-      window.location.assign("/global.php");
+      window.location.assign("/dashboard");
     }
   }, 1000);
 })();

@@ -7,6 +7,7 @@ Author: LordKorea
 import re
 from collections import OrderedDict
 from html import escape
+from random import choice
 from threading import RLock
 from time import time
 
@@ -86,7 +87,8 @@ class Match:
     def remove_match(id):
         """ Removes a match from the pool """
         with Match._pool_lock:
-            del Match._registry[id]
+            if id in Match._registry:
+                del Match._registry[id]
 
     @staticmethod
     def get_next_id():
@@ -162,10 +164,81 @@ class Match:
         with self._lock:
             return self._state != "PENDING"
 
+    def can_view_choices(self):
+        """ Whether participants can view others choices """
+        with self._lock:
+            return self._state == "PICKING" or self._state == "COOLDOWN"
+
     def get_seconds_to_next_phase(self):
         """ Retrieves the number of seconds to the next phase (state) """
         with self._lock:
             return self._timer - time()
+
+    def _set_state(self, state):
+        """
+        Updates the state for this match and handles the transition accordingly
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        # Notification that the transition out of the old state takes place
+        self._leave_state()
+        self._state = state
+        # Notification that the transition into the new state is finished
+        self._enter_state()
+
+    def _leave_state(self):
+        """
+        Handles a transition out of the current state
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        if self._state == "COOLDOWN":
+            # Delete all chosen cards from the hands
+            for pid in self._participants:
+                self._participants[pid].delete_chosen()
+
+    def _enter_state(self):
+        """
+        Handles a transition into the current state
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        if self._state == "CHOOSING":
+            # Select a new picker
+            self._select_next_picker()
+
+            # Shuffle the order of the participants
+            self._shuffle_participants()
+
+            # Select a new statement card for the match
+            self._select_match_card()
+
+            # Replenish all hands
+            self._replenish_hands()
+
+            # Update the timer
+            self._timer = time() + Match._TIMER_CHOOSING
+        elif self._state == "PICKING":
+            # Remove all hands that are not completed for picking
+            self._unchoose_incomplete()
+
+            # If no pick is possible (too few valid hands) then skip the round
+            if not self._pick_possible():
+                self._chat.append(("SYSTEM",
+                                   "<b>Too few valid choices!</b>"))
+                # If the round is skipped only unchoose the cards without
+                # deleting them
+                for pid in self._participants:
+                    self._participants[pid].unchoose_all()
+                self._set_state("COOLDOWN")
+                return
+
+            # Dynamically calculate the timer from the number of participants
+            pick_time = Match._TIMER_PICKING
+            pick_time += (len(self._participants)
+                          * Match._TIMER_PICKING_BONUS_PER_PLAYER)
+            self._timer = time() + pick_time
+        elif self._state == "COOLDOWN":
+            self._timer = time() + Match._TIMER_COOLDOWN
+        elif self._state == "ENDING":
+            self._timer = time() + Match._TIMER_ENDING
 
     def check_timer(self):
         """ Checks the timer and performs updates accordingly """
@@ -173,12 +246,42 @@ class Match:
         # the match has not started yet
         threshold = Match._THRESHOLD_PENDING_REFRESH
         with self._lock:
-            if self._timer - time() < threshold and self._state == "PENDING":
+            if self._state == "PENDING" and self._timer - time() < threshold:
                 if len(self._participants) < Match._MINIMUM_PLAYERS:
                     self._timer = time() + Match._TIMER_PENDING
                     self._chat.append(("SYSTEM",
                                        "<b>There are not enough players, "
                                        "the timer has been restarted!</b>"))
+
+        # Cancel matches with too few players
+        with self._lock:
+            if len(self._participants) < Match._MINIMUM_PLAYERS:
+                if self._state != "PENDING" and self._state != "ENDING":
+                    self._set_state("ENDING")
+
+        # Handle state transitions
+        delete_match = False
+        with self._lock:
+            if time() > self._timer:
+                if self._state == "PENDING":
+                    self._set_state("CHOOSING")
+                elif self._state == "CHOOSING":
+                    self._set_state("PICKING")
+                elif self._state == "PICKING":
+                    self._chat.append(("SYSTEM",
+                                       "<b>No winner was picked!</b>"))
+                    self._set_state("COOLDOWN")
+                elif self._state == "COOLDOWN":
+                    self._set_state("CHOOSING")
+                elif self._state == "ENDING":
+                    delete_match = True
+
+        # Delete the match if needed (note that it might already be deleted,
+        # but deletion is idempotent)
+        if delete_match:
+            with self._lock:
+                id = self._id
+            Match.remove_match(id)
 
     def check_participants(self):
         """ Checks the timeout timers of all participants """
@@ -189,8 +292,9 @@ class Match:
                     self._chat.append((
                         "SYSTEM",
                         "<b>%s timed out.</b>" % part.get_nickname()))
+                    if self._participants[id].is_picking():
+                        self.notify_picker_leave(id)
                     del self._participants[id]
-                    # TODO check status of participant and react accordingly
 
     def abandon_participant(self, pid):
         """ Removes the given participant from the match """
@@ -200,12 +304,51 @@ class Match:
             nick = self._participants[pid].get_nickname()
             self._chat.append(("SYSTEM",
                                "<b>%s left.</b>" % nick))
+            if self._participants[pid].is_picking():
+                self.notify_picker_leave(pid)
             del self._participants[pid]
+
+    def notify_picker_leave(self, pid):
+        """ Notifies the match that the picker with the given ID left.
+        When this method is called the picker is still in the list of
+        participants.
+        """
+        with self._lock:
+            # Find the first participant as the default fallback
+            for pid in self._participants:
+                fallback = self._participants[pid]
+                break
+
+            next = False
+            found = False
+            for ppid in self._participants:
+                if next:
+                    self._participants[ppid].set_picking(True)
+                    found = True
+                    break
+                elif pid == ppid:
+                    next = True
+
+            if not found:
+                fallback.set_picking(True)
+
+            if self._state == "CHOOSING" or self._state == "PICKING":
+                self._set_state("COOLDOWN")
+                self._chat.append(("SYSTEM",
+                                   "<b>The picker left!</b>"))
 
     def get_participant(self, pid):
         """ Retrieves the match participant with the given ID """
         with self._lock:
             return self._participants.get(pid, None)
+
+    def get_participants(self):
+        """ Retrieves all participants """
+        res = []
+        with self._lock:
+            for id in self._participants:
+                res.append(self._participants[id])
+        return res
 
     def add_participant(self, part):
         """ Adds a participant to the match """
@@ -214,6 +357,8 @@ class Match:
         with self._lock:
             self._participants[id] = part
             self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
+            if self._timer - time() < Match._THRESHOLD_JOIN_BONUS:
+                self._timer = time() + Match._THRESHOLD_JOIN_BONUS
 
     def create_deck(self, data):
         """ Create a deck from the given input source """
@@ -362,3 +507,124 @@ class Match:
         with self._lock:
             self._chat.append(("USER",
                                "<b>%s</b>: %s" % (nick, msg)))
+
+    def declare_round_winner(self, order):
+        """ Declares the participant with the given order rank as winner for
+        this round """
+        gc = self.count_gaps()
+        with self._lock:
+            winner = None
+            for pid in self._participants:
+                part = self._participants[pid]
+                if part.is_picking():
+                    continue
+                if part.choose_count() < gc:
+                    continue
+                if part.get_order() == order:
+                    winner = part
+                    break
+            if winner is None:
+                return
+            for pid in self._participants:
+                part = self._participants[pid]
+                if part is winner:
+                    part.increase_score()
+                    nick = part.get_nickname()
+                    self._chat.append(("SYSTEM",
+                                       "<b>%s won the round!</b>" % nick))
+                    if part.get_score() >= Match._WIN_CONDITION:
+                        self._chat.append(("SYSTEM", "<b>Game over!</b>"))
+                        self._chat.append(("SYSTEM",
+                                           "<b>%s won the game!</b>" % nick))
+                        self._set_state("ENDING")
+                    else:
+                        self._set_state("COOLDOWN")
+                else:
+                    part.delete_chosen()
+
+    def check_choosing_done(self):
+        """ Checks whether choosing is done """
+        gc = self.count_gaps()
+        with self._lock:
+            for pid in self._participants:
+                part = self._participants[pid]
+                if not part.is_picking() and gc != part.choose_count():
+                    return
+            if self._timer - time() > Match._THRESHOLD_CHOOSING_FINISH:
+                self._timer = time() + Match._THRESHOLD_CHOOSING_FINISH
+
+    def _pick_possible(self):
+        """ Checks whether picking a winner can be possible (at least two
+        valid hands)
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        n = 0
+        for pid in self._participants:
+            if self._participants[pid].choose_count() > 0:
+                n += 1
+                if n == 2:
+                    return True
+        return False
+
+    def _unchoose_incomplete(self):
+        """ Unchooses incomplete hands
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        gc = self.count_gaps()
+        for pid in self._participants:
+            if self._participants[pid].is_picking():
+                continue
+            if self._participants[pid].choose_count() < gc:
+                self._participants[pid].unchoose_all()
+                nick = self._participants[pid].get_nickname()
+                self._chat.append(("SYSTEM",
+                                   "<b>%s failed to choose cards!</b>" % nick))
+
+    def _replenish_hands(self):
+        """ Replenishes the hands of all participants
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        for pid in self._participants:
+            self._participants[pid].replenish_hand(self._deck)
+
+    def _select_match_card(self):
+        """ Selects a random statement card for this match
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        possible = [x for x in self._deck if x[0] == "STATEMENT"]
+        self._current_card = choice(possible)
+
+    def _shuffle_participants(self):
+        """ Shuffles the internal order of the participants
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        # Create a random order
+        order = list(range(self.get_num_participants()))
+
+        # Assign the order
+        k = 0
+        for pid in self._participants:
+            self._participants[pid].set_order(order[k] + 1)
+            k += 1
+
+    def _select_next_picker(self):
+        """ Selects the next picker
+        MutEx guarantee: The caller ensures that the match's MutEx is locked
+        """
+        # Find the first participant as the default fallback
+        for pid in self._participants:
+            fallback = self._participants[pid]
+            break
+
+        # Try to make the participant after the current one the new picker
+        next = False
+        for pid in self._participants:
+            if next:
+                self._participants[pid].set_picking(True)
+                return
+            elif self._participants[pid].is_picking():
+                next = True
+                self._participants[pid].set_picking(False)
+
+        # No picker was set yet
+        fallback.set_picking(True)
