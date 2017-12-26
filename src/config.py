@@ -19,6 +19,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Module Deadlock Guarantees:
+    When the mutex of the configuration is locked no other locks can be
+    requested. Thus the configuartion lock can not be part of any deadlock.
 """
 
 from json import dump, load
@@ -62,6 +66,9 @@ class Config:
         Args:
             key (str): The configuration key.
             default (any): The default value for the configuration key.
+
+        Contract:
+            This method locks the configuration lock.
         """
         with self._lock:
             # Set the default and write-back

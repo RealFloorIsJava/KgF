@@ -19,6 +19,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Module Deadlock Guarantees:
+    When the logger's mutex is locked no other locks can be requested.
+    Thus the logger's mutex can not be part of any deadlock.
 """
 
 from logging import ERROR, FileHandler, Formatter, INFO, getLogger
@@ -69,6 +73,9 @@ class Log:
 
         Args:
             msg (str): The message that should be logged.
+
+        Contract:
+            This method locks the logger's lock.
         """
         with self._lock:
             self._logger.log(msg=msg, level=INFO)
@@ -78,6 +85,9 @@ class Log:
 
         Args:
             msg (str): The message that should be logged.
+
+        Contract:
+            This method locks the logger's lock.
         """
         with self._lock:
             self._logger.log(msg=msg, level=ERROR)

@@ -1,7 +1,24 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
+MIT License
+Copyright (c) 2017 LordKorea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
 import cgi
@@ -21,28 +38,46 @@ cgi.maxlen = 8 * 1024 * 1024
 
 
 class ServerHandler(BaseHTTPRequestHandler):
-    """ Takes incoming requests and handles them. """
+    """Handles incoming requests to the web server."""
 
     # The master controller which dispatches requests to leaves
     _master = None
 
     @staticmethod
     def set_master(mctrl):
-        """ Sets the master controller """
+        """Sets the master controller for all handlers.
+
+        Args:
+            mctrl (obj): The master controller (pages.master) which receives
+                the endpoint calls.
+        """
         ServerHandler._master = mctrl
 
     def log_message(self, format, *args):
-        """
+        """Overridden access log handler.
+
         This is automatically called, but we do not want to generate an access
-        log.
+        log so this method does nothing.
+
+        Args:
+            format (str): This parameter is ignored.
+            *args: Additional positional arguments are ignored.
         """
         pass
 
     def do_request(self, params):
+        """Performs the necessary actions to serve an HTTP request.
+
+        Handles GET and POST requests in the same way.
+
+        Args:
+            params (dict): The parameters that were supplied by the client.
+                This includes POST parameters and file uploads.
+        """
         # Perform tasks for every request here
         Match.perform_housekeeping()
 
-        # Setup results
+        # Setup header dictionary
         head = {}
 
         # Find the session cookie (if any)
@@ -127,12 +162,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         self._reply(code, head, response)
 
     def do_GET(self):  # noqa: N802
-        """ Process a HTTP GET request. """
+        """Processes an HTTP GET request."""
         # Handle a GET request as a POST request with no parameters
         self.do_request({})
 
     def do_POST(self):  # noqa: N802
-        """ Process a HTTP POST request. """
+        """Processes an HTTP POST request."""
         try:
             self.do_request(self._get_post_params())
         except RequestError as e:
@@ -144,20 +179,31 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self._abort(400, "Media type not supplied/supported")
 
     def handle_expect_100(self):
-        """ Continuation requests are not handled by this web server """
+        """Handles HTTP continuation requests.
+
+        The web server rejects all continuation requests using the appropriate
+        HTTP status code.
+
+        Returns:
+            bool: Always False according to the documentation of http.server.
+        """
         self._reply(417, {}, b"\0")  # 417 Expectation Failed
         return False
 
     def _get_path(self):
-        """ Get the path of this request.
-        The path contains of all slash-seperated values after the domain in
+        """Parses the path for this request.
+
+        The path consists of all slash-seperated values after the domain in
         the request URI. The query string is not part of the path.
         The first element in the path is the 'leaf' which decides which page
         will handle the request.
         Example:
-            http://example.com/test/foo/bar.html?x=2
-            Path is ['test', 'foo', 'bar.html']
-            The leaf is 'test'
+        http://example.com/test/foo/bar.html?x=2
+        Path is ['test', 'foo', 'bar.html']
+        The leaf is 'test'
+
+        Returns:
+            list: The path.
         """
         # Get the path from the web server
         raw = self.path
@@ -185,7 +231,16 @@ class ServerHandler(BaseHTTPRequestHandler):
         return path
 
     def _get_post_params(self):
-        """ Get POST parameters (also handles file upload via HTTP) """
+        """Retrieves the POST parameters. Also handles file uploads.
+
+        Returns:
+            dict: The POST parameters. File uploads are returned as open file-
+                like objects in the dictionary.
+
+        Raises:
+            RequestError: When length or content type is not supplied by the
+                client.
+        """
         if "content-length" not in self.headers:
             # This server requires a content length to be supplied
             raise RequestError(True)
@@ -263,7 +318,15 @@ class ServerHandler(BaseHTTPRequestHandler):
             raise RequestError(False)
 
     def _parse_type(self, type):
-        """ Parses the content type according to RFC 2045 """
+        """Parses the content type according to RFC 2045
+
+        Args:
+            type (str): The raw content type header.
+
+        Returns:
+            (str, dict): The first element returned is the actual content-type,
+                the dictionary contains all arguments supplied for the type.
+        """
         type = type.strip()
         if ";" not in type:
             # Regular content type without arguments
@@ -292,11 +355,23 @@ class ServerHandler(BaseHTTPRequestHandler):
         return type, param
 
     def _abort(self, code, msg):
-        """ Report an error back to the client """
+        """Reports an error back to the client.
+
+        Args:
+            code (int): The HTTP status code that will be sent.
+            msg (str): The response string that will be sent.
+        """
         self._reply(code, {"Content-Type": "text/plain"}, msg.encode())
 
     def _reply(self, code, headers, data):
-        """ Send a HTTP response """
+        """Sends an HTTP response to the client.
+
+        Args:
+            code (int): The HTTP status code that will be sent.
+            headers (dict): A dictionary containing headers that will be sent.
+                Dictionary keys are header names and entries are header values.
+            data (bytes): The response that will be sent to the client.
+        """
         self.server_version = "KgF/2.0"
         self.sys_version = "TeaPot/1.33.7"
         self.protocol_version = 'HTTP/1.1'
@@ -324,7 +399,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
 
 class RequestError(Exception):
-    """ Raised if either content type or content length is missing """
+    """Raised if either content type or length is missing in the request."""
 
     def __init__(self, length):
         # Flag to indicate whether the length is missing
