@@ -7,7 +7,7 @@ Author: LordKorea
 import re
 from collections import OrderedDict
 from html import escape
-from random import choice
+from random import choice, shuffle
 from threading import RLock
 from time import time
 
@@ -600,6 +600,7 @@ class Match:
         """
         # Create a random order
         order = list(range(self.get_num_participants()))
+        shuffle(order)
 
         # Assign the order
         k = 0
