@@ -167,7 +167,9 @@ class Match:
     def can_view_choices(self):
         """ Whether participants can view others choices """
         with self._lock:
-            return self._state == "PICKING" or self._state == "COOLDOWN"
+            return (self._state == "PICKING"
+                    or self._state == "COOLDOWN"
+                    or self._state == "ENDING")
 
     def get_seconds_to_next_phase(self):
         """ Retrieves the number of seconds to the next phase (state) """
