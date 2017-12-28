@@ -25,12 +25,7 @@ from pages.controller import Controller
 
 
 class MasterController(Controller):
-    """Dispatches requests to the respective leaf controllers.
-
-    Class Attributes:
-        _LEAF_INJECT (str): The magic value that is used as (part of) the POST
-            parameter key used for selecting the correct leaf.
-    """
+    """Dispatches requests to the respective leaf controllers."""
 
     # The key for the parameter that will be injected
     _LEAF_INJECT = "___leaf___"

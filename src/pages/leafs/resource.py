@@ -1,9 +1,25 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
-"""
+MIT License
+Copyright (c) 2017 LordKorea
 
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from uuid import uuid4
 
@@ -11,12 +27,13 @@ from pages.controller import Controller
 
 
 class ResourceController(Controller):
-    """ Leaf /res """
+    """Handles the /res leaf."""
 
-    # The number of seconds for which a resource is cached
+    # The maximum number of seconds for which a resource is cached.
     _MAX_CACHE = 180
 
     def __init__(self):
+        """Constructor."""
         super().__init__()
         # Use the same ETag for all requests. Because the ETag is regenerated
         # when the application is restarted, cache is only kept for as long
@@ -36,7 +53,18 @@ class ResourceController(Controller):
         self.add_endpoint(self.resource_dealer)
 
     def resource_dealer(self, session, path, params, headers):
-        """ Delivers resources from the resource folder """
+        """Delivers resources from the resource folder.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): A list containg all elements in the request path.
+            params (dict): A dictionary of all POST parameters.
+            headers (dict): A dictionary of all HTTP headers.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         # Reads the file name from the path
         query = self._get_file_name(path)
         if query is None:
@@ -72,9 +100,19 @@ class ResourceController(Controller):
         return 200, head, r
 
     def _get_file_name(self, path):
-        """
-        Fetches the file name from the path
-        Returns None on failure, (filepath, extension) otherwise
+        """Fetches the file name from the path.
+
+        The first element of the path is split by dashes into a list of tokens.
+        The last two tokens will be used for the filename (filename +
+        extension). The other tokens will be translated into directories.
+
+        Args:
+            path (list): The list of elements in the path
+
+        Returns:
+            tuple or None: None is returned on failure. If the path contains
+            a valid file path the tuple will contain the path in the first
+            element. The second element will be the extension of the file.
         """
         # The path may not be empty
         if len(path) < 1:

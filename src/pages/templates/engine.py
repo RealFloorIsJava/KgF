@@ -1,36 +1,85 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
+MIT License
+Copyright (c) 2017 LordKorea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
 from html import escape
 
 
 class Parser:
-    """
-    Used to parse templates to HTML output
+    """Parses templates and interprets the template language.
+
+    The template language uses tags in curly braces to interact with the symbol
+    table. The following tags exist:
+    {OBR}
+        Produces an opening curly brace ({)
+    {CBR}
+        Produces a closing curly brace (})
+    {echo xyz}
+        Prints the value with name 'xyz' from the symbol table. HTML tags that
+        may be present in the value are not escaped.
+    {html xyz}
+        Prints the value with name 'xyz' from the symbol table. HTML tags and
+        entities in the value are escaped.
+    {iterate xyz}
+        The dataset with name 'xyz' (a list of similar dicts) will be iterated.
+        The template code between the opening {iterate} tag and the closing
+        {/iterate} tag will be run for every dictionary in the dataset. Inside
+        the tags the elements of the dataset will be imported into the symbol
+        table as 'xyz.key'.
+    {/iterate}
+        Closes an {iterate} tag.
+    {isset xyz}
+        The template code between {isset} and {/isset} will be only run if
+        the key 'xyz' is present in the symbol table and the associated value
+        is not None.
+    {/isset}
+        Closes an {isset} tag.
+    {isnot xyz}
+        Like {isset}, but the template code is only evaluated if the key 'xyz'
+        is not set or set to None.
+    {/isnot}
+        Closes an {isnot} tag.
     """
 
-    # List of opening command tags
-    _opening = [
-        "iterate",
-        "isset",
-        "isnot"
-    ]
+    # List of opening tags
+    _opening = ["iterate",
+                "isset",
+                "isnot"]
 
-    # List of closing command tags
-    _closing = [
-        "/iterate",
-        "/isset",
-        "/isnot"
-    ]
+    # List of closing tags
+    _closing = ["/iterate",
+                "/isset",
+                "/isnot"]
 
     @staticmethod
     def get_template(path, symtab):
-        """
-        Parses the given template input to HTML.
-        The given symbol table is used to resolve variables and datasets
+        """Fetches and parses the template using the given symbol table.
+
+        Args:
+            path (str): The path to the template file.
+            symtab (dict): The symbol table, mapping names to values.
+
+        Returns:
+            str: The resulting output of the template.
         """
         # Get the template data
         data = ""
@@ -43,19 +92,14 @@ class Parser:
 
     @staticmethod
     def parse_template(raw, symtab):
-        """ Parses template data to HTML.
-        The following command tags exist:
-        {OBR}           -> {
-        {CBR}           -> }
-        {echo xyz}      -> Print $xyz (No escaping)
-        {html xyz}      -> Print $xyz (HTML escaped, for use in tags)
-        {iterate xyz}   -> begin iteration through dataset xyz
-                           imports entries as xyz.key
-        {/iterate}      -> marks end of iteration
-        {isset xyz}     -> contents are only evaluated if xyz is set
-        {/isset}        -> ends isset
-        {isnot xyz}     -> contents are only evaluated if xyz is not set
-        {/isnot}        -> ends isnot
+        """Parses the given template source using the given symbol table.
+
+        Args:
+            raw (str): The template source that should be parsed.
+            symtab (dict): The symbol table, mapping names to values.
+
+        Returns:
+            str: The resulting output of the template.
         """
 
         # Add the beginning marker to the data
@@ -75,7 +119,11 @@ class Parser:
 
     @staticmethod
     def _modify_dataset(dataset):
-        """ Removes empty sub-datasets at any depth recursively """
+        """Removes empty sub-datasets at any depth recursively.
+
+        Args:
+            dataset (dict): The dataset to modify.
+        """
         for i in range(len(dataset)):
             entry = dataset[i]
             # Iterate over copy because keys are being removed inside
@@ -89,14 +137,19 @@ class Parser:
 
     @staticmethod
     def _fetch_tokens(raw):
-        """
-        Fetches the tokens in a raw sample.
-        Returns a list of tokens.
-        Token format:
-          Text tokens: ('txt', value)
-          Command tokens: ('cmd', value)
+        """Fetches the tokens from the given source.
 
-        Command tokens are added without enclosing braces
+        There are two types of tokens, text tokens (tuples with first element
+        'txt' and the second element containing the token) and command tokens
+        (tuples with first element 'cmd' and the second element containing
+        the token). Command tokens are used for tags. Everything that is not a
+        tag will be translated to a text token.
+
+        Args:
+            raw (str): The template source.
+
+        Returns:
+            list: The flat list of tokens.
         """
 
         # Command mode: If true, current lexical token is a command ({...})
@@ -143,19 +196,17 @@ class Parser:
 
     @staticmethod
     def _create_tree(toks):
-        """
-        Create the AST which is used to determine the program flow.
-        This is done by creating an in-memory tree and
-        adding tokens to it.
-        Scope tokens (Parser._opening) create new child trees.
-        The parser keeps track of the current position by using a
-        linked pointer tuple:
-          (node, parent_pointer)
-        with the parent_pointer being None for the top level node.
-        The tree itself is a list with nested lists inside.
+        """Creates the token AST which is used to interpret the template.
 
-        Command tags which have their own scope are placed at the beginning of
-        their scope.
+        Scope tokens (Parser._opening) create new child trees.
+
+        Args:
+            toks (list): The flat list of tokens.
+
+        Returns:
+            list: A list with nested lists representing the AST. Command tags
+                that open a scope are inserted into the list used for
+                representing the scope at the beginning.
         """
 
         # Create tree and node pointer
@@ -200,9 +251,14 @@ class Parser:
 
     @staticmethod
     def _parse_command(tree, symtab):
-        """
-        Recursively parse the given AST to generate
-        the result using the given symbol table
+        """Parses the given AST to generate the template output.
+
+        Args:
+            tree (list): The AST, a list with nested lists inside.
+            symtab (dict): The symbol table.
+
+        Returns:
+            str: The template output.
         """
         val = ""
 

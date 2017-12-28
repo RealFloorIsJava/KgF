@@ -1,7 +1,24 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
+MIT License
+Copyright (c) 2017 LordKorea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
 from html import escape
@@ -13,9 +30,10 @@ from server.match import Match
 
 
 class APIController(Controller):
-    """ Leaf /api """
+    """Handles the /api leaf."""
 
     def __init__(self):
+        """Constructor."""
         super().__init__()
 
         # Only allow logged-in users
@@ -39,17 +57,53 @@ class APIController(Controller):
                           params_restrict={"playedId"})
 
     def check_access(self, session, path, params, headers):
-        """ Checks whether the user is logged in """
+        """Checks whether the user is logged in.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            bool: True if and only if the user is logged in.
+        """
         return "login" in session
 
     def fail_permission(self, session, path, params, headers):
-        """ Called when the user is not authorized """
+        """Handles unauthorized clients.
+
+        Informs the client that access was denied.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"not authenticated\"}")
 
     def api_pick(self, session, path, params, headers):
-        """ Picks a winner """
+        """Handles picking a round winner.
+
+        Returns a JSON status.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         match = Match.get_match(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
@@ -70,7 +124,20 @@ class APIController(Controller):
                 "{\"error\":\"OK\"}")
 
     def api_choose(self, session, path, params, headers):
-        """ Chooses / unchooses a hand card """
+        """Handles (un)choosing a hand card.
+
+        Returns a JSON status.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         match = Match.get_match(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
@@ -92,7 +159,20 @@ class APIController(Controller):
                 "{\"error\":\"OK\"}")
 
     def api_cards(self, session, path, params, headers):
-        """ Retrieves the list of cards (hand, played) in the current match """
+        """Retrieves the list of cards (hand, played) in the current match.
+
+        Returns a JSON response containing the hand cards and played cards.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         match = Match.get_match(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
@@ -118,7 +198,20 @@ class APIController(Controller):
                 dumps(data))
 
     def api_participants(self, session, path, params, headers):
-        """ Retrieves the list of participants in the current match """
+        """Retrieves the list of participants of the client's match.
+
+        Returns a JSON response containing the participants of the match.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         match = Match.get_match(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
@@ -135,7 +228,20 @@ class APIController(Controller):
                 dumps(data))
 
     def api_chat_send(self, session, path, params, headers):
-        """ Sends a chat message """
+        """Handles sending a chat message.
+
+        Returns a JSON status.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         msg = escape(params["message"])
         match = Match.get_match(session["id"])
         if match is None:
@@ -147,7 +253,7 @@ class APIController(Controller):
             if session["chatcooldown"] > time():
                 return {403,  # 403 Forbidden
                         {"Content-Type": "application/json; charset=utf-8"},
-                        "{\"status\":\"spam rejected\"}"}
+                        "{\"error\":\"spam rejected\"}"}
         session["chatcooldown"] = time() + 1
 
         # Check the chat message for sanity
@@ -157,16 +263,26 @@ class APIController(Controller):
             match.send_message(nick, msg)
             return (200,  # 200 OK
                     {"Content-Type": "application/json; charset=utf-8"},
-                    "{\"status\":\"sent\"}")
+                    "{\"error\":\"OK\"}")
 
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
-                "{\"status\":\"invalid size\"}")
+                "{\"error\":\"invalid size\"}")
 
     def api_chat(self, session, path, params, headers):
-        """
-        Retrieves the chat history (either the complete history or starting
-        at the given offset)
+        """Retrieves the chat history, optionally starting at the given offset.
+
+        Returns a JSON response containing the requested chat messages.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
         """
         match = Match.get_match(session["id"])
         if match is None:
@@ -188,7 +304,20 @@ class APIController(Controller):
                 dumps(data))
 
     def api_status(self, session, path, params, headers):
-        """ Retrieves the status of the current match """
+        """Retrieves the status of the client's match.
+
+        Returns a JSON response containing the status.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         match = Match.get_match(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
@@ -215,7 +344,20 @@ class APIController(Controller):
                 dumps(data))
 
     def api_list(self, session, path, params, headers):
-        """ Returns the list of matches """
+        """Retrieves the list of all existing matches.
+
+        Returns a JSON response containing all matches.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
         data = []
         matches = Match.get_all()
         for match in matches:

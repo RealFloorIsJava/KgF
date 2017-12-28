@@ -31,11 +31,7 @@ from threading import RLock
 
 
 class Config:
-    """Manages the JSON configuration file.
-
-    Class Attributes:
-        _CONFIG_FILE (str): The path to the configuration file.
-    """
+    """Manages the JSON configuration file."""
 
     # The configuration file where keys and values will be stored
     _CONFIG_FILE = "./data/kgf.json"
