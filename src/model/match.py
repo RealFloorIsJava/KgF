@@ -122,7 +122,7 @@ class Match:
         """Retrieves the match of this player or None if not existing.
 
         Args:
-            pid (int): The ID of the player.
+            pid (str): The ID of the player.
 
         Returns:
             obj: The match of that player or None.
