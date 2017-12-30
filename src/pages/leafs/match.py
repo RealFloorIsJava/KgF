@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from kgf import kconfig
 from model.match import Match
 from model.participant import Participant
 from pages.controller import Controller
