@@ -1,7 +1,28 @@
-"""
-Part of KgF.
+"""Part of KgF.
 
-Author: LordKorea
+MIT License
+Copyright (c) 2017 LordKorea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Module Deadlock Guarantees:
+    When the mutex of a participant is locked no other locks can be
+    requested. Thus the participant lock can not be part of any deadlock.
 """
 
 from collections import OrderedDict
@@ -11,7 +32,7 @@ from time import time
 
 
 class Participant:
-    """ A participant in a match """
+    """Represents a participant in a match."""
 
     # The number of hand cards per type
     _HAND_CARDS_PER_TYPE = 6
@@ -20,6 +41,13 @@ class Participant:
     _PARTICIPANT_REFRESH_TIMER = 15
 
     def __init__(self, id, nickname):
+        """Constructor.
+
+        Args:
+            id (str): The player's ID.
+            nickname (str): The nickname that will be used for the player.
+        """
+
         # MutEx for this participant
         # Locking this Mutex can cause no other mutexes to be locked
         self._lock = RLock()
@@ -47,63 +75,135 @@ class Participant:
         self._hand = OrderedDict()
 
     def get_id(self):
-        """ Retrieves the ID of this participant """
+        """Retrieves the ID of this participant.
+
+        Returns:
+            str: The player's ID.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._id
 
     def get_nickname(self):
-        """ Retrieves the nickname of this participant """
+        """Retrieves the nickname of this participant.
+
+        Returns:
+            str: The player's nickname.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._nickname
 
     def timed_out(self):
-        """ Checks whether this participant has timed out """
+        """Checks whether this participant has timed out.
+
+        Returns:
+            bool: Whether this client has timed out.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return time() >= self._timeout
 
     def is_picking(self):
-        """ Checks whether this participant is picking cards """
+        """Checks whether the player is currently picking.
+
+        Returns:
+            bool: Whether the player is currently picking.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._picking
 
     def set_picking(self, val):
-        """ Changes whether this participant is picking """
+        """(Un)marks this player as the picker.
+
+        Args:
+            val (bool): Whether this player should be the picker.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             self._picking = val
 
     def get_score(self):
-        """ Retrieves the score of this participant """
+        """Retrieves the score of this participant.
+
+        Returns:
+            int: The score of this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._score
 
     def increase_score(self):
-        """ Increases the score of this participant """
+        """Increases the score of this participant by one.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             self._score += 1
 
     def set_order(self, order):
-        """ Sets the order of this participant """
+        """Sets the order key of this participant to the given value.
+
+        Args:
+            order (int): The order key that will be used.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             self._order = order
 
     def get_order(self):
-        """ Retrieves the order of this participant """
+        """Retrieves the order key of this participant.
+
+        Returns:
+            The order key of this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._order
 
     def refresh(self):
-        """ Refreshes the timeout timer of this participant """
+        """Refreshes the timeout timer of this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             self._timeout = time() + Participant._PARTICIPANT_REFRESH_TIMER
 
     def unchoose_all(self):
-        """ Unchooses all cards on the hand """
+        """Unchooses all cards on the hand of this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             for hid in self._hand:
                 self._hand[hid][2] = None
 
     def delete_chosen(self):
-        """ Deletes all chosen hand cards from this participant """
+        """Deletes all chosen hand cards from this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             dl = []
             for hid in self._hand:
@@ -113,17 +213,38 @@ class Participant:
                 del self._hand[hid]
 
     def get_hand(self):
-        """ Retrieves the hand of this participant """
+        """Retrieves a copy of the hand of this participant.
+
+        Returns:
+            dict: A copy of the hand of the player.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return self._hand.copy()
 
     def choose_count(self):
-        """ Returns the number of chosen cards in the hand """
+        """Retrieves the number of chosen cards in the hand of this player.
+
+        Returns:
+            int: The number of cards in the hand.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             return len([x for x in self._hand if self._hand[x][2] is not None])
 
     def replenish_hand(self, deck):
-        """ Replenishes the hand of this participant from the given deck """
+        """Replenishes the hand of this participant from the given deck.
+
+        Args:
+            deck (list): The deck the cards are chosen from.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             kv = len([x for x in self._hand if self._hand[x][0] == "VERB"])
             ko = len([x for x in self._hand if self._hand[x][0] == "OBJECT"])
@@ -142,7 +263,16 @@ class Participant:
                 ko += 1
 
     def toggle_chosen(self, handid, allowance):
-        """ Toggles whether the hand card with the given ID is chosen """
+        """Toggles whether the hand card with the given ID is chosen.
+
+        Args:
+            handid (int): The ID of the hand card.
+            allowance (int): The maximum number of cards that are allowed in
+                the hand.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         k = 0
         n = 0
         with self._lock:
@@ -163,7 +293,17 @@ class Participant:
                             self._hand[hid][2] = None
 
     def get_choose_data(self, redacted):
-        """ Fetches the choose data for this participant """
+        """Fetches the choose data for this participant.
+
+        Args:
+            redacted (bool): Whether the information should be redacted.
+
+        Returns:
+            list: The choose data for this participant.
+
+        Contract:
+            This method locks the participant's lock.
+        """
         with self._lock:
             data = []
             for hid in self._hand:
