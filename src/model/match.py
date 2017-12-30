@@ -21,6 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Module Deadlock Guarantees:
+    The following lock dependencies are introduced by this module:
+        Match Instance Lock -> Participant Lock
+
+    The match pool mutex allows no other locks to be requested and therefor
+    can not be part of any deadlock.
 """
 
 import re
@@ -556,7 +561,7 @@ class Match:
             data (str): The deck data.
 
         Contract:
-            This method locks the match pool lock.
+            This method locks the match's instance lock.
         """
         tsv_lines = re.split(r"\n|\r|\r\n", data)
 
