@@ -538,6 +538,9 @@ class Match:
         Args:
             data (str): The deck data.
 
+        Returns:
+            (bool, str): Whether creation was successful and a status message.
+
         Contract:
             The instance of the match may not yet be made available to other
             threads. No locking is performed.
@@ -563,26 +566,26 @@ class Match:
             # Ensure that cards have a TEXT<tab>TYPE format
             tsv = re.split(r"\t", line)
             if len(tsv) != 2:
-                continue
+                return False, "invalid_format"
 
             text = escape(tsv[0])
             type = tsv[1]
             if type not in ("STATEMENT", "OBJECT", "VERB"):
-                continue
+                return False, "invalid_type"
 
             # Check that the number of gaps fits for the given type
             gaps = text.count("_")
             if gaps > 0:
                 if type != "STATEMENT":
                     # Gaps in a non-statement card are not allowed
-                    continue
+                    return False, "illegal_gap"
                 if gaps > 3:
                     # More than three gaps are not supported
-                    continue
+                    return False, "too_many_gaps"
             else:
                 if type == "STATEMENT":
                     # Statement card without any gaps
-                    continue
+                    return False, "statement_no_gap"
 
             # Add the card to the deck
             if type not in self._deck:
@@ -597,24 +600,11 @@ class Match:
                 break
 
         # Ensure that all limits are met
-        note_given = False
         for type in limits:
-            needed = limits[type]
-            while limits[type] > 0:
-                limits[type] -= 1
-                # Notify the participants that there are cards missing
-                if not note_given:
-                    note_given = True
-                    self._chat.append(("SYSTEM",
-                                       ("<b>Your deck is insufficient."
-                                        " Placeholder cards have been"
-                                        " added to the match.</b>")))
+            if limits[type] > 0:
+                return False, "deck_too_small"
 
-                # Add a placeholder card
-                txt = ("Your deck needs at least %i more %s cards"
-                       % (needed, type.lower()))
-                self._deck.append(Card(card_id_counter, type, txt))
-                card_id_counter += 1
+        return True, "OK"
 
     @mutex
     def get_status(self):

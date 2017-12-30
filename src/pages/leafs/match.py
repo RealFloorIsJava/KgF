@@ -166,7 +166,7 @@ class MatchController(Controller):
         """Handles the request to create a match.
 
         Redirects either to the match view (on success) or to the dashboard
-        (when the deck is too big).
+        (when the deck is too big or another error occurs).
 
         Args:
             session (obj): The session data of the client.
@@ -195,14 +195,20 @@ class MatchController(Controller):
         fp.seek(0)
         if size > 200 * 1024:
             return (303,  # 303 See Other
-                    {"Location": "/dashboard/filesizefail"},
+                    {"Location": "/dashboard/deck_too_big"},
                     "")
 
         # Create a new match
         match = Match()
 
         # Create the deck from the upload
-        match.create_deck(fp.read().decode())
+        success, msg = match.create_deck(fp.read().decode())
+
+        # Check for failure
+        if not success:
+            return (303,  # 303 See Other
+                    {"Location": "/dashboard/%s" % msg},
+                    "")
 
         # Add the participant to the match
         part = Participant(session["id"], session["nickname"])

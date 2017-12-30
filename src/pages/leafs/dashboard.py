@@ -97,8 +97,13 @@ class DashboardController(Controller):
             "showLogout": True if self._logout_shown else None
         }
 
-        if "filesizefail" in path:
-            symtab["filesizefail"] = True
+        # Check for deck upload errors
+        deck_errors = ["deck_too_big", "invalid_format", "invalid_type",
+                       "illegal_gap", "too_many_gaps", "statement_no_gap",
+                       "deck_too_small"]
+        for err in deck_errors:
+            if err in path:
+                symtab[err] = True
 
         # Parse the template
         data = Parser.get_template("./res/tpl/dashboard.html", symtab)

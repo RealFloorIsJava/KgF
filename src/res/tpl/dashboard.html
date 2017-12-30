@@ -23,9 +23,40 @@
       </div>
       <div class="clearAfterFloat"></div>
     </div>
-    {isset filesizefail}
+    {isset deck_too_big}
       <div class="status-box failure-box">
-        The file you uploaded was too large!
+        The file you uploaded is too large!
+      </div>
+    {/isset}
+    {isset invalid_format}
+      <div class="status-box failure-box">
+        The file you uploaded is not formatted correctly!
+      </div>
+    {/isset}
+    {isset invalid_type}
+      <div class="status-box failure-box">
+        The file you uploaded contains cards of an invalid type!
+      </div>
+    {/isset}
+    {isset illegal_gap}
+      <div class="status-box failure-box">
+        The file you uploaded contains non-statement cards with gaps!
+      </div>
+    {/isset}
+    {isset too_many_gaps}
+      <div class="status-box failure-box">
+        The file you uploaded contains cards with more than three gaps!
+      </div>
+    {/isset}
+    {isset statement_no_gap}
+      <div class="status-box failure-box">
+        The file you uploaded contains statement cards with no gaps!
+      </div>
+    {/isset}
+    {isset deck_too_small}
+      <div class="status-box failure-box">
+        The file you uploaded does not contain sufficient cards for a match.
+        Try to add more cards of every type.
       </div>
     {/isset}
 
