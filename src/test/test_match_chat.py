@@ -41,40 +41,47 @@ def teardown_function(f):
     Match._id_counter = 0
 
 
-def test_match_empty_expire():
-    """Tests whether empty matches expire."""
+def test_create_message():
+    """Tests whether the match creation message is sent."""
     match = Match()
     match.create_deck(card_set)
-    match.put_in_pool()
-    assert Match.get_by_id(match.id) is not None
-    Match.perform_housekeeping()
-    assert Match.get_by_id(match.id) is None
+    assert len(match._chat) == 1
+    assert match._chat[0][0] == "SYSTEM"
+    assert match._chat[0][1] == "<b>Match was created.</b>"
 
 
-def test_match_nonempty_notexpire():
-    """Tests whether empty matches expire."""
+def test_join_message():
+    """Tests whether the participant join message is sent."""
     match = Match()
     match.create_deck(card_set)
     part = Participant("ID", "NICK")
     match.add_participant(part)
-    match.put_in_pool()
-    assert Match.get_by_id(match.id) is not None
-    Match.perform_housekeeping()
-    assert Match.get_by_id(match.id) is not None
+    assert len(match._chat) > 0
+    assert match._chat[-1][0] == "SYSTEM"
+    assert match._chat[-1][1] == "<b>NICK joined.</b>"
 
 
-def test_match_join_leave():
-    """Tests joining/leaving of matches."""
+def test_leave_message():
+    """Tests whether the participant leave message is sent."""
     match = Match()
     match.create_deck(card_set)
-    assert len(match._participants) == 0
     part = Participant("ID", "NICK")
     match.add_participant(part)
-    assert len(match._participants) == 1
-    part2 = Participant("ID2", "NICK")
-    match.add_participant(part2)
-    assert len(match._participants) == 2
     match.abandon_participant("ID")
-    assert len(match._participants) == 1
-    match.abandon_participant("ID2")
-    assert len(match._participants) == 0
+    assert len(match._chat) > 0
+    assert match._chat[-1][0] == "SYSTEM"
+    assert match._chat[-1][1] == "<b>NICK left.</b>"
+
+
+def test_timeout_message():
+    """Tests the participant timeout message."""
+    match = Match()
+    match.create_deck(card_set)
+    part = Participant("ID", "NICK")
+    match.add_participant(part)
+    part._timeout = 1
+    match.put_in_pool()
+    Match.perform_housekeeping()
+    assert len(match._chat) > 0
+    assert match._chat[-1][0] == "SYSTEM"
+    assert match._chat[-1][1] == "<b>NICK timed out.</b>"
