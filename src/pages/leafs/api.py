@@ -185,8 +185,9 @@ class APIController(Controller):
         # Load the data of the hand cards
         hand = part.get_hand()
         for id in hand:
-            data["hand"][hand[id][0]][id] = {"text": hand[id][1],
-                                             "chosen": hand[id][2]}
+            hcard = hand[id]
+            data["hand"][hcard.card.type][id] = {"text": hcard.card.text,
+                                                 "chosen": hcard.chosen}
 
         # Load the data of the played cards
         for p in match.get_participants():
@@ -336,7 +337,7 @@ class APIController(Controller):
 
         # Add the card text to the output, if possible
         if data["hasCard"]:
-            data["cardText"] = match.current_card[1]
+            data["cardText"] = match.current_card.text
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},

@@ -43,8 +43,7 @@ class Match:
 
     Attributes:
         id (int): The ID of the match. It should not be changed.
-        current_card (tuple): The currently selected card. Should not be
-            changed.
+        current_card (obj): The currently selected card. Should not be changed.
     """
 
     # The minimum amount of players for a match
@@ -207,7 +206,7 @@ class Match:
         self.current_card = None
 
         # The deck for this match
-        self._deck = []
+        self._deck = {}
 
         # The state of the match
         self._state = "PENDING"
@@ -550,6 +549,9 @@ class Match:
                   "OBJECT": Match._MINIMUM_OBJECT_CARDS,
                   "VERB": Match._MINIMUM_VERB_CARDS}
 
+        # Card ID counters
+        card_id_counter = 0
+
         # Read all cards from the source
         left = Match._MAXIMUM_CARDS_IN_DECK
         for line in tsv_lines:
@@ -583,7 +585,10 @@ class Match:
                     continue
 
             # Add the card to the deck
-            self._deck.append((type, text))
+            if type not in self._deck:
+                self._deck[type] = []
+            self._deck[type].append(Card(card_id_counter, type, text))
+            card_id_counter += 1
             limits[type] -= 1
 
             # Enforce the card limit
@@ -606,10 +611,10 @@ class Match:
                                         " added to the match.</b>")))
 
                 # Add a placeholder card
-                self._deck.append((
-                    type,
-                    "Your deck needs at least %i more %s cards"
-                    % (needed, type.lower())))
+                txt = ("Your deck needs at least %i more %s cards"
+                       % (needed, type.lower()))
+                self._deck.append(Card(card_id_counter, type, txt))
+                card_id_counter += 1
 
     @mutex
     def get_status(self):
@@ -694,7 +699,7 @@ class Match:
         """
         if self.current_card is None:
             return 1
-        return max(1, self.current_card[1].count("_"))
+        return max(1, self.current_card.text.count("_"))
 
     @mutex
     def retrieve_chat(self, offset=0):
@@ -849,8 +854,8 @@ class Match:
             The caller ensures that the match's lock is held when calling this
             method.
         """
-        possible = [x for x in self._deck if x[0] == "STATEMENT"]
-        self.current_card = choice(possible)
+        statements = self._deck["STATEMENT"]
+        self.current_card = choice(statements)
 
     def _shuffle_participants(self):
         """Shuffles the internal order of the participants.
@@ -896,3 +901,26 @@ class Match:
 
         # No picker was set yet
         fallback.picking = True
+
+
+class Card:
+    """Represents a card in the match's deck.
+
+    Attributes:
+        id (int): A unique ID for the card.
+        type (str): The type of the card. Should not be modified.
+        text (str): The text that is written on the card. Should not be
+            modified.
+    """
+
+    def __init__(self, id, type, text):
+        """Constructor.
+
+        Args:
+            id (int): A unique ID for the card.
+            type (str): The type of the card.
+            text (str): The text of the card.
+        """
+        self.id = id
+        self.type = type
+        self.text = text

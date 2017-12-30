@@ -26,7 +26,8 @@ Module Deadlock Guarantees:
 """
 
 from collections import OrderedDict
-from random import randint
+from copy import deepcopy
+from random import shuffle
 from threading import RLock
 from time import time
 
@@ -84,8 +85,8 @@ class Participant:
         self.order = 0
 
         # The hand of this participant
-        # Entries have the form [type, text, chosen]
         self._hand = OrderedDict()
+        self._hand_counter = 1
 
     def has_timed_out(self):
         """Checks whether this participant has timed out.
@@ -118,7 +119,7 @@ class Participant:
             This method locks the participant's lock.
         """
         for hid in self._hand:
-            self._hand[hid][2] = None
+            self._hand[hid].chosen = None
 
     @mutex
     def delete_chosen(self):
@@ -127,11 +128,11 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        dl = []
+        del_list = []
         for hid in self._hand:
-            if self._hand[hid][2] is not None:
-                dl.append(hid)
-        for hid in dl:
+            if self._hand[hid].chosen is not None:
+                del_list.append(hid)
+        for hid in del_list:
             del self._hand[hid]
 
     @mutex
@@ -144,7 +145,7 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        return self._hand.copy()
+        return deepcopy(self._hand)
 
     @mutex
     def choose_count(self):
@@ -156,7 +157,11 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        return len([x for x in self._hand if self._hand[x][2] is not None])
+        n = 0
+        for hid in self._hand:
+            if self._hand[hid].chosen is not None:
+                n += 1
+        return n
 
     @mutex
     def replenish_hand(self, deck):
@@ -168,21 +173,47 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        kv = len([x for x in self._hand if self._hand[x][0] == "VERB"])
-        ko = len([x for x in self._hand if self._hand[x][0] == "OBJECT"])
-        # TODO improve this
-        while kv < Participant._HAND_CARDS_PER_TYPE:
-            x = randint(0, len(deck) - 1)
-            while x in self._hand or deck[x][0] != "VERB":
-                x = randint(0, len(deck) - 1)
-            self._hand[x] = [deck[x][0], deck[x][1], None]
-            kv += 1
-        while ko < Participant._HAND_CARDS_PER_TYPE:
-            x = randint(0, len(deck) - 1)
-            while x in self._hand or deck[x][0] != "OBJECT":
-                x = randint(0, len(deck) - 1)
-            self._hand[x] = [deck[x][0], deck[x][1], None]
-            ko += 1
+        # Fetch types for replenishing
+        types = []
+        for key in deck:
+            if key != "STATEMENT":
+                types.append(key)
+
+        # Replenish for every type
+        for type in types:
+            typecards = deck[type].copy()
+            shuffle(typecards)
+
+            # Count cards of that type and fetch IDs
+            k_in_hand = 0
+            ids = set()
+            for hid in self._hand:
+                hcard = self._hand[hid]
+                if hcard.card.type == type:
+                    ids.add(hcard.card.id)
+                    k_in_hand += 1
+
+            # Fill hand to limit
+            ptr = 0
+            while (k_in_hand < Participant._HAND_CARDS_PER_TYPE
+                   and ptr < len(typecards)):
+                pick = typecards[ptr]
+
+                # Check whether this card will be added
+                ptr += 1
+                if pick.id in ids:
+                    continue
+
+                # Mark the card as added
+                ids.add(pick.id)
+                k_in_hand += 1
+
+                # Add the card to the hand
+                self._hand[self._hand_counter] = HandCard(pick)
+                self._hand_counter += 1
+
+            # if k_in_hand is less than the required amount of hand cards per
+            # type then no valid cards could be found.
 
     @mutex
     def toggle_chosen(self, handid, allowance):
@@ -196,23 +227,30 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        # The next choice ID
         k = 0
+        # The number of chosen hand cards
         n = 0
         for hid in self._hand:
-            if self._hand[hid][2] is not None:
+            hcard = self._hand[hid]
+            if hcard.chosen is not None:
                 n += 1
-                k = max(k, self._hand[hid][2] + 1)
+                k = max(k, hcard.chosen + 1)
+
         if handid in self._hand:
-            if self._hand[handid][2] is None:
+            hcard = self._hand[handid]
+            if hcard.chosen is None:
                 if n >= allowance:
                     return
-                self._hand[handid][2] = k
+                hcard.chosen = k
             else:
-                k = self._hand[handid][2]
+                k = hcard.chosen
+                # Unselect the hand card and all with higher choice indexes
                 for hid in self._hand:
-                    if (self._hand[hid][2] is not None
-                            and self._hand[hid][2] >= k):
-                        self._hand[hid][2] = None
+                    other_hcard = self._hand[hid]
+                    if (other_hcard.chosen is not None
+                            and other_hcard.chosen >= k):
+                        other_hcard.chosen = None
 
     @mutex
     def get_choose_data(self, redacted):
@@ -229,7 +267,10 @@ class Participant:
         """
         data = []
         for hid in self._hand:
-            type, text, chosen = self._hand[hid]
+            hcard = self._hand[hid]
+            type = hcard.card.type
+            text = hcard.card.text
+            chosen = hcard.chosen
             if chosen is not None:
                 while len(data) <= chosen:
                     data.append(None)
@@ -238,3 +279,23 @@ class Participant:
                 else:
                     data[chosen] = {"type": type, "text": text}
         return data
+
+
+class HandCard:
+    """Represents a card on hand.
+
+    Attributes:
+        card (obj): The card that this hand card represents. Should not be
+            changed. Create a new HandCard if another card is required.
+        chosen (int, optional): The choice index of this hand card. If the card
+            is not chosen it will be set to None.
+    """
+
+    def __init__(self, card):
+        """Constructor.
+
+        Args:
+            card (obj): The card that this hand card represents.
+        """
+        self.card = card
+        self.chosen = None
