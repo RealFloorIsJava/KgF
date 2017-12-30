@@ -31,10 +31,11 @@ Module Deadlock Guarantees:
 import re
 from collections import OrderedDict
 from html import escape
-from random import choice, shuffle
+from random import shuffle
 from threading import RLock
 from time import time
 
+from model.multideck import MultiDeck
 from util.locks import mutex, named_mutex
 
 
@@ -207,6 +208,9 @@ class Match:
 
         # The deck for this match
         self._deck = {}
+
+        # The multidecks for improved random drawing
+        self._multidecks = {}
 
         # The state of the match
         self._state = "PENDING"
@@ -535,6 +539,8 @@ class Match:
     def create_deck(self, data):
         """Creates a deck from the given input source.
 
+        Does also create the multidecks for the created deck.
+
         Args:
             data (str): The deck data.
 
@@ -603,6 +609,10 @@ class Match:
         for type in limits:
             if limits[type] > 0:
                 return False, "deck_too_small"
+
+        # Create multidecks
+        for type in self._deck:
+            self._multidecks[type] = MultiDeck(self._deck[type])
 
         return True, "OK"
 
@@ -835,7 +845,7 @@ class Match:
             method.
         """
         for pid in self._participants:
-            self._participants[pid].replenish_hand(self._deck)
+            self._participants[pid].replenish_hand(self._multidecks)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.
@@ -844,8 +854,12 @@ class Match:
             The caller ensures that the match's lock is held when calling this
             method.
         """
-        statements = self._deck["STATEMENT"]
-        self.current_card = choice(statements)
+        # Prevent duplicates from occuring
+        disallowed = set()
+        if self.current_card is not None:
+            disallowed.add(self.current_card.id)
+
+        self.current_card = self._multidecks["STATEMENT"].request(disallowed)
 
     def _shuffle_participants(self):
         """Shuffles the internal order of the participants.

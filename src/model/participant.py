@@ -27,7 +27,6 @@ Module Deadlock Guarantees:
 
 from collections import OrderedDict
 from copy import deepcopy
-from random import shuffle
 from threading import RLock
 from time import time
 
@@ -164,56 +163,40 @@ class Participant:
         return n
 
     @mutex
-    def replenish_hand(self, deck):
-        """Replenishes the hand of this participant from the given deck.
+    def replenish_hand(self, mdecks):
+        """Replenishes the hand of this participant from the given decks.
 
         Args:
-            deck (list): The deck the cards are chosen from.
+            mdecks (dict): Maps card type to a multideck of the card type.
 
         Contract:
             This method locks the participant's lock.
         """
         # Fetch types for replenishing
         types = []
-        for key in deck:
+        for key in mdecks:
             if key != "STATEMENT":
                 types.append(key)
 
         # Replenish for every type
         for type in types:
-            typecards = deck[type].copy()
-            shuffle(typecards)
-
             # Count cards of that type and fetch IDs
             k_in_hand = 0
-            ids = set()
+            ids_banned = set()
             for hid in self._hand:
                 hcard = self._hand[hid]
                 if hcard.card.type == type:
-                    ids.add(hcard.card.id)
+                    ids_banned.add(hcard.card.id)
                     k_in_hand += 1
 
             # Fill hand to limit
-            ptr = 0
-            while (k_in_hand < Participant._HAND_CARDS_PER_TYPE
-                   and ptr < len(typecards)):
-                pick = typecards[ptr]
-
-                # Check whether this card will be added
-                ptr += 1
-                if pick.id in ids:
-                    continue
-
-                # Mark the card as added
-                ids.add(pick.id)
-                k_in_hand += 1
-
-                # Add the card to the hand
+            for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
+                pick = mdecks[type].request(ids_banned)
+                if pick is None:
+                    break  # Can't fulfill the requirement...
+                ids_banned.add(pick.id)
                 self._hand[self._hand_counter] = HandCard(pick)
                 self._hand_counter += 1
-
-            # if k_in_hand is less than the required amount of hand cards per
-            # type then no valid cards could be found.
 
     @mutex
     def toggle_chosen(self, handid, allowance):
