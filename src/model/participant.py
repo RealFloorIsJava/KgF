@@ -30,9 +30,22 @@ from random import randint
 from threading import RLock
 from time import time
 
+from util.locks import mutex
+
 
 class Participant:
-    """Represents a participant in a match."""
+    """Represents a participant in a match.
+
+    Attributes:
+        id (str): The ID of the participant. Should not be changed once the
+            participant is created.
+        nickname (str): The nickname of the participant. Should not be changed.
+        picking (bool): Whether the participant is picking.
+        score (int): The score of the player. It is recommended to use the
+            provided modification method to prevent race conditions from
+            occurring.
+        order (int): The order key of the particpant, used for shuffling.
+    """
 
     # The number of hand cards per type
     _HAND_CARDS_PER_TYPE = 6
@@ -53,167 +66,77 @@ class Participant:
         self._lock = RLock()
 
         # The ID of this participant (player ID)
-        self._id = id
+        self.id = id
 
         # The player nickname
-        self._nickname = nickname
+        self.nickname = nickname
 
         # The score of this participant
-        self._score = 0
+        self.score = 0
 
         # Whether this participant is picking
-        self._picking = False
+        self.picking = False
 
         # The timeout timer of this participant
         self._timeout = time() + Participant._PARTICIPANT_REFRESH_TIMER
 
         # The order of this participant (may change each round)
-        self._order = 0
+        self.order = 0
 
         # The hand of this participant
         # Entries have the form [type, text, chosen]
         self._hand = OrderedDict()
 
-    def get_id(self):
-        """Retrieves the ID of this participant.
-
-        Returns:
-            str: The player's ID.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            return self._id
-
-    def get_nickname(self):
-        """Retrieves the nickname of this participant.
-
-        Returns:
-            str: The player's nickname.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            return self._nickname
-
-    def timed_out(self):
+    def has_timed_out(self):
         """Checks whether this participant has timed out.
 
         Returns:
             bool: Whether this client has timed out.
-
-        Contract:
-            This method locks the participant's lock.
         """
-        with self._lock:
-            return time() >= self._timeout
+        # Locking is not needed here as access is atomic.
+        return time() >= self._timeout
 
-    def is_picking(self):
-        """Checks whether the player is currently picking.
-
-        Returns:
-            bool: Whether the player is currently picking.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            return self._picking
-
-    def set_picking(self, val):
-        """(Un)marks this player as the picker.
-
-        Args:
-            val (bool): Whether this player should be the picker.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            self._picking = val
-
-    def get_score(self):
-        """Retrieves the score of this participant.
-
-        Returns:
-            int: The score of this participant.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            return self._score
-
+    @mutex
     def increase_score(self):
         """Increases the score of this participant by one.
 
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            self._score += 1
-
-    def set_order(self, order):
-        """Sets the order key of this participant to the given value.
-
-        Args:
-            order (int): The order key that will be used.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            self._order = order
-
-    def get_order(self):
-        """Retrieves the order key of this participant.
-
-        Returns:
-            The order key of this participant.
-
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            return self._order
+        self.score += 1
 
     def refresh(self):
-        """Refreshes the timeout timer of this participant.
+        """Refreshes the timeout timer of this participant."""
+        # Locking is not needed here as access is atomic.
+        self._timeout = time() + Participant._PARTICIPANT_REFRESH_TIMER
 
-        Contract:
-            This method locks the participant's lock.
-        """
-        with self._lock:
-            self._timeout = time() + Participant._PARTICIPANT_REFRESH_TIMER
-
+    @mutex
     def unchoose_all(self):
         """Unchooses all cards on the hand of this participant.
 
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            for hid in self._hand:
-                self._hand[hid][2] = None
+        for hid in self._hand:
+            self._hand[hid][2] = None
 
+    @mutex
     def delete_chosen(self):
         """Deletes all chosen hand cards from this participant.
 
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            dl = []
-            for hid in self._hand:
-                if self._hand[hid][2] is not None:
-                    dl.append(hid)
-            for hid in dl:
-                del self._hand[hid]
+        dl = []
+        for hid in self._hand:
+            if self._hand[hid][2] is not None:
+                dl.append(hid)
+        for hid in dl:
+            del self._hand[hid]
 
+    @mutex
     def get_hand(self):
-        """Retrieves a copy of the hand of this participant.
+        """Retrieves a snapshot of the hand of this participant.
 
         Returns:
             dict: A copy of the hand of the player.
@@ -221,9 +144,9 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            return self._hand.copy()
+        return self._hand.copy()
 
+    @mutex
     def choose_count(self):
         """Retrieves the number of chosen cards in the hand of this player.
 
@@ -233,9 +156,9 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            return len([x for x in self._hand if self._hand[x][2] is not None])
+        return len([x for x in self._hand if self._hand[x][2] is not None])
 
+    @mutex
     def replenish_hand(self, deck):
         """Replenishes the hand of this participant from the given deck.
 
@@ -245,23 +168,23 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            kv = len([x for x in self._hand if self._hand[x][0] == "VERB"])
-            ko = len([x for x in self._hand if self._hand[x][0] == "OBJECT"])
-            # TODO improve this
-            while kv < Participant._HAND_CARDS_PER_TYPE:
+        kv = len([x for x in self._hand if self._hand[x][0] == "VERB"])
+        ko = len([x for x in self._hand if self._hand[x][0] == "OBJECT"])
+        # TODO improve this
+        while kv < Participant._HAND_CARDS_PER_TYPE:
+            x = randint(0, len(deck) - 1)
+            while x in self._hand or deck[x][0] != "VERB":
                 x = randint(0, len(deck) - 1)
-                while x in self._hand or deck[x][0] != "VERB":
-                    x = randint(0, len(deck) - 1)
-                self._hand[x] = [deck[x][0], deck[x][1], None]
-                kv += 1
-            while ko < Participant._HAND_CARDS_PER_TYPE:
+            self._hand[x] = [deck[x][0], deck[x][1], None]
+            kv += 1
+        while ko < Participant._HAND_CARDS_PER_TYPE:
+            x = randint(0, len(deck) - 1)
+            while x in self._hand or deck[x][0] != "OBJECT":
                 x = randint(0, len(deck) - 1)
-                while x in self._hand or deck[x][0] != "OBJECT":
-                    x = randint(0, len(deck) - 1)
-                self._hand[x] = [deck[x][0], deck[x][1], None]
-                ko += 1
+            self._hand[x] = [deck[x][0], deck[x][1], None]
+            ko += 1
 
+    @mutex
     def toggle_chosen(self, handid, allowance):
         """Toggles whether the hand card with the given ID is chosen.
 
@@ -275,23 +198,23 @@ class Participant:
         """
         k = 0
         n = 0
-        with self._lock:
-            for hid in self._hand:
-                if self._hand[hid][2] is not None:
-                    n += 1
-                    k = max(k, self._hand[hid][2] + 1)
-            if handid in self._hand:
-                if self._hand[handid][2] is None:
-                    if n >= allowance:
-                        return
-                    self._hand[handid][2] = k
-                else:
-                    k = self._hand[handid][2]
-                    for hid in self._hand:
-                        if (self._hand[hid][2] is not None
-                                and self._hand[hid][2] >= k):
-                            self._hand[hid][2] = None
+        for hid in self._hand:
+            if self._hand[hid][2] is not None:
+                n += 1
+                k = max(k, self._hand[hid][2] + 1)
+        if handid in self._hand:
+            if self._hand[handid][2] is None:
+                if n >= allowance:
+                    return
+                self._hand[handid][2] = k
+            else:
+                k = self._hand[handid][2]
+                for hid in self._hand:
+                    if (self._hand[hid][2] is not None
+                            and self._hand[hid][2] >= k):
+                        self._hand[hid][2] = None
 
+    @mutex
     def get_choose_data(self, redacted):
         """Fetches the choose data for this participant.
 
@@ -304,16 +227,14 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
-        with self._lock:
-            data = []
-            for hid in self._hand:
-                type, text, chosen = self._hand[hid]
-                if chosen is not None:
-                    while len(data) <= chosen:
-                        data.append(None)
-                    if redacted:
-                        data[chosen] = {"redacted": True}
-                    else:
-                        data[chosen] = {"type": type,
-                                        "text": text}
-            return data
+        data = []
+        for hid in self._hand:
+            type, text, chosen = self._hand[hid]
+            if chosen is not None:
+                while len(data) <= chosen:
+                    data.append(None)
+                if redacted:
+                    data[chosen] = {"redacted": True}
+                else:
+                    data[chosen] = {"type": type, "text": text}
+        return data

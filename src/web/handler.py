@@ -97,7 +97,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         session = Session.get_session(self.client_address[0], sid)
         if session[1]:
             # The session is newly created, set the session ID cookie
-            cookie = "session=%s;Path=/;HttpOnly" % session[0].get_id()
+            cookie = "session=%s;Path=/;HttpOnly" % session[0].sid
             head["Set-Cookie"] = cookie
         session = session[0]
 
@@ -115,7 +115,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         # Call the leaf/endpoint
         try:
-            x = ServerHandler._master.call_endpoint(session.get_data(),
+            x = ServerHandler._master.call_endpoint(session.data,
                                                     path,
                                                     params,
                                                     self.headers)

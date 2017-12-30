@@ -21,10 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Module Deadlock Guarantees:
-    The following lock dependencies are introduced by this module:
-        Session Pool Lock -> Session Instance Lock
-        Session Instance Lock -> Configuration Lock
-
+    The session pool mutex allows no other locks to be requested and therefor
+    can not be part of any deadlock.
     The session data mutex allows no other locks to be requested and therefor
     can not be part of any deadlock.
 """
@@ -34,10 +32,18 @@ from time import time
 from uuid import uuid4
 
 from kgf import kconfig
+from util.locks import mutex, named_mutex
 
 
 class Session:
-    """Represents a client session whic is kept open by a session cookie."""
+    """Represents a client session whic is kept open by a session cookie.
+
+    Attributes:
+        sid (str): The session ID. Should not be changed once the session
+            exists.
+        data (obj): The session's data. The data object itself should not be
+            overwritten.
+    """
 
     # The MutEx for the session pool
     # Locking this MutEx can cause the Session MutEx to be locked.
@@ -46,8 +52,20 @@ class Session:
     # The session pool, all currently existing sessions, sid->session
     _sessions = {}
 
-    @staticmethod
-    def get_session(ip, sid=None):
+    @classmethod
+    @named_mutex("_pool_lock")
+    def add_session(cls, sid, session):
+        """Adds a session to the session pool.
+
+        Args:
+            sid (str): The session ID.
+            session (obj): The session that will be stored.
+        """
+        Session._sessions[sid] = session
+
+    @classmethod
+    @named_mutex("_pool_lock")
+    def get_session(cls, ip, sid=None):
         """Retrieves an existing session or creates a new one.
 
         A new session is created for the user if and only if at least one of
@@ -77,39 +95,31 @@ class Session:
         if sid is None:
             return Session(ip), True
 
-        with Session._pool_lock:
-            # Unknown SID -> new session
-            if sid not in Session._sessions:
-                return Session(ip), True
+        # Unknown SID -> new session
+        if sid not in Session._sessions:
+            return Session(ip), True
 
-            # Fetch (maybe invalid) session
-            session = Session._sessions[sid]
-            create = False
+        # Fetch (maybe invalid) session
+        session = Session._sessions[sid]
+        create = False
 
-            # A session expires when it was not used for some time or the
-            # IP of the owner changes (basic hijacking protection)
-            if session.is_expired() or not session.is_owner(ip):
-                # Delete the old session and create a new one
-                del Session._sessions[sid]
-                session = Session(ip)
-                create = True
-            return session, create
+        # A session expires when it was not used for some time or the
+        # IP of the owner changes (basic hijacking protection)
+        if session.is_expired() or not session.is_owner(ip):
+            # Delete the old session and create a new one
+            del Session._sessions[sid]
+            session = Session(ip)
+            create = True
+        return session, create
 
     def __init__(self, ip):
         """Constructor.
 
         Args:
             ip (str): The IP address of the owner of the session.
-
-        Contract:
-            This method locks the session pool's lock.
         """
-        # The MutEx for an individual session
-        # Locking this MutEx can't cause any other MutExes to be locked.
-        self._lock = RLock()
-
         # Generate a random session ID and store the session owner's IP
-        self._sid = str(uuid4())
+        self.sid = str(uuid4())
         self._ip = ip
 
         # Expires X minutes into the future
@@ -117,70 +127,37 @@ class Session:
         self.refresh()
 
         # Initialize session data
-        self._data = SessionData()
+        self.data = SessionData()
 
         # Insert this session into the pool
-        with Session._pool_lock:
-            Session._sessions[self._sid] = self
+        Session.add_session(self.sid, self)
 
     def is_expired(self):
         """Checks whether this session is past its expiration date.
 
         Returns:
             bool: Whether the session is no longer valid due to expiration.
-
-        Contract:
-            This method will lock the session's instance lock.
         """
-        with self._lock:
-            return self._expires <= time()
+        # Locking is not needed here as access is atomic.
+        return self._expires <= time()
 
     def is_owner(self, ip):
         """Checks whether the given IP is the owner of this session.
 
+        Args:
+            ip (str): The IP address of the client.
+
         Returns:
             bool: True if the owner has the same IP, False otherwise.
-
-        Contract:
-            This method will lock the session's instance lock.
         """
-        with self._lock:
-            return self._ip == ip
+        # Locking is not needed here as access is atomic.
+        return self._ip == ip
 
     def refresh(self):
-        """Refreshes the session by resetting the expiration timer.
-
-        Contract:
-            This method will lock the session's instance lock and the
-            configuration lock in that order.
-        """
-        with self._lock:
-            expire_time = kconfig().get("expire_time", 15)
-            self._expires = time() + expire_time * 60
-
-    def get_id(self):
-        """Returns the session ID.
-
-        Returns:
-            str: The session ID.
-
-        Contract:
-            This method will lock the session's instance lock.
-        """
-        with self._lock:
-            return self._sid
-
-    def get_data(self):
-        """Returns the session's data.
-
-        Returns:
-            obj: The SessionData object associated with the session.
-
-        Contract:
-            This method will lock the session's instance lock.
-        """
-        with self._lock:
-            return self._data
+        """Refreshes the session by resetting the expiration timer."""
+        # Locking is not needed here as access is atomic.
+        expire_time = kconfig().get("expire_time", 15)
+        self._expires = time() + expire_time * 60
 
 
 class SessionData:
@@ -195,6 +172,7 @@ class SessionData:
         # The internals of the session data
         self._internal = {}
 
+    @mutex
     def remove(self, key):
         """Removes the entry with the given key from the session data.
 
@@ -204,9 +182,9 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            del self._internal[key]
+        del self._internal[key]
 
+    @mutex
     def get(self, key, default=None):
         """Retrieves the entry with the given key or the given default value.
 
@@ -221,9 +199,9 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            return self._internal.get(key, default)
+        return self._internal.get(key, default)
 
+    @mutex
     def __len__(self):
         """Retrieves the length of the data dictionary.
 
@@ -233,9 +211,9 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            return len(self._internal)
+        return len(self._internal)
 
+    @mutex
     def __getitem__(self, key):
         """Retrieves the entry for the given key.
 
@@ -248,9 +226,9 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            return self._internal[key]
+        return self._internal[key]
 
+    @mutex
     def __setitem__(self, key, value):
         """Sets the entry for the given key in the session data.
 
@@ -261,9 +239,9 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            self._internal[key] = value
+        self._internal[key] = value
 
+    @mutex
     def __contains__(self, item):
         """Checks whether an entry with the given key is present in the data.
 
@@ -276,5 +254,4 @@ class SessionData:
         Contract:
             This method will lock the session's data lock.
         """
-        with self._lock:
-            return item in self._internal
+        return item in self._internal

@@ -30,6 +30,8 @@ from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
 
+from util.locks import mutex
+
 
 class Log:
     """Provides logging utilities and log rotation."""
@@ -68,6 +70,7 @@ class Log:
         self._logger.addHandler(handler)
         self._logger.setLevel(INFO)
 
+    @mutex
     def log(self, msg):
         """Logs a non-critical message.
 
@@ -77,9 +80,9 @@ class Log:
         Contract:
             This method locks the logger's lock.
         """
-        with self._lock:
-            self._logger.log(msg=msg, level=INFO)
+        self._logger.log(msg=msg, level=INFO)
 
+    @mutex
     def error(self, msg):
         """Logs a message that describes an error or a critical condition.
 
@@ -89,8 +92,7 @@ class Log:
         Contract:
             This method locks the logger's lock.
         """
-        with self._lock:
-            self._logger.log(msg=msg, level=ERROR)
+        self._logger.log(msg=msg, level=ERROR)
 
     def _log_roll(self, keyword, storage=5):
         """Deletes and renames old log files and finds a new log file name.

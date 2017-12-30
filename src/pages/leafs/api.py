@@ -104,12 +104,12 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
 
-        if not match.is_picking() or not part.is_picking():
+        if not match.is_picking() or not part.picking:
             return self.fail_permission(session, path, params, headers)
 
         try:
@@ -138,12 +138,12 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
 
-        if not match.is_choosing() or part.is_picking():
+        if not match.is_choosing() or part.picking:
             return self.fail_permission(session, path, params, headers)
 
         try:
@@ -173,7 +173,7 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
@@ -191,7 +191,7 @@ class APIController(Controller):
         # Load the data of the played cards
         for p in match.get_participants():
             redacted = not match.can_view_choices() and part is not p
-            data["played"][p.get_order()] = p.get_choose_data(redacted)
+            data["played"][p.order] = p.get_choose_data(redacted)
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},
@@ -212,16 +212,16 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
 
         data = []
         for part in match.get_participants():
-            data.append({"id": part.get_id(),
-                         "name": part.get_nickname(),
-                         "score": part.get_score(),
-                         "picking": part.is_picking()})
+            data.append({"id": part.id,
+                         "name": part.nickname,
+                         "score": part.score,
+                         "picking": part.picking})
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},
@@ -243,7 +243,7 @@ class APIController(Controller):
                 sent and 3) the response to be sent to the client.
         """
         msg = escape(params["message"])
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
@@ -259,8 +259,7 @@ class APIController(Controller):
         # Check the chat message for sanity
         if len(msg) > 0 and len(msg) < 200:
             # Send the message
-            nick = part.get_nickname()
-            match.send_message(nick, msg)
+            match.send_message(part.nickname, msg)
             return (200,  # 200 OK
                     {"Content-Type": "application/json; charset=utf-8"},
                     "{\"error\":\"OK\"}")
@@ -284,7 +283,7 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
 
@@ -318,7 +317,7 @@ class APIController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
@@ -331,13 +330,13 @@ class APIController(Controller):
                 "status": match.get_status(),
                 "ending": match.is_ending(),
                 "hasCard": match.has_card(),
-                "allowChoose": match.is_choosing() and not part.is_picking(),
-                "allowPick": match.is_picking() and part.is_picking(),
+                "allowChoose": match.is_choosing() and not part.picking,
+                "allowPick": match.is_picking() and part.picking,
                 "gaps": match.count_gaps()}
 
         # Add the card text to the output, if possible
         if data["hasCard"]:
-            data["cardText"] = match.get_card()[1]
+            data["cardText"] = match.current_card[1]
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},
@@ -362,7 +361,7 @@ class APIController(Controller):
         matches = Match.get_all()
         for match in matches:
             data.append({
-                "id": match.get_id(),
+                "id": match.id,
                 "owner": match.get_owner_nick(),
                 "participants": match.get_num_participants(),
                 "started": match.has_started(),

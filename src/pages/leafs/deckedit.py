@@ -91,11 +91,9 @@ class DeckeditController(Controller):
                 sent and 3) the response to be sent to the client.
         """
         # Populate symbol table
-        symtab = {
-            "nickname": session["nickname"],
-            "theme": session["theme"],
-            "showLogout": True if self._logout_shown else None
-        }
+        symtab = {"nickname": session["nickname"],
+                  "theme": session["theme"],
+                  "showLogout": True if self._logout_shown else None}
 
         # Parse the template
         data = Parser.get_template("./res/tpl/deckedit.html", symtab)

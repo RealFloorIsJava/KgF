@@ -34,6 +34,9 @@ class MatchController(Controller):
         """Constructor."""
         super().__init__()
 
+        # Whether the logout link will be shown
+        self._logout_shown = kconfig().get("login-required", True)
+
         # Only allow logged-in users in a match
         self.add_access_restriction(self.check_access)
         self.set_permission_fail_handler(self.fail_permission)
@@ -71,7 +74,7 @@ class MatchController(Controller):
         #  - Joining a match
         #  - Creating a match
         is_exempt = ("create" in path) or ("join" in path)
-        if not is_exempt and Match.get_match(session["id"]) is None:
+        if not is_exempt and Match.get_match_of_player(session["id"]) is None:
             return False
 
         return True
@@ -111,7 +114,7 @@ class MatchController(Controller):
                 sent and 3) the response to be sent to the client.
         """
         # Leave the match
-        match = Match.get_match(session["id"])
+        match = Match.get_match_of_player(session["id"])
         match.abandon_participant(session["id"])
 
         return (303,  # 303 See Other
@@ -133,7 +136,7 @@ class MatchController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        if Match.get_match(session["id"]) is not None:
+        if Match.get_match_of_player(session["id"]) is not None:
             # The user is already in a match
             return (303,  # 303 See Other
                     {"Location": "/match"},
@@ -174,7 +177,7 @@ class MatchController(Controller):
             tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
                 sent and 3) the response to be sent to the client.
         """
-        if Match.get_match(session["id"]) is not None:
+        if Match.get_match_of_player(session["id"]) is not None:
             # The user already is in a match
             return (303,  # 303 See Other
                     {"Location": "/match"},
@@ -227,7 +230,8 @@ class MatchController(Controller):
                 sent and 3) the response to be sent to the client.
         """
         # Populate symbol table
-        symtab = {"theme": session["theme"]}
+        symtab = {"theme": session["theme"],
+                  "showLogout": True if self._logout_shown else None}
 
         # Parse the template
         data = Parser.get_template("./res/tpl/match.html", symtab)

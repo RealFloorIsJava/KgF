@@ -35,9 +35,17 @@ from random import choice, shuffle
 from threading import RLock
 from time import time
 
+from util.locks import mutex, named_mutex
+
 
 class Match:
-    """Represents a match."""
+    """Represents a match.
+
+    Attributes:
+        id (int): The ID of the match. It should not be changed.
+        current_card (tuple): The currently selected card. Should not be
+            changed.
+    """
 
     # The minimum amount of players for a match
     _MINIMUM_PLAYERS = 3
@@ -71,14 +79,15 @@ class Match:
 
     # The match id -> match registry and the ID counter
     _registry = OrderedDict()
-    _id = 0
+    _id_counter = 0
 
     # MutEx for the match registry
     # Locking this MutEx can't cause any other MutExes to be locked.
     _pool_lock = RLock()
 
-    @staticmethod
-    def get_by_id(id):
+    @classmethod
+    @named_mutex("_pool_lock")
+    def get_by_id(cls, id):
         """Retrieves a match by its ID.
 
         Args:
@@ -90,11 +99,11 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        with Match._pool_lock:
-            return Match._registry.get(id, None)
+        return Match._registry.get(id, None)
 
-    @staticmethod
-    def get_all():
+    @classmethod
+    @named_mutex("_pool_lock")
+    def get_all(cls):
         """Retrieves all matches.
 
         Returns:
@@ -103,14 +112,13 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        with Match._pool_lock:
-            res = []
-            for k in Match._registry:
-                res.append(Match._registry[k])
-            return res
+        res = []
+        for k in Match._registry:
+            res.append(Match._registry[k])
+        return res
 
-    @staticmethod
-    def get_match(pid):
+    @classmethod
+    def get_match_of_player(cls, pid):
         """Retrieves the match of this player or None if not existing.
 
         Args:
@@ -118,10 +126,6 @@ class Match:
 
         Returns:
             obj: The match of that player or None.
-
-        Contract:
-            This method locks the match pool lock.
-            Independently, the locks of some matches will be locked.
         """
         matches = Match.get_all()
         for match in matches:
@@ -129,8 +133,9 @@ class Match:
                 return match
         return None
 
-    @staticmethod
-    def add_match(id, match):
+    @classmethod
+    @named_mutex("_pool_lock")
+    def add_match(cls, id, match):
         """Adds a match to the pool.
 
         Args:
@@ -140,11 +145,11 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        with Match._pool_lock:
-            Match._registry[id] = match
+        Match._registry[id] = match
 
-    @staticmethod
-    def remove_match(id):
+    @classmethod
+    @named_mutex("_pool_lock")
+    def remove_match(cls, id):
         """Removes a match from the pool.
 
         Args:
@@ -153,12 +158,12 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        with Match._pool_lock:
-            if id in Match._registry:
-                del Match._registry[id]
+        if id in Match._registry:
+            del Match._registry[id]
 
-    @staticmethod
-    def get_next_id():
+    @classmethod
+    @named_mutex("_pool_lock")
+    def get_next_id(cls):
         """Retrieves an unused id.
 
         Returns:
@@ -167,12 +172,11 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        with Match._pool_lock:
-            Match._id += 1
-            return Match._id
+        Match._id_counter += 1
+        return Match._id_counter
 
-    @staticmethod
-    def perform_housekeeping():
+    @classmethod
+    def perform_housekeeping(cls):
         """Performs housekeeping tasks like checking timers.
 
         Contract:
@@ -184,7 +188,7 @@ class Match:
             match.check_participants()
             match.check_timer()
             if match.get_num_participants() == 0:
-                Match.remove_match(match.get_id())
+                Match.remove_match(match.id)
 
     def __init__(self):
         """Constructor."""
@@ -194,13 +198,13 @@ class Match:
         self._lock = RLock()
 
         # The ID of this match
-        self._id = Match.get_next_id()
+        self.id = Match.get_next_id()
 
         # The timer of the match
         self._timer = time() + Match._TIMER_PENDING
 
         # The current card of the match
-        self._current_card = None
+        self.current_card = None
 
         # The deck for this match
         self._deck = []
@@ -215,26 +219,10 @@ class Match:
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
 
     def put_in_pool(self):
-        """Puts this match into the match pool.
+        """Puts this match into the match pool."""
+        Match.add_match(self.id, self)
 
-        Contract:
-            This method locks the match pool lock and the instance lock
-            independently.
-        """
-        Match.add_match(self.get_id(), self)
-
-    def get_id(self):
-        """Retrieves the ID of the match.
-
-        Returns:
-            int: The ID of this match.
-
-        Contract:
-            This method locks the match's instance lock.
-        """
-        with self._lock:
-            return self._id
-
+    @mutex
     def get_owner_nick(self):
         """Retrieves the nickname of the owner (the first of the players).
 
@@ -245,10 +233,10 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        with self._lock:
-            for id in self._participants:
-                return self._participants[id].get_nickname()
+        for id in self._participants:
+            return self._participants[id].nickname
 
+    @mutex
     def get_num_participants(self):
         """Retrieves the number of participants in the match.
 
@@ -258,9 +246,9 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            return len(self._participants)
+        return len(self._participants)
 
+    @mutex
     def has_participant(self, pid):
         """Checks whether this match has a participant with the given ID.
 
@@ -273,21 +261,18 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            return pid in self._participants
+        return pid in self._participants
 
     def has_started(self):
         """Checks whether the match has already started.
 
         Returns:
             bool: Whether the match has already started.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._state != "PENDING"
+        # Locking is not needed here as access is atomic.
+        return self._state != "PENDING"
 
+    @mutex
     def can_view_choices(self):
         """Whether participants can view others card choices.
 
@@ -297,22 +282,18 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            return (self._state == "PICKING"
-                    or self._state == "COOLDOWN"
-                    or self._state == "ENDING")
+        return (self._state == "PICKING"
+                or self._state == "COOLDOWN"
+                or self._state == "ENDING")
 
     def get_seconds_to_next_phase(self):
         """Retrieves the number of seconds to the next phase (state).
 
         Returns:
             int: The number of remaining seconds to the next phase.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return int(self._timer - time())
+        # Locking is not needed here as access is atomic.
+        return int(self._timer - time())
 
     def _set_state(self, state):
         """Updates the state for this match.
@@ -432,10 +413,9 @@ class Match:
         # Delete the match if needed (note that it might already be deleted,
         # but deletion is idempotent)
         if delete_match:
-            with self._lock:
-                id = self._id
-            Match.remove_match(id)
+            Match.remove_match(self.id)
 
+    @mutex
     def check_participants(self):
         """Checks the timeout timers of all participants.
 
@@ -443,17 +423,17 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        with self._lock:
-            for id in self._participants.copy():
-                part = self._participants[id]
-                if part.timed_out():
-                    self._chat.append((
-                        "SYSTEM",
-                        "<b>%s timed out.</b>" % part.get_nickname()))
-                    if self._participants[id].is_picking():
-                        self.notify_picker_leave(id)
-                    del self._participants[id]
+        for id in self._participants.copy():
+            part = self._participants[id]
+            if part.has_timed_out():
+                self._chat.append((
+                    "SYSTEM",
+                    "<b>%s timed out.</b>" % part.nickname))
+                if self._participants[id].picking:
+                    self.notify_picker_leave(id)
+                del self._participants[id]
 
+    @mutex
     def abandon_participant(self, pid):
         """Removes the given participant from the match.
 
@@ -464,16 +444,16 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        with self._lock:
-            if pid not in self._participants:
-                return
-            nick = self._participants[pid].get_nickname()
-            self._chat.append(("SYSTEM",
-                               "<b>%s left.</b>" % nick))
-            if self._participants[pid].is_picking():
-                self.notify_picker_leave(pid)
-            del self._participants[pid]
+        if pid not in self._participants:
+            return
+        nick = self._participants[pid].nickname
+        self._chat.append(("SYSTEM",
+                           "<b>%s left.</b>" % nick))
+        if self._participants[pid].picking:
+            self.notify_picker_leave(pid)
+        del self._participants[pid]
 
+    @mutex
     def notify_picker_leave(self, pid):
         """Notifies the match that the picker with the given ID left.
 
@@ -484,29 +464,29 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        with self._lock:
-            # Find the first participant as the default fallback
-            for pid in self._participants:
-                fallback = self._participants[pid]
+        # Find the first participant as the default fallback
+        for pid in self._participants:
+            fallback = self._participants[pid]
+            break
+
+        next = False
+        found = False
+        for ppid in self._participants:
+            if next:
+                self._participants[ppid].picking = True
+                found = True
                 break
+            elif pid == ppid:
+                next = True
 
-            next = False
-            found = False
-            for ppid in self._participants:
-                if next:
-                    self._participants[ppid].set_picking(True)
-                    found = True
-                    break
-                elif pid == ppid:
-                    next = True
+        if not found:
+            fallback.picking = True
 
-            if not found:
-                fallback.set_picking(True)
+        if self._state == "CHOOSING" or self._state == "PICKING":
+            self._set_state("COOLDOWN")
+            self._chat.append(("SYSTEM", "<b>The picker left!</b>"))
 
-            if self._state == "CHOOSING" or self._state == "PICKING":
-                self._set_state("COOLDOWN")
-                self._chat.append(("SYSTEM", "<b>The picker left!</b>"))
-
+    @mutex
     def get_participant(self, pid):
         """Retrieves the match participant with the given ID.
 
@@ -519,9 +499,9 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._participants.get(pid, None)
+        return self._participants.get(pid, None)
 
+    @mutex
     def get_participants(self):
         """Retrieves all participants in the match.
 
@@ -532,11 +512,11 @@ class Match:
             This method locks the match's instance lock.
         """
         res = []
-        with self._lock:
-            for id in self._participants:
-                res.append(self._participants[id])
+        for id in self._participants:
+            res.append(self._participants[id])
         return res
 
+    @mutex
     def add_participant(self, part):
         """Adds a participant to the match.
 
@@ -546,13 +526,12 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        id = part.get_id()
-        nick = part.get_nickname()
-        with self._lock:
-            self._participants[id] = part
-            self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
-            if self._timer - time() < Match._THRESHOLD_JOIN_BONUS:
-                self._timer = time() + Match._THRESHOLD_JOIN_BONUS
+        id = part.id
+        nick = part.nickname
+        self._participants[id] = part
+        self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
+        if self._timer - time() < Match._THRESHOLD_JOIN_BONUS:
+            self._timer = time() + Match._THRESHOLD_JOIN_BONUS
 
     def create_deck(self, data):
         """Creates a deck from the given input source.
@@ -561,7 +540,8 @@ class Match:
             data (str): The deck data.
 
         Contract:
-            This method locks the match's instance lock.
+            The instance of the match may not yet be made available to other
+            threads. No locking is performed.
         """
         tsv_lines = re.split(r"\n|\r|\r\n", data)
 
@@ -603,8 +583,7 @@ class Match:
                     continue
 
             # Add the card to the deck
-            with self._lock:
-                self._deck.append((type, text))
+            self._deck.append((type, text))
             limits[type] -= 1
 
             # Enforce the card limit
@@ -621,19 +600,18 @@ class Match:
                 # Notify the participants that there are cards missing
                 if not note_given:
                     note_given = True
-                    with self._lock:
-                        self._chat.append(("SYSTEM",
-                                           ("<b>Your deck is insufficient."
-                                            " Placeholder cards have been"
-                                            " added to the match.</b>")))
+                    self._chat.append(("SYSTEM",
+                                       ("<b>Your deck is insufficient."
+                                        " Placeholder cards have been"
+                                        " added to the match.</b>")))
 
                 # Add a placeholder card
-                with self._lock:
-                    self._deck.append((
-                        type,
-                        "Your deck needs at least %i more %s cards"
-                        % (needed, type.lower())))
+                self._deck.append((
+                    type,
+                    "Your deck needs at least %i more %s cards"
+                    % (needed, type.lower())))
 
+    @mutex
     def get_status(self):
         """Retrieves the status of this match.
 
@@ -643,25 +621,26 @@ class Match:
         Contract:
             This method locks the match's lock and some participant locks.
         """
-        with self._lock:
-            state = self._state
+        state = self._state
 
         # Handle states with a static status message
-        if state != "PICKING":
-            return {"PENDING": "Waiting for players...",
-                    "CHOOSING": "Players are choosing cards...",
-                    "COOLDOWN": "The next round is about to start...",
-                    "ENDING": "The match is ending..."}.get(state,
-                                                            "<State Unknown>")
+        if state == "PENDING":
+            return "Waiting for players..."
+        elif state == "CHOOSING":
+            return "Players are choosing cards..."
+        elif state == "COOLDOWN":
+            return "The next round is about to start..."
+        elif state == "ENDING":
+            return "The match is ending..."
 
+        # The current state has to be PICKING
         # Get the picking player
         picker = "<unknown>"
-        with self._lock:
-            for id in self._participants:
-                part = self._participants[id]
-                if part.is_picking():
-                    picker = part.get_nickname()
-                    break
+        for id in self._participants:
+            part = self._participants[id]
+            if part.picking:
+                picker = part.nickname
+                break
 
         return "%s is picking a winner..." % picker
 
@@ -670,61 +649,38 @@ class Match:
 
         Returns:
             bool: Whether this match is ending.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._state == "ENDING"
+        # Locking is not needed here as access is atomic.
+        return self._state == "ENDING"
 
     def is_choosing(self):
         """Checks whether this match is in the choosing state.
 
         Returns:
             bool: Whether this match is in the CHOOSING state.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._state == "CHOOSING"
+        # Locking is not needed here as access is atomic.
+        return self._state == "CHOOSING"
 
     def is_picking(self):
         """Checks whether this match is in the winner picking state.
 
         Returns:
             bool: Whether this match is in the PICKING state.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._state == "PICKING"
+        # Locking is not needed here as access is atomic.
+        return self._state == "PICKING"
 
     def has_card(self):
         """Checks whether this match has a statement card selected.
 
         Returns:
             bool: Whether a statement card is selected.
-
-        Contract:
-            This method locks the match's instance lock.
         """
-        with self._lock:
-            return self._current_card is not None
+        # Locking is not needed here as access is atomic.
+        return self.current_card is not None
 
-    def get_card(self):
-        """Retrieves the currently selected statement card.
-
-        Returns:
-            obj: The currently selected statement card.
-
-        Contract:
-            This method locks the match's instance lock.
-        """
-        with self._lock:
-            return self._current_card
-
+    @mutex
     def count_gaps(self):
         """Retrieves the number of gaps on the current card.
 
@@ -736,11 +692,11 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            if self._current_card is None:
-                return 1
-            return max(1, self._current_card[1].count("_"))
+        if self.current_card is None:
+            return 1
+        return max(1, self.current_card[1].count("_"))
 
+    @mutex
     def retrieve_chat(self, offset=0):
         """Retrieves the chat beginning at the given offset.
 
@@ -756,14 +712,14 @@ class Match:
         """
         offset = max(0, offset)
         res = []
-        with self._lock:
-            for id, msg in enumerate(self._chat):
-                if id >= offset:
-                    res.append({"id": id,
-                                "type": msg[0],
-                                "message": msg[1]})
+        for id, msg in enumerate(self._chat):
+            if id >= offset:
+                res.append({"id": id,
+                            "type": msg[0],
+                            "message": msg[1]})
         return res
 
+    @mutex
     def send_message(self, nick, msg):
         """Sends a user message to the chat of this match.
 
@@ -774,10 +730,9 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        with self._lock:
-            self._chat.append(("USER",
-                               "<b>%s</b>: %s" % (nick, msg)))
+        self._chat.append(("USER", "<b>%s</b>: %s" % (nick, msg)))
 
+    @mutex
     def declare_round_winner(self, order):
         """Declares the participant with the given order winner for this round.
 
@@ -790,36 +745,36 @@ class Match:
             lock.
         """
         gc = self.count_gaps()
-        with self._lock:
-            winner = None
-            for pid in self._participants:
-                part = self._participants[pid]
-                if part.is_picking():
-                    continue
-                if part.choose_count() < gc:
-                    continue
-                if part.get_order() == order:
-                    winner = part
-                    break
-            if winner is None:
-                return
-            for pid in self._participants:
-                part = self._participants[pid]
-                if part is winner:
-                    part.increase_score()
-                    nick = part.get_nickname()
+        winner = None
+        for pid in self._participants:
+            part = self._participants[pid]
+            if part.picking:
+                continue
+            if part.choose_count() < gc:
+                continue
+            if part.order == order:
+                winner = part
+                break
+        if winner is None:
+            return
+        for pid in self._participants:
+            part = self._participants[pid]
+            if part is winner:
+                part.increase_score()
+                nick = part.nickname
+                self._chat.append(("SYSTEM",
+                                   "<b>%s won the round!</b>" % nick))
+                if part.score >= Match._WIN_CONDITION:
+                    self._chat.append(("SYSTEM", "<b>Game over!</b>"))
                     self._chat.append(("SYSTEM",
-                                       "<b>%s won the round!</b>" % nick))
-                    if part.get_score() >= Match._WIN_CONDITION:
-                        self._chat.append(("SYSTEM", "<b>Game over!</b>"))
-                        self._chat.append(("SYSTEM",
-                                           "<b>%s won the game!</b>" % nick))
-                        self._set_state("ENDING")
-                    else:
-                        self._set_state("COOLDOWN")
+                                       "<b>%s won the game!</b>" % nick))
+                    self._set_state("ENDING")
                 else:
-                    part.delete_chosen()
+                    self._set_state("COOLDOWN")
+            else:
+                part.delete_chosen()
 
+    @mutex
     def check_choosing_done(self):
         """Checks whether choosing is complete.
 
@@ -830,13 +785,12 @@ class Match:
             This method locks the match's instance lock and participant locks.
         """
         gc = self.count_gaps()
-        with self._lock:
-            for pid in self._participants:
-                part = self._participants[pid]
-                if not part.is_picking() and gc != part.choose_count():
-                    return
-            if self._timer - time() > Match._THRESHOLD_CHOOSING_FINISH:
-                self._timer = time() + Match._THRESHOLD_CHOOSING_FINISH
+        for pid in self._participants:
+            part = self._participants[pid]
+            if not part.picking and gc != part.choose_count():
+                return
+        if self._timer - time() > Match._THRESHOLD_CHOOSING_FINISH:
+            self._timer = time() + Match._THRESHOLD_CHOOSING_FINISH
 
     def _pick_possible(self):
         """ Checks whether picking a winner is possible.
@@ -870,11 +824,11 @@ class Match:
         """
         gc = self.count_gaps()
         for pid in self._participants:
-            if self._participants[pid].is_picking():
+            if self._participants[pid].picking:
                 continue
             if self._participants[pid].choose_count() < gc:
                 self._participants[pid].unchoose_all()
-                nick = self._participants[pid].get_nickname()
+                nick = self._participants[pid].nickname
                 self._chat.append(("SYSTEM",
                                    "<b>%s failed to choose cards!</b>" % nick))
 
@@ -896,7 +850,7 @@ class Match:
             method.
         """
         possible = [x for x in self._deck if x[0] == "STATEMENT"]
-        self._current_card = choice(possible)
+        self.current_card = choice(possible)
 
     def _shuffle_participants(self):
         """Shuffles the internal order of the participants.
@@ -912,7 +866,7 @@ class Match:
         # Assign the order
         k = 0
         for pid in self._participants:
-            self._participants[pid].set_order(order[k] + 1)
+            self._participants[pid].order = order[k] + 1
             k += 1
 
     def _select_next_picker(self):
@@ -934,11 +888,11 @@ class Match:
         next = False
         for pid in self._participants:
             if next:
-                self._participants[pid].set_picking(True)
+                self._participants[pid].picking = True
                 return
-            elif self._participants[pid].is_picking():
+            elif self._participants[pid].picking:
                 next = True
-                self._participants[pid].set_picking(False)
+                self._participants[pid].picking = False
 
         # No picker was set yet
-        fallback.set_picking(True)
+        fallback.picking = True

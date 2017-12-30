@@ -29,6 +29,8 @@ from json import dump, load
 from os.path import exists
 from threading import RLock
 
+from util.locks import mutex
+
 
 class Config:
     """Manages the JSON configuration file."""
@@ -53,6 +55,7 @@ class Config:
         with open(Config._CONFIG_FILE, "r") as f:
             self._configuration = load(f)
 
+    @mutex
     def get(self, key, default):
         """Gets the value for the given configuration key.
 
@@ -66,11 +69,10 @@ class Config:
         Contract:
             This method locks the configuration lock.
         """
-        with self._lock:
-            # Set the default and write-back
-            if key not in self._configuration:
-                self._configuration[key] = default
-                with open(Config._CONFIG_FILE, "w") as f:
-                    dump(self._configuration, f, indent=4, sort_keys=True)
+        # Set the default and write-back
+        if key not in self._configuration:
+            self._configuration[key] = default
+            with open(Config._CONFIG_FILE, "w") as f:
+                dump(self._configuration, f, indent=4, sort_keys=True)
 
-            return self._configuration[key]
+        return self._configuration[key]
