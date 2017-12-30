@@ -39,9 +39,37 @@ class IndexController(Controller):
         # Load the login password
         self._login_pw = kconfig().get("site-pw", "loremipsum")
 
+        # Whether a login is required
+        self._login_required = kconfig().get("login-required", True)
+
+        # Adds the catch-all endpoint if login is not required
+        if not self._login_required:
+            self.add_endpoint(self.catchall)
+
         self.add_endpoint(self.login, params_restrict={"pw"})
         self.add_endpoint(self.logout, path_restrict={"logout"})
         self.add_endpoint(self.index)
+
+    def catchall(self, session, path, params, headers):
+        """Handles creating a user when login is disabled.
+
+        Will redirect to the dashboard.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
+        if "login" not in session:
+            self._create_user(session)
+        return (303,  # 303 See Other
+                {"Location": "/dashboard"},
+                "")
 
     def login(self, session, path, params, headers):
         """Handles requests made with the login form.
@@ -60,14 +88,22 @@ class IndexController(Controller):
                 sent and 3) the response to be sent to the client.
         """
         if params["pw"] == self._login_pw:
-            session["login"] = True
-            session["id"] = str(uuid4())
-            session["nickname"] = "Meme" + str(randint(10000, 99999))
-            session["theme"] = "light"
+            self._create_user(session)
             return None  # fall through (will redirect to dashboard)
         return (303,  # 303 See Other
                 {"Location": "/index/pwfail"},
                 "")
+
+    def _create_user(self, session):
+        """Initializes a temporary user account.
+
+        Args:
+            session (obj): The session data the user will be created in.
+        """
+        session["login"] = True
+        session["id"] = str(uuid4())
+        session["nickname"] = "Meme" + str(randint(10000, 99999))
+        session["theme"] = "light"
 
     def logout(self, session, path, params, headers):
         """Handles logout requests.

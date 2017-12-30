@@ -11,7 +11,9 @@
   </head>
   <body>
     <div class="cupboard">
-      <a href="/index/logout">Log Out</a> -
+      {isset showLogout}
+        <a href="/index/logout">Log Out</a> &mdash;
+      {/isset}
       <a href="/dashboard">Close editor</a>
       <div class="rightFloat">
         <a href="#" id="lightLabel">

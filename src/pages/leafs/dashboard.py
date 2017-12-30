@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from kgf import kconfig
 from pages.controller import Controller
 from pages.templates.engine import Parser
 
@@ -31,6 +32,9 @@ class DashboardController(Controller):
     def __init__(self):
         """Constructor."""
         super().__init__()
+
+        # Whether the logout link will be shown
+        self._logout_shown = kconfig().get("login-required", True)
 
         # Only allow logged-in users
         self.add_access_restriction(self.check_access)
@@ -89,7 +93,8 @@ class DashboardController(Controller):
         # Populate symbol table
         symtab = {
             "nickname": session["nickname"],
-            "theme": session["theme"]
+            "theme": session["theme"],
+            "showLogout": True if self._logout_shown else None
         }
 
         if "filesizefail" in path:
