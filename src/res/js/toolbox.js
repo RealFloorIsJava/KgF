@@ -6,14 +6,14 @@ function getFormatted(str) {
 function symmetricKeyDifference(a, b) {
   var onlyA = [];
   var onlyB = [];
-  for (var x in a) {
-    if (!b.hasOwnProperty(x)) {
-      onlyA.push(x);
+  for (var x of a) {
+    if (!b.has(x[0])) {
+      onlyA.push(x[0]);
     }
   }
-  for (var x in b) {
-    if (!a.hasOwnProperty(x)) {
-      onlyB.push(x);
+  for (var x of b) {
+    if (!a.has(x[0])) {
+      onlyB.push(x[0]);
     }
   }
   return {

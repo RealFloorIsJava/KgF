@@ -1,16 +1,16 @@
 (function(){
   var mExternalUpdateAllowed = true;
-  var mSelectedCards = {};
+  var mSelectedCards = new Map();
   var mNumSelected = 0;
   var mNumGaps = 0;
-  var mHandResolver = {
-    "OBJECT": {},
-    "VERB": {}
-  };
+  var mHandResolver = new Map([
+    ["OBJECT", new Map()],
+    ["VERB", new Map()]
+  ]);
   var allowChoose = false;
   var allowPick = false;
 
-  var mParticipantResolver = {};
+  var mParticipantResolver = new Map();
 
   var mMinimumChatId = 0;
   var mChatLock = false;
@@ -35,8 +35,15 @@
       url: "/api/cards",
       dataType: "json",
       success: function(data) {
-        updateHand(data["hand"]["OBJECT"], "OBJECT");
-        updateHand(data["hand"]["VERB"], "VERB");
+        let sentHand = new Map([["OBJECT", new Map()], ["VERB", new Map()]]);
+        for (let key in data["hand"]["OBJECT"]) {
+          sentHand.get("OBJECT").set(key, data["hand"]["OBJECT"][key]);
+        }
+        for (let key in data["hand"]["VERB"]) {
+          sentHand.get("VERB").set(key, data["hand"]["VERB"][key]);
+        }
+        updateHand(sentHand.get("OBJECT"), "OBJECT");
+        updateHand(sentHand.get("VERB"), "VERB");
         updatePlayed(data["played"]);
       }
     });
@@ -143,16 +150,13 @@
   function updateHand(hand, type) {
     var lowerType = type.toLowerCase();
     var container = $("#" + lowerType + "-hand");
-    var resolver = mHandResolver[type];
+    var resolver = mHandResolver.get(type);
     var diff = symmetricKeyDifference(resolver, hand);
 
     if (mExternalUpdateAllowed) {
-      for (var handId in hand) {
-        if (hand.hasOwnProperty(handId)) {
-          if (hand[handId]["chosen"] == null
-              && resolver.hasOwnProperty(handId)) {
-            unselectHandCard(resolver[handId]);
-          }
+      for (var entry of hand) {
+        if (entry[1]["chosen"] == null && resolver.has(entry[0])) {
+          unselectHandCard(resolver.get(entry[0]));
         }
       }
     }
@@ -164,10 +168,10 @@
         .addClass("card-base")
         .addClass(lowerType + "-card")
         .attr("id", "hand-id-" + handId)
-        .html(getFormatted(hand[handId]["text"]));
+        .html(getFormatted(hand.get(handId)["text"]));
 
-      if (hand[handId]["chosen"] != null) {
-        selectHandCard(elem, hand[handId]["chosen"]);
+      if (hand.get(handId)["chosen"] != null) {
+        selectHandCard(elem, hand.get(handId)["chosen"]);
       }
 
       container.on("click", "#hand-id-" + handId, {
@@ -177,21 +181,20 @@
       });
 
       container.append(elem);
-      resolver[handId] = elem;
+      resolver.set(handId, elem);
     }
 
     for (var i = 0; i < diff.onlyA.length; i++) {
-      unselectHandCard(resolver[diff.onlyA[i]]);
-      resolver[diff.onlyA[i]].remove();
+      unselectHandCard(resolver.get(diff.onlyA[i]));
+      resolver.get(diff.onlyA[i]).remove();
+      resolver.delete(diff.onlyA[i]);
     }
 
     var needsSystemCard = true;
-    for (var handId in resolver) {
-      if (resolver.hasOwnProperty(handId)) {
-        needsSystemCard = false;
-        container.children(".system-card").remove();
-        break;
-      }
+    for (var entry of resolver) {
+      needsSystemCard = false;
+      container.children(".system-card").remove();
+      break;
     }
     if (needsSystemCard) {
       var sysCard = $("<div></div>")
@@ -248,7 +251,7 @@
       success: function(data) {
         var list = $("#partlist");
         for (var i = 0; i < data.length; i++) {
-          if (!mParticipantResolver.hasOwnProperty(data[i].id)) {
+          if (!mParticipantResolver.has(data[i].id)) {
             var name = $("<div></div>").addClass("part-name");
             var score = $("<div></div>").addClass("part-score");
             var type = $("<div></div>").addClass("part-type");
@@ -259,9 +262,9 @@
               .append(score)
               .append(type)
               .append(status);
-            mParticipantResolver[data[i].id] = newElem;
+            mParticipantResolver.set(data[i].id, newElem);
           }
-          var elem = mParticipantResolver[data[i].id];
+          var elem = mParticipantResolver.get(data[i].id);
           elem.children("div").eq(0).text(data[i].name);
           elem.children("div").eq(1).text(data[i].score + "pts");
           elem.children("div").eq(2)
@@ -290,16 +293,16 @@
           mExternalUpdateAllowed = true;
         }, 1000);
         var remove = false;
-        var card = mHandResolver["OBJECT"][handId]
-          || mHandResolver["VERB"][handId];
+        var card = mHandResolver.get("OBJECT").get(handId)
+          || mHandResolver.get("VERB").get(handId);
 
         // Remove card choices
         for (var i = 0; i < 4; i++) {
-          if (!mSelectedCards.hasOwnProperty(i)) {
+          if (!mSelectedCards.has(i)) {
             continue;
           }
-          if (mSelectedCards[i] == card || remove) {
-            unselectHandCard(mSelectedCards[i]);
+          if (mSelectedCards.get(i) == card || remove) {
+            unselectHandCard(mSelectedCards.get(i));
             remove = true;
           }
         }
@@ -321,20 +324,18 @@
       card.children(".card-label").text("" + (k + 1));
     }
     card.addClass("card-selected");
-    mSelectedCards[k] = card;
+    mSelectedCards.set(k, card);
     mNumSelected++;
   }
 
   function unselectHandCard(card) {
     card.children(".card-label").remove();
     card.removeClass("card-selected");
-    for (var key in mSelectedCards) {
-      if (mSelectedCards.hasOwnProperty(key)) {
-        if (mSelectedCards[key] == card) {
-          delete mSelectedCards[key];
-          mNumSelected--;
-          break;
-        }
+    for (var entry of mSelectedCards) {
+      if (entry[1] == card) {
+        mSelectedCards.delete(entry[0]);
+        mNumSelected--;
+        break;
       }
     }
   }
