@@ -29,7 +29,7 @@ from traceback import extract_tb
 from urllib.parse import parse_qs
 
 from kgf import print
-from server.match import Match
+from model.match import Match
 from web.session import Session
 
 

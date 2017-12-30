@@ -185,7 +185,7 @@ class Match:
         """Constructor."""
         # MutEx for the current match
         # Locking this MutEx can cause the following mutexes to be locked:
-        #  server.participant.Participant MutEx
+        #  model.participant.Participant MutEx
         self._lock = RLock()
 
         # The ID of this match

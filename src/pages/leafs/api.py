@@ -25,8 +25,8 @@ from html import escape
 from json import dumps
 from time import time
 
+from model.match import Match
 from pages.controller import Controller
-from server.match import Match
 
 
 class APIController(Controller):

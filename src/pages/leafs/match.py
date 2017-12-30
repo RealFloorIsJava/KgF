@@ -21,10 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from model.match import Match
+from model.participant import Participant
 from pages.controller import Controller
 from pages.templates.engine import Parser
-from server.match import Match
-from server.participant import Participant
 
 
 class MatchController(Controller):
