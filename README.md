@@ -14,6 +14,11 @@ you're done.
 
 3. Run KgF by invoking `python3 app.py` again.
 
+## Testing
+
+Unit tests can be run using `pytest`. To run all unit tests, invoke `py.test`
+or `py.test -v` in the source folder.
+
 ## License of download.js
 
 MIT License
