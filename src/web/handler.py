@@ -374,7 +374,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         self.server_version = "KgF/2.0"
         self.sys_version = "TeaPot/1.33.7"
-        self.protocol_version = 'HTTP/1.1'
+        self.protocol_version = "HTTP/1.1"
         try:
             # Send HTTP status code
             self.send_response(code)

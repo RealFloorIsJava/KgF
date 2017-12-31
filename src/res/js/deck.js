@@ -33,7 +33,7 @@
       if (line.length == 0) {
         continue;
       }
-      displayCard(line.split(/\t/));
+      displayCard(line.split(/\t/), false);
     }
   }
 
@@ -105,16 +105,20 @@
     return node;
   }
 
-  function displayCard(tsv) {
+  function displayCard(tsv, added) {
     var curId = mIdCounter++;
     var node = createCard($("#deck-display"), tsv, curId, true);
-    $("#deck-display").append(node);
+    if (added) {
+      $("#deck-display").prepend(node);
+    } else {
+      $("#deck-display").append(node);
+    }
     mCards[curId] = tsv;
     mCardNodes[curId] = node;
   }
 
   function addCard() {
-    displayCard(["Card Text", "STATEMENT"]);
+    displayCard(["Card Text", "STATEMENT"], true);
     mEditId = mIdCounter - 1;
     openEditor();
     markDirty();
@@ -132,7 +136,7 @@
     clearCards();
     for (var i = 0; i < sorting.length; i++) {
       if (sorting[i]) {
-        displayCard(sorting[i]);
+        displayCard(sorting[i], false);
       }
     }
     markDirty();
