@@ -1,104 +1,121 @@
+"use strict";
+
 (function(){
-  var mMatchResolver = {};
+  let matchResolver = new Map()
 
-  function createMatchDIV(anchor, id) {
-    var elem = $("<div></div>").addClass("match-box");
-
-    var matchFloatClear = $("<div></div>").addClass("clearAfterFloat");
-    var startingMatchButton = $("<div></div>")
-      .addClass("rightFloat")
-      .append($("<button></button>")
-        .text("Join match")
-        .attr("id", "id-joinmatch-" + id)
-      );
-
-    anchor.on("click", "#id-joinmatch-" + id, {}, function() {
-      window.location.assign("/match/join/" + id);
-    });
-
-    var runningMatchButton = $("<div></div>")
-      .addClass("rightFloat")
-      .append($("<button></button>")
-        .text("Match in progress")
-        .prop("disabled", true)
-      );
-
-    var matchElem = $("<div></div>")
-      .append($("<b></b>"))
-      .append("'s match &mdash; ")
-      .append($("<b></b>"))
-      .append(" participants");
-
-    elem.append(matchElem.clone()
-      .append(" &mdash; Starting in ")
-      .append($("<b></b>"))
-      .append(" seconds...")
-      .append(startingMatchButton)
-      .append(matchFloatClear)
-    );
-    elem.append(matchElem
-      .append(runningMatchButton)
-      .append(matchFloatClear.clone())
-    );
-
-    return elem;
-  }
-
-  function displayMatches(json) {
-    var matchList = $("#matchlist");
-    for (var i = 0; i < json.length; i++) {
-      var match = json[i];
-      if (!mMatchResolver.hasOwnProperty(match["id"])) {
-        mMatchResolver[match["id"]] = createMatchDIV(matchList, match["id"]);
-      }
-      var elem = mMatchResolver[match["id"]];
-
-      var startingDIV = elem.children("div").eq(0);
-      startingDIV.find("b").eq(0).html(match["owner"]);
-      startingDIV.find("b").eq(1).html(match["participants"]);
-      startingDIV.find("b").eq(2).html(match["seconds"]);
-      startingDIV.addClass(match["started"] ? "invisible" : "inlineVisible");
-      startingDIV.removeClass(match["started"] ? "inlineVisible" : "invisible");
-
-      var runningDIV = elem.children("div").eq(1);
-      runningDIV.find("b").eq(0).html(match["owner"]);
-      runningDIV.find("b").eq(1).html(match["participants"]);
-      runningDIV.addClass(match["started"] ? "inlineVisible" : "invisible");
-      runningDIV.removeClass(match["started"] ? "invisible" : "inlineVisible");
-
-      json[i] = elem;
-    }
-    matchList.empty().append(json);
-  }
-
+  /**
+   * Loads all matches and displays them on the page.
+   */
   function loadMatches() {
     $.ajax({
       method: "GET",
       url: "/api/list",
       dataType: "json",
-      success: displayMatches
-    });
+      success: displayMatches,
+      error: (x, e, f) => console.log(`/api/list error: ${e} ${f}`)
+    })
   }
 
-  $("#deckEditButton").click(function() {
-    window.location.assign("/deckedit");
-  });
+  /**
+   * Displays the matches that were received from the API.
+   *
+   * @param json The JSON data object that was received.
+   */
+  function displayMatches(json) {
+    let matchList = $("#matchlist")
+    let addIds = new Set()
+    let removeIds = new Set(matchResolver.keys())
 
-  $("#nameChangeLabel").click(function() {
-    var newName = prompt("What name would you like to have?");
-    if (newName != null && newName != "" && newName.length < 32) {
-      $("#username").text(newName);
-      $.ajax({
-        method: "POST",
-        url: "/options",
-        data: {
-          name: newName
-        }
-      });
-    } else {
-      alert("Invalid name!");
+    // Modify DOM elements
+    for (let match of json) {
+      removeIds.delete(match.id)
+      if (!matchResolver.has(match.id)) {
+        addIds.add(match.id)
+        matchResolver.set(match.id, createMatchDiv(match.id))
+      }
+      let elem = matchResolver.get(match.id)
+      let [divStarting, divRunning] = jqUnpack(elem.children("div"))
+
+      // The DIV for when the match can be joined
+      let [bOwner, bParts, bSeconds] = jqUnpack(divStarting.children("b"))
+      bOwner.html(match.owner)
+      bParts.html(match.participants)
+      bSeconds.html(match.seconds)
+      divStarting.toggleClass("invisible", match.started)
+
+      // The DIV for when the match can't be joined
+      let [bOwner2, bParts2] = jqUnpack(divRunning.children("b"))
+      bOwner2.html(match.owner)
+      bParts2.html(match.participants)
+      divRunning.toggleClass("invisible", !match.started)
     }
-  });
 
-  setInterval(loadMatches, 900);
-})();
+    // Delete all gone matches
+    for (let id of removeIds) {
+      let dom = matchResolver.get(id)
+      dom.remove()
+      matchResolver.delete(id)
+    }
+
+    // Add all new matches
+    for (let id of addIds) {
+      matchList.append(matchResolver.get(id))
+    }
+  }
+
+  /**
+   * Creates a DIV for the given ID
+   *
+   * @param id The id of the match.
+   * @return The DOM element.
+   */
+  function createMatchDiv(id) {
+    $("#matchlist").on("click", `#id-joinmatch-${id}`, {}, () => joinMatch(id))
+    return (
+      $("<div></div>", {"class": "match-box"}).append([
+        $("<div></div>").append([
+          $("<b></b>"),
+          "'s match &mdash; ",
+          $("<b></b>"),
+          " participants &mdash; Starting in ",
+          $("<b></b>"),
+          " seconds...",
+          $("<div></div>", {"class": "rightFloat"}).append([
+            $("<button>Join match</button>").attr("id", `id-joinmatch-${id}`)
+          ]),
+          $("<div></div>", {"class": "clearAfterFloat"})
+        ]),
+        $("<div></div>").append([
+          $("<b></b>"),
+          "'s match &mdash; ",
+          $("<b></b>"),
+          " participants",
+          $("<div></div>", {"class": "rightFloat"}).append([
+            $("<button>Can't join now</button>").prop("disabled", true)
+          ]),
+          $("<div></div>", {"class": "clearAfterFloat"})
+        ])
+      ])
+    )
+  }
+
+  /**
+   * Opens the deck editor.
+   */
+  function openEditor() {
+    window.location.assign("/deckedit")
+  }
+
+  /**
+   * Joins a match.
+   *
+   * @param id The ID of the match that will be joined.
+   */
+  function joinMatch(id) {
+    window.location.assign("/match/join/" + id)
+  }
+
+  $("#deckEditButton").click(openEditor)
+  setInterval(loadMatches, 1000)
+  loadMatches()
+})()
