@@ -45,6 +45,10 @@ class Match:
     Attributes:
         id (int): The ID of the match. It should not be changed.
         current_card (obj): The currently selected card. Should not be changed.
+
+    Class Attributes:
+        frozen (bool): Whether matches are currently frozen, i.e. whether their
+            state transitions are disabled.
     """
 
     # The minimum amount of players for a match
@@ -84,6 +88,9 @@ class Match:
     # MutEx for the match registry
     # Locking this MutEx can't cause any other MutExes to be locked.
     _pool_lock = RLock()
+
+    # Whether matches are currently frozen
+    frozen = False
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -379,6 +386,14 @@ class Match:
         Contract:
             This method locks the match pool lock and match instance lock.
         """
+        # Frozen matches regenerate their timer
+        if Match.frozen:
+            self._timer = time() + 59 * 61  # Freeze timer to 59:59
+        else:
+            with self._lock:
+                if self._timer - time() > 59 * 60:  # > 59 minutes
+                    self._timer = time() + 30  # Reset to 00:30
+
         # Refresh the timer when there are not enough participants while
         # the match has not started yet
         threshold = Match._THRESHOLD_PENDING_REFRESH

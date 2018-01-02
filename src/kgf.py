@@ -24,6 +24,7 @@ SOFTWARE.
 import builtins
 from os import mkdir
 from os.path import isdir
+import readline
 from sys import exit
 
 from config import Config
@@ -129,14 +130,44 @@ class KgF:
         The console only serves as means for stopping the application by using
         the command 'quit'.
         """
+        # Late imports to prevent circular dependencies when other modules
+        # need configuration or logger
+        from model.match import Match
+
+        stdout = builtins.print
         try:
+            stdout("Type `quit` or use ^C to stop.")
+            stdout("Type `help` for available commands.")
+
             # Run console
             while True:
-                builtins.print("Type quit to stop")
-                inp = input("> ")
+                try:
+                    inp = input("> ")
+                except KeyboardInterrupt:
+                    # ^C
+                    stdout()
+                    break
+                except EOFError:
+                    # ^D
+                    stdout()
+                    stdout("Type `quit` or use ^C to stop.")
+                    continue
+
                 if inp == "quit":
                     break
+                elif inp == "help":
+                    stdout("-- Available commands")
+                    stdout("  quit     - Stops the application.")
+                    stdout("  help     - Shows this help.")
+                    stdout("  freeze   - Freezes all matches.")
+                    stdout("  unfreeze - Unfreezes all matches.")
+                elif inp == "freeze":
+                    Match.frozen = True
+                    stdout("Froze all matches...")
+                elif inp == "unfreeze":
+                    Match.frozen = False
+                    stdout("Unfroze all matches...")
         finally:
             # Clean up
-            builtins.print("Shutting down...")
+            stdout("Shutting down...")
             self._webserver.stop()
