@@ -22,9 +22,9 @@ SOFTWARE.
 """
 
 import builtins
+import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
-import readline
 from sys import exit
 
 from config import Config
