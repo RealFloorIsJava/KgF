@@ -30,7 +30,7 @@ class ResourceController(Controller):
     """Handles the /res leaf."""
 
     # The maximum number of seconds for which a resource is cached.
-    _MAX_CACHE = 180
+    _MAX_CACHE = 60 * 60 * 24 * 180  # 1/2 year
 
     def __init__(self):
         """Constructor."""
@@ -68,8 +68,8 @@ class ResourceController(Controller):
         # Reads the file name from the path
         query = self._get_file_name(path)
         if query is None:
-            # 404 Not Found
-            return 404, {"Content-Type": "text/plain"}, "Not found"
+            # 403 Forbidden
+            return 403, {"Content-Type": "text/plain"}, "Forbidden"
 
         # Check if the response can be a "Not Modified"
         if "if-none-match" in headers:
@@ -102,10 +102,6 @@ class ResourceController(Controller):
     def _get_file_name(self, path):
         """Fetches the file name from the path.
 
-        The first element of the path is split by dashes into a list of tokens.
-        The last two tokens will be used for the filename (filename +
-        extension). The other tokens will be translated into directories.
-
         Args:
             path (list): The list of elements in the path
 
@@ -119,22 +115,33 @@ class ResourceController(Controller):
             return None
 
         # Check that the path is sanitized
-        # The file may only contain [a-z][0-9] and the dash (-)
-        fn = path[0]
-        for c in fn:
-            if c not in "abcdefghijklmnopqrstuvwxyz0123456789-":
-                return None
+        # Path elements may only contain alphabetic characters, numbers and
+        # dashes. Only the last path element may have exactly one dot.
+        for i in range(len(path)):
+            is_last = i == len(path) - 1
+            has_dot = False
+            has_chars = False
+            for c in path[i]:
+                if c == ".":
+                    if not is_last:
+                        return None  # dots not in last element
+                    if has_dot:
+                        return None  # multiple dots
+                    if not has_chars:
+                        return None  # element starts with a dot
+                    has_dot = True
+                elif c not in ("abcdefghijklmnopqrstuvwxyz"
+                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                               "0123456789-"):
+                    return None  # illegal character
+                has_chars = True
 
-        fn = fn.split("-")
-        f = "./res"
-        ext = "oct"
+        # Construct the file name
+        fn = "/".join(path)
+        if "." not in fn:
+            return None  # no file extension
+        dot_idx = fn.index(".")
 
-        # Construct the file from the dash seperated name
-        # The last element is the extension, all others are path elements
-        for i in range(len(fn)):
-            if i + 1 == len(fn):
-                f += ".%s" % fn[i]
-                ext = fn[i]
-            else:
-                f += "/%s" % fn[i]
+        f = "./res/%s" % fn
+        ext = fn[(dot_idx + 1):]
         return f, ext

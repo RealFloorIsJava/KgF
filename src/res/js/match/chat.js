@@ -69,8 +69,8 @@
    */
   function createChatMessage(type, msg) {
     let typeImg = (type === "SYSTEM"
-      ? "/res/images-bang-svg"
-      : "/res/images-message-svg")
+      ? "/res/images/bang.svg"
+      : "/res/images/message.svg")
     return (
       $("<div></div>").append([
         $("<img>", {"src": typeImg, "class": "chat-svg"}),

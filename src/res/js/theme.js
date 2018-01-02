@@ -30,7 +30,7 @@
   function toggleLights() {
     theme = (theme == "dark") ? "light" : "dark"
     checkLights()
-    $("#theme").attr("href", `/res/css-${theme}-css`)
+    $("#theme").attr("href", `/res/css/${theme}.css`)
     $.ajax({
       method: "POST",
       url: "/options",
