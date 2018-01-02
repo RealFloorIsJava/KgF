@@ -23,26 +23,18 @@
  */
 "use strict";
 
-(function(){
-  /**
-   * Changes the name of the user.
-   */
-  function changeName() {
-    var newName = prompt("What name would you like to have?")
-    if (newName === null) {
-      return
-    }
-    if (newName === "" || newName.length >= 32) {
-      alert("Invalid name! Please use between 1 and 31 characters.")
-      return
-    }
-    $("#username").text(newName)
-    $.ajax({
-      method: "POST",
-      url: "/options",
-      data: {name: newName}
-    })
-  }
-
-  $("#nameChangeLabel").click(changeName)
-})()
+/**
+ * Formats the given string as a card text.
+ *
+ * Gaps (_) are expanded to HTML. Hyphenation markers (|) are expanded to soft
+ * hyphens.
+ *
+ * @param str The raw string.
+ * @return The formatted string.
+ */
+function applyCardTextFormat(str) {
+  const gap = "<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>"
+  str = str.replace(/\|/g, "&shy;")
+  str = str.replace(/_/g, gap)
+  return str
+}
