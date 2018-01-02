@@ -98,7 +98,7 @@ class KgF:
 
         # Setup data directory
         if not isdir("./data"):
-            mkdir("./data", 0o0700)
+            mkdir("./data", 0o0700)  # rwx --- ---
 
         # Setup logging
         KgF.klog = Log()

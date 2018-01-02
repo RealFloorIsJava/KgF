@@ -58,7 +58,7 @@ class Match:
     _WIN_CONDITION = 8
 
     # The maximum number of cards in a deck
-    _MAXIMUM_CARDS_IN_DECK = 2000
+    _MAXIMUM_CARDS_IN_DECK = 9999
 
     # The minimum amount of cards of each type, don't set this to
     # lower than the number of cards on a hand

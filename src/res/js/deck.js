@@ -127,6 +127,7 @@
     // Setting this handler to the deck display prevents editing when the card
     // is in the editor
     $("#deck-display").on("click", `#edit-id-${id}`, {}, () => editCard(id))
+    let prefId = ("" + id).padStart(4, "0")
     return (
       $("<div></div>", {
           "class": `card-base ${type}-card`,
@@ -144,7 +145,7 @@
           ($("<span>Delete</span>").addClass("fake-anchor")
             .attr("id", `del-id-${id}`)),
           " - ",
-          `#${id}`
+          `#${prefId}`
         ])
       ])
     )

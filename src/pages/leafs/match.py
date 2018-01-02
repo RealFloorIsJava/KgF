@@ -193,7 +193,7 @@ class MatchController(Controller):
         fp.seek(0, 2)
         size = fp.tell()
         fp.seek(0)
-        if size > 200 * 1024:
+        if size > 800 * 1000:
             return (303,  # 303 See Other
                     {"Location": "/dashboard/deck_too_big"},
                     "")
