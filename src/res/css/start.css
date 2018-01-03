@@ -1,17 +1,14 @@
 .floating-center {
   position: absolute;
-  left: 37.5%;
-  top: 37.5%;
-  width: 25%;
-  height: 25%;
-  border: 1px solid gray;
+  left: calc((100vw - 480px) / 2);
+  top: calc((100vh - 250px) / 2);
+  width: 480px;
+  height: 250px;
   background-color: #f3f3f3;
-}
-
-.login-form {
-  position: relative;
-  top: 25px;
-  left: 25px;
+  box-shadow: 6px 6px 15px 0px #222;
+  border-radius: 5px;
+  padding: 30px;
+  box-sizing: border-box;
 }
 
 .auth-error {
@@ -23,5 +20,14 @@
 }
 
 body {
-  background-color: #eef3ee;
+  background-color: #dde3dd;
+  margin: 0px;
+  padding: 0px;
+}
+
+.ghribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 0;
 }
