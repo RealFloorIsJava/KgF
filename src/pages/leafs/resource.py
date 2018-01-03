@@ -30,7 +30,7 @@ class ResourceController(Controller):
     """Handles the /res leaf."""
 
     # The maximum number of seconds for which a resource is cached.
-    _MAX_CACHE = 60 * 60 * 24 * 180  # 1/2 year
+    _MAX_CACHE = 60 * 60  # 1 hour
 
     def __init__(self):
         """Constructor."""
