@@ -170,4 +170,6 @@ class KgF:
         finally:
             # Clean up
             stdout("Shutting down...")
+            stdout("Please be patient, while clients"
+                   " are gracefully disconnected.")
             self._webserver.stop()

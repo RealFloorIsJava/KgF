@@ -40,6 +40,14 @@ cgi.maxlen = 8 * 1024 * 1024
 class ServerHandler(BaseHTTPRequestHandler):
     """Handles incoming requests to the web server."""
 
+    # Set some metrics
+    server_version = "Teapot/2.0"
+    sys_version = "Python"
+    protocol_version = "HTTP/1.1"
+
+    # Set the default timeout
+    timeout = 10
+
     # The master controller which dispatches requests to leaves
     _master = None
 
@@ -372,9 +380,6 @@ class ServerHandler(BaseHTTPRequestHandler):
                 Dictionary keys are header names and entries are header values.
             data (bytes): The response that will be sent to the client.
         """
-        self.server_version = "KgF/2.0"
-        self.sys_version = "TeaPot/1.33.7"
-        self.protocol_version = "HTTP/1.1"
         try:
             # Send HTTP status code
             self.send_response(code)
