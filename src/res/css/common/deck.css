@@ -25,8 +25,8 @@
 
 .card-editor-cover {
   position: fixed;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.7);
@@ -40,7 +40,7 @@
 }
 
 .card-editor-card-display {
-  margin: 0px 0px 20px 0px;
+  margin: 0 0 20px 0;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -48,7 +48,7 @@
 
 .card-text-edit {
   border-radius: 5px;
-  margin: 10px 0px 10px 0px;
+  margin: 10px 0 10px 0;
 }
 
 .card-base:hover, .card-base.card-selected {

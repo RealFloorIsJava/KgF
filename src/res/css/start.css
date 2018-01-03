@@ -5,7 +5,7 @@
   width: 480px;
   height: 250px;
   background-color: #f3f3f3;
-  box-shadow: 6px 6px 15px 0px #222;
+  box-shadow: 6px 6px 15px 0 #222;
   border-radius: 5px;
   padding: 30px;
   box-sizing: border-box;
@@ -21,8 +21,8 @@
 
 body {
   background-color: #dde3dd;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 .ghribbon {

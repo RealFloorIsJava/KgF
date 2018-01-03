@@ -25,7 +25,7 @@
 }
 
 .match-status {
-  margin: 0px 10px 10px 10px;
+  margin: 0 10px 10px 10px;
   text-align: center;
   font-variant: small-caps;
 }
@@ -85,7 +85,7 @@
 }
 
 .match-tools {
-  padding: 40px 10px 0px 60px;
+  padding: 40px 10px 0 60px;
   position: sticky;
   top: 5px;
   display: flex;
@@ -101,7 +101,7 @@
   font-size: 45px;
 }
 
-.card-area-played { /*TODO*/
+.match-played-cards {
   padding: 40px 20px 250px 20px; /* 250px for 'phantom hand' */
   display: flex;
   flex-grow: 1;
@@ -109,8 +109,8 @@
   flex-wrap: wrap;
 }
 
-.card-area-set { /*TODO*/
-  padding: 0px 15px 20px 15px;
+.match-played-set {
+  padding: 0 15px 20px 15px;
   display: flex;
   justify-content: center;
 }
@@ -127,7 +127,7 @@
 
 .match-hand {
   position: fixed;
-  bottom: 0px;
+  bottom: 0;
   display: flex;
   justify-content: center;
   width: calc(100vw - 300px);
@@ -144,7 +144,7 @@
   margin-right: 4px;
   padding: 3px 10px 4px 10px;
   height: 27px;
-  border-radius: 5px 5px 0px 0px;
+  border-radius: 5px 5px 0 0;
   cursor: pointer;
   box-shadow: 2px -6px 7px -4px #222;
 }
@@ -160,7 +160,7 @@
   overflow-x: auto;
 }
 
-.hand-area-set-row {
+.hand-set {
   display: flex;
   justify-content: center;
 }

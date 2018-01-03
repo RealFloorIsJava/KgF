@@ -135,11 +135,11 @@
    * @param data The played cards data.
    */
   function updatePlayed(data) {
-    let area = $(".card-area-played")
-    let sets = area.children(".card-area-set")
+    let area = $(".match-played-cards")
+    let sets = area.children(".match-played-set")
     if (sets.length === 0) {
       area.prepend(createCardSet(1))
-      sets = area.children(".card-area-set")
+      sets = area.children(".match-played-set")
     }
     for (let key in data) {
       if (!data.hasOwnProperty(key)) {
@@ -148,7 +148,7 @@
       let dataSet = data[key]
       while (key > sets.length) {
         sets.last().after(createCardSet(key))
-        sets = area.children(".card-area-set")
+        sets = area.children(".match-played-set")
       }
 
       let set = sets.eq(key - 1)
@@ -193,7 +193,7 @@
     $(document).on("click", `#played-id-${key}`, {}, () => clickPlayed(key))
     return (
       $("<div></div>", {
-        "class": "card-area-set",
+        "class": "match-played-set",
         "id": `played-id-${key}`
       }).css("display", "none")
     )
@@ -382,7 +382,7 @@
    */
   function pickTab(tab) {
     $(".hand-tab-header").removeClass("active-tab-header")
-    $(".hand-area-set-row").css("display", "none")
+    $(".hand-set").css("display", "none")
     $(`.${tab}`).css("display", "inherit")
     $(`#${tab}`).addClass("active-tab-header")
   }
