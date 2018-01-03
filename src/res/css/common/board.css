@@ -1,0 +1,12 @@
+.board {
+  padding: 16px 20px 16px 20px;
+  position: relative;
+  font-size: 16px;
+  line-height: 22px;
+  z-index: 500;
+  box-shadow: 0px 5px 7px -2px #222;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

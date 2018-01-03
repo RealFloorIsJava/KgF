@@ -1,0 +1,22 @@
+body {
+  margin: 0px;
+  padding: 0px;
+  font-family: "Helvetica";
+}
+
+a, a:link, a:visited, a:hover, a:active {
+  text-decoration: underline;
+}
+
+.large-text-button {
+  font-size: large;
+}
+
+.hint {
+  font-size: small;
+  margin: 0px 20px 0px 10px;
+}
+
+.invisible {
+  display: none !important;
+}

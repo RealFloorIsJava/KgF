@@ -60,14 +60,14 @@
       let [divStarting, divRunning] = jqUnpack(elem.children("div"))
 
       // The DIV for when the match can be joined
-      let [bOwner, bParts, bSeconds] = jqUnpack(divStarting.children("b"))
+      let [bOwner, bParts, bSeconds] = jqUnpack(divStarting.find("b"))
       bOwner.html(match.owner)
       bParts.html(match.participants)
       bSeconds.html(match.seconds)
       divStarting.toggleClass("invisible", match.started)
 
       // The DIV for when the match can't be joined
-      let [bOwner2, bParts2] = jqUnpack(divRunning.children("b"))
+      let [bOwner2, bParts2] = jqUnpack(divRunning.find("b"))
       bOwner2.html(match.owner)
       bParts2.html(match.participants)
       divRunning.toggleClass("invisible", !match.started)
@@ -96,27 +96,29 @@
     $("#matchlist").on("click", `#id-joinmatch-${id}`, {}, () => joinMatch(id))
     return (
       $("<div></div>", {"class": "match-box"}).append([
-        $("<div></div>").append([
-          $("<b></b>"),
-          "'s match &mdash; ",
-          $("<b></b>"),
-          " participants &mdash; Starting in ",
-          $("<b></b>"),
-          " seconds...",
-          $("<div></div>", {"class": "rightFloat"}).append([
+        $("<div></div>", {"class": "match-box-contents"}).append([
+          $("<div></div>").append([
+            $("<b></b>"),
+            "'s match &mdash; ",
+            $("<b></b>"),
+            " participants &mdash; Starting in ",
+            $("<b></b>"),
+            " seconds..."
+          ]),
+          $("<div></div>").append([
             $("<button>Join match</button>").attr("id", `id-joinmatch-${id}`)
-          ]),
-          $("<div></div>", {"class": "clearAfterFloat"})
+          ])
         ]),
-        $("<div></div>").append([
-          $("<b></b>"),
-          "'s match &mdash; ",
-          $("<b></b>"),
-          " participants",
-          $("<div></div>", {"class": "rightFloat"}).append([
-            $("<button>Can't join now</button>").prop("disabled", true)
+        $("<div></div>", {"class": "match-box-contents"}).append([
+          $("<div></div>").append([
+            $("<b></b>"),
+            "'s match &mdash; ",
+            $("<b></b>"),
+            " participants"
           ]),
-          $("<div></div>", {"class": "clearAfterFloat"})
+          $("<div></div>").append([
+            $("<button>Can't join now</button>").prop("disabled", true)
+          ])
         ])
       ])
     )

@@ -1,0 +1,12 @@
+.match-box {
+  margin: 20px 100px 20px 100px;
+  padding: 20px 30px 20px 30px;
+  border-radius: 5px;
+  box-shadow: 5px 5px 7px -3px #222;
+}
+
+.match-box-contents {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

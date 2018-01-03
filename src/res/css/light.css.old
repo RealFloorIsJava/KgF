@@ -1,0 +1,75 @@
+
+.knob-statement {
+  text-decoration: none !important;
+  background-color: #444444;
+}
+
+.knob-object {
+  text-decoration: none !important;
+  background-color: #AD0021;
+}
+
+.knob-verb {
+  text-decoration: none !important;
+  background-color: #FFBB00;
+}
+
+.card-base {
+  box-shadow: 2px 2px 6px -3px #222222;
+}
+
+.part {
+  background-color: #aaaaaa;
+  box-shadow: 7px 7px 7px -3px #222222;
+}
+
+.match-chat {
+  background-color: #dddddd;
+  box-shadow: -2px 0px 7px -3px #222222;
+}
+
+.chat-line {
+  box-shadow: 1px 0px 7px -1px #222222;
+  background-color: #eeeeee;
+  color: #333333;
+}
+
+.hand-area-set {
+  background-color: #cfcfcf;
+  box-shadow: 2px -3px 7px -4px #222222;
+}
+
+.hand-tab-header {
+  background-color: #cfcfcf;
+  box-shadow: 2px -6px 7px -4px #222222;
+}
+
+.system-card {
+  color: #111100;
+  background-color: #AAAADD;
+}
+
+.statement-card {
+  color: #fafafa;
+  background-color: #0a0a0a;
+}
+
+.statement-card a, .statement-card a:link, .statement-card a:visited,
+  .statement-card a:hover, .statement-card a:active {
+  color: #aaaadd;
+}
+
+.object-card {
+  color: #001111;
+  background-color: #dd9999;
+}
+
+.verb-card {
+  color: #000011;
+  background-color: #dddd99;
+}
+
+.card-editor {
+  background-color: #999999;
+  box-shadow: 2px 2px 7px -3px #222222;
+}

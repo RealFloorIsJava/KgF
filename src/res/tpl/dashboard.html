@@ -3,25 +3,26 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="shortcut icon" href="/res/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/res/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/res/css/common.css">
     <link rel="stylesheet" type="text/css" href="/res/css/{echo theme}.css" id="theme">
     <script type="text/javascript">
       var theme = "{echo theme}";
     </script>
   </head>
   <body>
-    <div class="cupboard">
-      {isset showLogout}
-        <a href="/index/logout">Log Out</a> &mdash;
-      {/isset}
-      You are known as <span id="username">{echo nickname}</span>
-      (<a href="#" id="nameChangeLabel">Change</a>)
-      <div class="rightFloat">
+    <div class="board">
+      <div>
+        {isset showLogout}
+          <a href="/index/logout">Log Out</a> &mdash;
+        {/isset}
+        You are known as <span id="username">{echo nickname}</span>
+        (<a href="#" id="nameChangeLabel">Change</a>)
+      </div>
+      <div>
         <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div class="clearAfterFloat"></div>
     </div>
     {isset deck_too_big}
       <div class="status-box failure-box">
@@ -62,25 +63,26 @@
 
     <div id="matchlist"></div>
 
-    <div class="match-box">
-      <form action="/match/create" method="POST" enctype="multipart/form-data">
-      <span class="upload-hint">Choose a deck...</span>
-        <input type="file" name="deckupload" required="required" accept=".tsv">
-        <span class="upload-hint">(Maximum file size for decks is <b>800kB</b>)</span>
-        <div class="rightFloat">
-          <input type="submit" value="Create new match" class="largeTextButton">
+    <form action="/match/create" method="POST" enctype="multipart/form-data">
+      <div class="match-box match-box-contents">
+        <div>
+          <span class="hint">Choose a deck...</span>
+          <input type="file" name="deckupload" required="required" accept=".tsv">
+          <span class="hint">(Maximum file size for decks is <b>800kB</b>)</span>
         </div>
-      </form>
-      <div class="clearAfterFloat"></div>
-    </div>
+        <div>
+          <input type="submit" value="Create New Match" class="large-text-button">
+        </div>
+      </div>
+    </form>
 
-    <div class="match-box">
-      <div class="rightFloat">
-        <button class="largeTextButton" id="deckEditButton">
-          Open deck editor
+    <div class="match-box match-box-contents">
+      <div>&nbsp;</div>
+      <div>
+        <button class="large-text-button" id="deckEditButton">
+          Open Deck Editor
         </button>
       </div>
-      <div class="clearAfterFloat"></div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
