@@ -20,3 +20,8 @@ a, a:link, a:visited, a:hover, a:active {
 .invisible {
   display: none !important;
 }
+
+.fake-anchor {
+  text-decoration: underline;
+  cursor: pointer;
+}

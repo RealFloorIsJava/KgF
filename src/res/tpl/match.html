@@ -3,77 +3,72 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="shortcut icon" href="/res/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/res/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/res/css/common.css">
     <link rel="stylesheet" type="text/css" href="/res/css/{echo theme}.css" id="theme">
     <script type="text/javascript">
       var theme = "{echo theme}";
     </script>
   </head>
   <body>
-    <div class="cupboard">
-      {isset showLogout}
-        <a href="/index/logout">Log Out</a> &mdash;
-      {/isset}
-      <a href="/match/abandon">Abandon match</a>
-      <div class="rightFloat">
+    <div class="board">
+      <div>
+        {isset showLogout}
+          <a href="/index/logout">Log Out</a> &mdash;
+        {/isset}
+        <a href="/match/abandon">Abandon match</a>
+      </div>
+      <div>
         <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div class="clearAfterFloat"></div>
     </div>
-    <div class="match-container">
-      <div class="match-view">
-        <div class="match-status" id="matchstatus">
+    <div class="match-view-container">
+      <div class="match-contents">
+        <div id="matchstatus" class="match-status">
           Loading...
         </div>
-        <div class="part-container" id="partlist">
-          <div class="part" id="defaultPart">
+        <div id="partlist" class="participant-container">
+          <div id="defaultPart" class="part">
             <div class="part-name">Loading...</div>
           </div>
         </div>
-        <div class="card-area">
-          <div class="card-area-statement">
-            <div class="side-slider">
-              <div class="countdown-clock" id="countdown">
-                00:00
-              </div>
-              <div class="card-base system-card sticky-card" id="match-statement">Waiting...</div>
+        <div class="match-main">
+          <div class="match-tools">
+            <div class="countdown-clock" id="countdown">
+              00:00
             </div>
+            <div class="card-base system-card sticky-card" id="match-statement">
+              Waiting...
+            </div>
+            <button class="large-text-button">Skip Card</button>
           </div>
-          <div class="area-played-hand">
-            <div class="card-area-played">
-              <div class="card-area-boost">&nbsp;</div>
-              <div class="card-area-boost">&nbsp;</div>
-              <div class="card-area-boost">&nbsp;</div>
-              <div class="card-area-boost">&nbsp;</div>
-            </div>
-            <div class="hand-area">
-              <div class="hand-border">
-                <div class="hand-tabs">
-                  <div class="hand-tab-header" id="tab-actions">
-                    Actions
-                  </div>
-                  <div class="hand-tab-header" id="tab-objects">
-                    Objects
-                  </div>
-                </div>
-                <div class="hand-area-set">
-                  <div class="hand-area-set-row tab-actions" id="verb-hand">
-                    <div class="card-base system-card">No cards on your hand.</div>
-                  </div>
-                  <div class="hand-area-set-row tab-objects" id="object-hand">
-                    <div class="card-base system-card">No cards on your hand.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="card-area-played"></div>
         </div>
       </div>
       <div class="match-chat">
-      <input type="text" class="chat-line" id="chatinput" placeholder="Type a message..." spellcheck="false" maxlength="120" autocomplete="off">
-      <div class="chat-messages" id="chatlist"></div>
+        <input type="text" class="chat-line" id="chatinput" placeholder="Type a message..." spellcheck="false" maxlength="120" autocomplete="off">
+        <div class="chat-messages" id="chatlist"></div>
+      </div>
+    </div>
+    <div class="match-hand">
+      <div class="match-hand-container">
+        <div class="match-hand-tabs">
+          <div class="hand-tab-header" id="tab-actions">
+            Actions
+          </div>
+          <div class="hand-tab-header" id="tab-objects">
+            Objects
+          </div>
+        </div>
+        <div class="match-hand-content">
+          <div class="hand-area-set-row tab-actions" id="verb-hand">
+            <div class="card-base system-card">No cards on your hand.</div>
+          </div>
+          <div class="hand-area-set-row tab-objects" id="object-hand">
+            <div class="card-base system-card">No cards on your hand.</div>
+          </div>
+        </div>
       </div>
     </div>
 

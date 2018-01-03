@@ -1,0 +1,44 @@
+.deck-toolbox {
+  background-color: #CFCFCF;
+}
+
+.card-editor {
+  background-color: #999;
+}
+
+.system-card {
+  color: #110;
+  background-color: #AAD;
+}
+
+.statement-card {
+  color: #FAFAFA;
+  background-color: #0A0A0A;
+}
+
+.statement-card a, .statement-card a:link, .statement-card a:visited,
+    .statement-card a:hover, .statement-card a:active {
+  color: #AAD;
+}
+
+.object-card {
+  color: #011;
+  background-color: #D99;
+}
+
+.verb-card {
+  color: #001;
+  background-color: #DD9;
+}
+
+.knob-statement {
+  background-color: #444;
+}
+
+.knob-object {
+  background-color: #AD0021;
+}
+
+.knob-verb {
+  background-color: #FB0;
+}

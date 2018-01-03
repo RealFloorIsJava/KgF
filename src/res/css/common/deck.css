@@ -1,0 +1,93 @@
+.deck-toolbox {
+  margin: 20px 100px 20px 100px;
+  padding: 20px 30px 20px 30px;
+  border-radius: 5px;
+  box-shadow: 5px 5px 7px -3px #222;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.deck-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-editor-container {
+  position: fixed;
+  top: calc((100vh - 370px) / 2);
+  left: calc((100vw - 640px) / 2);
+  height: 370px;
+  width: 640px;
+  z-index: 750;
+}
+
+.card-editor-cover {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.card-editor {
+  position: relative;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 2px 2px 7px -3px #222222;
+}
+
+.card-editor-card-display {
+  margin: 0px 0px 20px 0px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.card-text-edit {
+  border-radius: 5px;
+  margin: 10px 0px 10px 0px;
+}
+
+.card-base:hover, .card-base.card-selected {
+  transform: scale(1.05);
+}
+
+.card-base {
+  margin: 6px;
+  padding: 6px;
+  position: relative;
+  width: 128px;
+  height: 150px;
+  border-radius: 5px;
+  font-family: "Arial";
+  transition-property: transform;
+  transition-duration: 200ms;
+  cursor: default;
+  overflow: hidden;
+  box-shadow: 2px 2px 6px -3px #222;
+}
+
+.card-id {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  font-size: x-small;
+}
+
+.knob-statement {
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+.knob-object {
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+.knob-verb {
+  text-decoration: none !important;
+  cursor: pointer;
+}

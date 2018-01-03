@@ -1,3 +1,15 @@
 .match-box {
   background-color: #4F4F4F;
 }
+
+.part {
+  background-color: #555;
+}
+
+.match-hand-content {
+  background-color: #4F4F4F;
+}
+
+.hand-tab-header {
+  background-color: #4F4F4F;
+}

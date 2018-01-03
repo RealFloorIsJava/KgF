@@ -3,59 +3,57 @@
   <head>
     <title>Karten gegen Flopsigkeit</title>
     <link rel="shortcut icon" href="/res/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/res/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/res/css/common.css">
     <link rel="stylesheet" type="text/css" href="/res/css/{echo theme}.css" id="theme">
     <script type="text/javascript">
       var theme = "{echo theme}";
     </script>
   </head>
   <body>
-    <div class="cupboard">
-      {isset showLogout}
-        <a href="/index/logout">Log Out</a> &mdash;
-      {/isset}
-      <a href="/dashboard">Close editor</a>
-      <div class="rightFloat">
+    <div class="board">
+      <div>
+        {isset showLogout}
+          <a href="/index/logout">Log Out</a> &mdash;
+        {/isset}
+        <a href="/dashboard">Close editor</a>
+      </div>
+      <div>
         <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
       </div>
-      <div class="clearAfterFloat"></div>
     </div>
-    {isset status}
-      {echo status}
-    {/isset}
 
-    <div class="match-box">
-      <input type="file" id="deckinput" accept=".tsv">
-      <div class="rightFloat">
-        <button class="largeTextButton" id="openDeckButton">
-          Open deck
+    <div class="deck-toolbox">
+      <div>
+        <input type="file" id="deckinput" accept=".tsv">
+      </div>
+      <div>
+        <button class="large-text-button" id="openDeckButton">
+          Open Deck
         </button>
-        <button class="largeTextButton" id="addCardButton">
-          Add card
+        <button class="large-text-button" id="addCardButton">
+          Add Card
         </button>
-        <button class="largeTextButton" id="sortCardsButton">
-          Sort by type
+        <button class="large-text-button" id="sortCardsButton">
+          Sort By Type
         </button>
-        <button class="largeTextButton" id="exportDeckButton">
-          Export deck
+        <button class="large-text-button" id="exportDeckButton">
+          Export Deck
         </button>
       </div>
-      <div class="clearAfterFloat"></div>
     </div>
 
-    <div class="card-container" id="deck-display">
-    </div>
+    <div class="deck-cards" id="deck-display"></div>
 
-    <div class="card-editor-container">
+    <div class="card-editor-container invisible">
       <div class="card-editor-cover">&nbsp;</div>
       <div class="card-editor">
         <div class="card-editor-card-display"></div>
         <b>Underscore (_):</b> Represents a gap for statement cards (at most 3 per card)<br>
         <b>Pipe (|):</b> Represents a hyphenation point for long words<br>
         <input type="text" size="70" maxlength="250" id="card-text-input" class="card-text-edit"><br>
-        <button class="largeTextButton" id="closeEditorButton">
+        <button class="large-text-button" id="closeEditorButton">
           Save card
         </button>
       </div>

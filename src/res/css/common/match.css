@@ -10,3 +10,161 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.match-view-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.match-contents {
+  margin-top: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.match-status {
+  margin: 0px 10px 10px 10px;
+  text-align: center;
+  font-variant: small-caps;
+}
+
+.participant-container {
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+}
+
+.part {
+  margin: 3px 6px 7px 6px;
+  width: 256px;
+  height: 48px;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 7px 7px 7px -3px #222222;
+  position: relative;
+}
+
+.part-name {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: small;
+}
+
+.part-score {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: small;
+  font-weight: bold;
+}
+
+.part-type {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  font-size: small;
+  font-style: italic;
+}
+
+.part-status {
+  position: absolute;
+  bottom: 5px;
+  left: 7px;
+  font-size: small;
+  font-style: italic;
+}
+
+.match-main {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  align-items: flex-start;
+}
+
+.match-tools {
+  padding: 40px 10px 0px 60px;
+  position: sticky;
+  top: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.countdown-clock {
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 45px;
+}
+
+.card-area-played { /*TODO*/
+  padding: 40px 20px 250px 20px; /* 250px for 'phantom hand' */
+  display: flex;
+  flex-grow: 1;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+}
+
+.card-area-set { /*TODO*/
+  padding: 0px 15px 20px 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.card-label {
+  margin-left: -6px;
+  position: absolute;
+  width: 100%;
+  font-family: "Arial";
+  font-size: 128px;
+  text-align: center;
+  opacity: 0.2;
+}
+
+.match-hand {
+  position: fixed;
+  bottom: 0px;
+  display: flex;
+  justify-content: center;
+  width: calc(100vw - 300px);
+}
+
+.match-hand-tabs {
+  position: absolute;
+  top: -27px;
+  display: flex;
+  line-height: 20px;
+}
+
+.hand-tab-header {
+  margin-right: 4px;
+  padding: 3px 10px 4px 10px;
+  height: 27px;
+  border-radius: 5px 5px 0px 0px;
+  cursor: pointer;
+  box-shadow: 2px -6px 7px -4px #222;
+}
+
+.match-hand-content {
+  padding: 15px 15px 15px 15px;
+  position: relative;
+  border-top-right-radius: 5px;
+  display: flex;
+  box-shadow: 2px -3px 7px -4px #222;
+  z-index: 250;
+  max-width: 50vw;
+  overflow-x: auto;
+}
+
+.hand-area-set-row {
+  display: flex;
+  justify-content: center;
+}
+
+.active-tab-header {
+  z-index: 500;
+}

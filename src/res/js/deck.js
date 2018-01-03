@@ -181,7 +181,7 @@
    */
   function openEditor() {
     let card = cards.get(editId)
-    $(".card-editor-container").css("display", "flex")
+    $(".card-editor-container").removeClass("invisible")
     $("#card-text-input").val(card.text)
     $("#card-text-input").focus()
 
@@ -295,7 +295,7 @@
    * Closes the editor.
    */
   function closeEditor() {
-    $(".card-editor-container").css("display", "none")
+    $(".card-editor-container").addClass("invisible")
     let card = cards.get(editId)
     card.text = $("#card-text-input").val()
     card.node.children("span").eq(0).html(applyCardTextFormat(card.text))
