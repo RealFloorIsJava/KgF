@@ -202,7 +202,13 @@ class MatchController(Controller):
         match = Match()
 
         # Create the deck from the upload
-        success, msg = match.create_deck(fp.read().decode())
+        try:
+            data = fp.read().decode()
+        except UnicodeDecodeError:
+            return (415,  # 415 Unsupported Media Type
+                    {"Content-Type": "text/plain"},
+                    "Unsupported content type")
+        success, msg = match.create_deck(data)
 
         # Check for failure
         if not success:
