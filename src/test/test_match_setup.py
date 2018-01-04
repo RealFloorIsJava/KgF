@@ -67,14 +67,19 @@ def test_match_join_leave():
     """Tests joining/leaving of matches."""
     match = Match()
     match.create_deck(card_set)
-    assert len(match._participants) == 0
+    assert match.get_num_participants(True) == 0
+    assert match.get_num_participants(False) == 0
     part = Participant("ID", "NICK")
     match.add_participant(part)
-    assert len(match._participants) == 1
+    assert match.get_num_participants(True) == 1
+    assert match.get_num_participants(False) == 1
     part2 = Participant("ID2", "NICK")
     match.add_participant(part2)
-    assert len(match._participants) == 2
+    assert match.get_num_participants(True) == 2
+    assert match.get_num_participants(False) == 2
     match.abandon_participant("ID")
-    assert len(match._participants) == 1
+    assert match.get_num_participants(True) == 1
+    assert match.get_num_participants(False) == 1
     match.abandon_participant("ID2")
-    assert len(match._participants) == 0
+    assert match.get_num_participants(True) == 0
+    assert match.get_num_participants(False) == 0

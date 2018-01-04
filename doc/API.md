@@ -254,7 +254,7 @@ Returns a JSON object of the following format:
 
 |Key|Type|Description|
 |---|---|---|
-|hand|object|Hand object, described below.|
+|hand|object|Hand object, described below. Only included if the participant is no spectator.|
 |played|array|The played cards of the match, described below.|
 
 #### Hand object

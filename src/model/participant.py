@@ -45,6 +45,7 @@ class Participant:
             provided modification method to prevent race conditions from
             occurring.
         order (int): The order key of the particpant, used for shuffling.
+        spectator (bool): Whether the participant is a spectator.
     """
 
     # The number of hand cards per type
@@ -83,6 +84,10 @@ class Participant:
         # The order of this participant (may change each round)
         self.order = 0
 
+        # Whether this participant is a spectator. Should not change after the
+        # participant is part of a match.
+        self.spectator = False
+
         # The hand of this participant
         self._hand = OrderedDict()
         self._hand_counter = 1
@@ -103,6 +108,7 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to increase score for spectator"
         self.score += 1
 
     def refresh(self):
@@ -117,6 +123,7 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to unchoose for spectator"
         for hid in self._hand:
             self._hand[hid].chosen = None
 
@@ -127,6 +134,7 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to delete for spectator"
         del_list = []
         for hid in self._hand:
             if self._hand[hid].chosen is not None:
@@ -144,6 +152,8 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to get hand for spectator"
+
         return deepcopy(self._hand)
 
     @mutex
@@ -156,6 +166,8 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to get count for spectator"
+
         n = 0
         for hid in self._hand:
             if self._hand[hid].chosen is not None:
@@ -172,6 +184,8 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to replenish spectator"
+
         # Fetch types for replenishing
         types = []
         for key in mdecks:
@@ -210,6 +224,8 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to toggle for spectator"
+
         # The next choice ID
         k = 0
         # The number of chosen hand cards
@@ -248,6 +264,8 @@ class Participant:
         Contract:
             This method locks the participant's lock.
         """
+        assert not self.spectator, "Trying to get data for spectator"
+
         data = []
         for hid in self._hand:
             hcard = self._hand[hid]

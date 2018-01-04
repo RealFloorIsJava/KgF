@@ -108,6 +108,8 @@ class APIController(Controller):
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
+        if part.spectator:
+            return self.fail_permission(session, path, params, headers)
 
         if not match.is_picking() or not part.picking:
             return self.fail_permission(session, path, params, headers)
@@ -142,6 +144,8 @@ class APIController(Controller):
         if match is None:
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
+        if part.spectator:
+            return self.fail_permission(session, path, params, headers)
 
         if not match.is_choosing() or part.picking:
             return self.fail_permission(session, path, params, headers)
@@ -181,13 +185,14 @@ class APIController(Controller):
         data = {}
 
         # Load the data of the hand cards
-        hand_cards = {"OBJECT": {}, "VERB": {}}
-        hand = part.get_hand()
-        for id in hand:
-            hcard = hand[id]
-            hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
-                                               "chosen": hcard.chosen}
-        data["hand"] = hand_cards
+        if not part.spectator:
+            hand_cards = {"OBJECT": {}, "VERB": {}}
+            hand = part.get_hand()
+            for id in hand:
+                hcard = hand[id]
+                hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
+                                                   "chosen": hcard.chosen}
+            data["hand"] = hand_cards
 
         # Load the data of the played cards
         # Note: If the order changes this might lead to inconsistencies but the
@@ -195,6 +200,9 @@ class APIController(Controller):
         played_cards = []
         can_view_choices = match.can_view_choices()
         for p in match.get_participants():
+            if p.spectator:
+                continue
+
             redacted = not can_view_choices and part is not p
             order = p.order
 
@@ -269,7 +277,7 @@ class APIController(Controller):
         session["chatcooldown"] = time() + 1
 
         # Check the chat message for sanity
-        if len(msg) > 0 and len(msg) < 200:
+        if 0 < len(msg) < 200:
             # Send the message
             match.send_message(part.nickname, msg)
             return (200,  # 200 OK
@@ -338,12 +346,18 @@ class APIController(Controller):
         part.refresh()
 
         # Prepare the data for the status request
+        allow_choose = (match.is_choosing()
+                        and not part.picking
+                        and not part.spectator)
+        allow_pick = (match.is_picking()
+                      and part.picking
+                      and not part.spectator)
         data = {"timer": int(match.get_seconds_to_next_phase()),
                 "status": match.get_status(),
                 "ending": match.is_ending(),
                 "hasCard": match.has_card(),
-                "allowChoose": match.is_choosing() and not part.picking,
-                "allowPick": match.is_picking() and part.picking,
+                "allowChoose": allow_choose,
+                "allowPick": allow_pick,
                 "gaps": match.count_gaps()}
 
         # Add the card text to the output, if possible

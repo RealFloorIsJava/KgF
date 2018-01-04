@@ -223,7 +223,7 @@ class Match:
         # One of: PENDING, CHOOSING, PICKING, COOLDOWN, ENDING
         self._state = "PENDING"
 
-        # The participants of the match
+        # The participants of the match (some of them may be spectators)
         self._participants = OrderedDict()
 
         # The chat of this match, tuples with type/message
@@ -245,11 +245,16 @@ class Match:
             lock.
         """
         for id in self._participants:
+            if self._participants[id].spectator:
+                continue  # Spectators can't be owner.
             return self._participants[id].nickname
 
     @mutex
-    def get_num_participants(self):
+    def get_num_participants(self, include_specs=True):
         """Retrieves the number of participants in the match.
+
+        Args:
+            include_specs (bool): Whether to include spectators in the count.
 
         Returns:
             int: The number of participants in the match.
@@ -257,6 +262,14 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
+        if not include_specs:
+            n = 0
+            for id in self._participants:
+                if not self._participants[id].spectator:
+                    n += 1
+            return n
+
+        # Default case: including spectators
         return len(self._participants)
 
     @mutex
@@ -323,7 +336,9 @@ class Match:
         if self._state == "COOLDOWN":
             # Delete all chosen cards from the hands
             for pid in self._participants:
-                self._participants[pid].delete_chosen()
+                part = self._participants[pid]
+                if not part.spectator:
+                    part.delete_chosen()
 
     def _enter_state(self):
         """Handles a transition into the current state.
@@ -358,13 +373,15 @@ class Match:
                 # If the round is skipped only unchoose the cards without
                 # deleting them
                 for pid in self._participants:
-                    self._participants[pid].unchoose_all()
+                    part = self._participants[pid]
+                    if not part.spectator:
+                        part.unchoose_all()
                 self._set_state("COOLDOWN")
                 return
 
             # Dynamically calculate the timer from the number of participants
             pick_time = Match._TIMER_PICKING
-            pick_time += (len(self._participants)
+            pick_time += (self.get_num_participants(False)
                           * Match._TIMER_PICKING_BONUS_PER_PLAYER)
             self._timer = time() + pick_time
         elif self._state == "COOLDOWN":
@@ -386,12 +403,14 @@ class Match:
                 if self._timer - time() > 59 * 60:  # > 59 minutes
                     self._timer = time() + 30  # Reset to 00:30
 
+        n_players = self.get_num_participants(False)
+
         # Refresh the timer when there are not enough participants while
         # the match has not started yet
         threshold = Match._THRESHOLD_PENDING_REFRESH
         with self._lock:
             if self._state == "PENDING" and self._timer - time() < threshold:
-                if len(self._participants) < Match._MINIMUM_PLAYERS:
+                if n_players < Match._MINIMUM_PLAYERS:
                     self._timer = time() + Match._TIMER_PENDING
                     self._chat.append(("SYSTEM",
                                        "<b>There are not enough players, "
@@ -399,7 +418,7 @@ class Match:
 
         # Cancel matches with too few players
         with self._lock:
-            if len(self._participants) < Match._MINIMUM_PLAYERS:
+            if n_players < Match._MINIMUM_PLAYERS:
                 if self._state != "PENDING" and self._state != "ENDING":
                     self._set_state("ENDING")
 
@@ -475,15 +494,22 @@ class Match:
             lock.
         """
         # Find the first participant as the default fallback
-        for pid in self._participants:
-            fallback = self._participants[pid]
-            break
+        fallback = None
+        for ppid in self._participants:
+            part = self._participants[ppid]
+            if not part.spectator:
+                fallback = part
+                break
+        assert fallback is not None
 
         next = False
         found = False
         for ppid in self._participants:
+            part = self._participants[ppid]
+            if part.spectator:
+                continue
             if next:
-                self._participants[ppid].picking = True
+                part.picking = True
                 found = True
                 break
             elif pid == ppid:
@@ -545,7 +571,11 @@ class Match:
         id = part.id
         nick = part.nickname
         self._participants[id] = part
-        self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
+        if not part.spectator:
+            self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
+        else:
+            self._chat.append(("SYSTEM",
+                               "<b>%s is now spectating.</b>" % nick))
 
         # Add a threshold to the timer if the match has not started yet
         if self._state == "PENDING":
@@ -778,6 +808,8 @@ class Match:
         winner = None
         for pid in self._participants:
             part = self._participants[pid]
+            if part.spectator:
+                continue
             if part.picking:
                 continue
             if part.choose_count() < gc:
@@ -787,8 +819,12 @@ class Match:
                 break
         if winner is None:
             return
+
         for pid in self._participants:
             part = self._participants[pid]
+            if part.spectator:
+                continue
+
             if part is winner:
                 part.increase_score()
                 nick = part.nickname
@@ -817,8 +853,11 @@ class Match:
         gc = self.count_gaps()
         for pid in self._participants:
             part = self._participants[pid]
+            if part.spectator:
+                continue
             if not part.picking and gc != part.choose_count():
                 return
+
         if self._timer - time() > Match._THRESHOLD_CHOOSING_FINISH:
             self._timer = time() + Match._THRESHOLD_CHOOSING_FINISH
 
@@ -836,7 +875,10 @@ class Match:
         """
         n = 0
         for pid in self._participants:
-            if self._participants[pid].choose_count() > 0:
+            part = self._participants[pid]
+            if part.spectator:
+                continue
+            if part.choose_count() > 0:
                 n += 1
                 if n == 2:
                     return True
@@ -854,11 +896,12 @@ class Match:
         """
         gc = self.count_gaps()
         for pid in self._participants:
-            if self._participants[pid].picking:
+            part = self._participants[pid]
+            if part.spectator or part.picking:
                 continue
-            if self._participants[pid].choose_count() < gc:
-                self._participants[pid].unchoose_all()
-                nick = self._participants[pid].nickname
+            if part.choose_count() < gc:
+                part.unchoose_all()
+                nick = part.nickname
                 self._chat.append(("SYSTEM",
                                    "<b>%s failed to choose cards!</b>" % nick))
 
@@ -870,7 +913,10 @@ class Match:
             method.
         """
         for pid in self._participants:
-            self._participants[pid].replenish_hand(self._multidecks)
+            part = self._participants[pid]
+            if part.spectator:
+                continue
+            part.replenish_hand(self._multidecks)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.
@@ -894,13 +940,16 @@ class Match:
             method.
         """
         # Create a random order
-        order = list(range(self.get_num_participants()))
+        order = list(range(self.get_num_participants(False)))
         shuffle(order)
 
         # Assign the order
         k = 0
         for pid in self._participants:
-            self._participants[pid].order = order[k] + 1
+            part = self._participants[pid]
+            if part.spectator:
+                continue
+            part.order = order[k] + 1
             k += 1
 
     def _select_next_picker(self):
@@ -914,19 +963,26 @@ class Match:
             method.
         """
         # Find the first participant as the default fallback
+        fallback = None
         for pid in self._participants:
-            fallback = self._participants[pid]
-            break
+            part = self._participants[pid]
+            if not part.spectator:
+                fallback = self._participants[pid]
+                break
+        assert fallback is not None
 
         # Try to make the participant after the current one the new picker
         next = False
         for pid in self._participants:
+            part = self._participants[pid]
+            if part.spectator:
+                continue
             if next:
-                self._participants[pid].picking = True
+                part.picking = True
                 return
-            elif self._participants[pid].picking:
+            elif part.picking:
                 next = True
-                self._participants[pid].picking = False
+                part.picking = False
 
         # No picker was set yet
         fallback.picking = True

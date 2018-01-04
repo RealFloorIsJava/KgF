@@ -134,6 +134,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         ServerHandler._master.decorate_params(leaf, params)
 
         # Call the leaf/endpoint
+        x = None
         try:
             x = ServerHandler._master.call_endpoint(session.data,
                                                     path,
@@ -167,6 +168,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                         elem.file.close()
                 except:
                     pass
+        assert x is not None
 
         # Update request results
         code = x[0]

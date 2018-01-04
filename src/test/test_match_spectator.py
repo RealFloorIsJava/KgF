@@ -24,7 +24,6 @@ SOFTWARE.
 from model.match import Match
 from model.participant import Participant
 
-
 card_set = ("_-0\tSTATEMENT\n_-1\tSTATEMENT\n_-2\tSTATEMENT\n_-3\tSTATEMENT\n"
             "_-4\tSTATEMENT\n_-5\tSTATEMENT\n_-6\tSTATEMENT\n_-7\tSTATEMENT\n"
             "_-8\tSTATEMENT\n_-9\tSTATEMENT\n"
@@ -41,59 +40,47 @@ def teardown_function(f):
     Match._id_counter = 0
 
 
-def test_create_message():
-    """Tests whether the match creation message is sent."""
-    match = Match()
-    match.create_deck(card_set)
-    assert len(match._chat) == 1
-    assert match._chat[0][0] == "SYSTEM"
-    assert match._chat[0][1] == "<b>Match was created.</b>"
-
-
-def test_join_message():
-    """Tests whether the participant join message is sent."""
-    match = Match()
-    match.create_deck(card_set)
-    part = Participant("ID", "NICK")
-    match.add_participant(part)
-    assert len(match._chat) > 0
-    assert match._chat[-1][0] == "SYSTEM"
-    assert match._chat[-1][1] == "<b>NICK joined.</b>"
-
-
-def test_spectate_message():
-    """Tests whether the spectator join message is sent."""
+def test_match_spec_notexpire():
+    """Tests whether matches with only spectators expire."""
     match = Match()
     match.create_deck(card_set)
     part = Participant("ID", "NICK")
     part.spectator = True
     match.add_participant(part)
-    assert len(match._chat) > 0
-    assert match._chat[-1][0] == "SYSTEM"
-    assert match._chat[-1][1] == "<b>NICK is now spectating.</b>"
-
-
-def test_leave_message():
-    """Tests whether the participant leave message is sent."""
-    match = Match()
-    match.create_deck(card_set)
-    part = Participant("ID", "NICK")
-    match.add_participant(part)
-    match.abandon_participant("ID")
-    assert len(match._chat) > 0
-    assert match._chat[-1][0] == "SYSTEM"
-    assert match._chat[-1][1] == "<b>NICK left.</b>"
-
-
-def test_timeout_message():
-    """Tests the participant timeout message."""
-    match = Match()
-    match.create_deck(card_set)
-    part = Participant("ID", "NICK")
-    match.add_participant(part)
-    part._timeout = 1
     match.put_in_pool()
+    assert Match.get_by_id(match.id) is not None
     Match.perform_housekeeping()
-    assert len(match._chat) > 0
-    assert match._chat[-1][0] == "SYSTEM"
-    assert match._chat[-1][1] == "<b>NICK timed out.</b>"
+    assert Match.get_by_id(match.id) is not None
+
+
+def test_match_join_leave_spec():
+    """Tests joining/leaving of spectators."""
+    match = Match()
+    match.create_deck(card_set)
+    assert match.get_num_participants(True) == 0
+    assert match.get_num_participants(False) == 0
+    part = Participant("ID", "NICK")
+    match.add_participant(part)
+    assert match.get_num_participants(True) == 1
+    assert match.get_num_participants(False) == 1
+    part2 = Participant("ID2", "NICK2")
+    part2.spectator = True
+    match.add_participant(part2)
+    assert match.get_num_participants(True) == 2
+    assert match.get_num_participants(False) == 1
+    match.abandon_participant("ID")
+    assert match.get_num_participants(True) == 1
+    assert match.get_num_participants(False) == 0
+    match.abandon_participant("ID2")
+    assert match.get_num_participants(True) == 0
+    assert match.get_num_participants(False) == 0
+
+
+def test_get_match_of_spec():
+    """Tests retrieving the match of a spectator."""
+    match = Match()
+    part = Participant("ID", "NICK")
+    part.spectator = True
+    match.add_participant(part)
+    match.put_in_pool()
+    assert Match.get_match_of_player("ID") is match

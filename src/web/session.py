@@ -246,7 +246,7 @@ class SessionData:
         """Checks whether an entry with the given key is present in the data.
 
         Args:
-            key (any): The key to look for in the session data.
+            item (any): The key to look for in the session data.
 
         Returns:
             bool: Whether an entry with the given key is present.
