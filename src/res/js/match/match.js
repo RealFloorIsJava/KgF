@@ -141,11 +141,8 @@
       area.prepend(createCardSet(1))
       sets = area.children(".match-played-set")
     }
-    for (let key in data) {
-      if (!data.hasOwnProperty(key)) {
-        continue
-      }
-      let dataSet = data[key]
+    let key = 0
+    for (let dataSet of data) {
       while (key > sets.length) {
         sets.last().after(createCardSet(key))
         sets = area.children(".match-played-set")
@@ -159,6 +156,8 @@
         set.append(elem)
         set.css("display", "flex")
       }
+
+      key++
     }
   }
 

@@ -178,21 +178,32 @@ class APIController(Controller):
             return self.fail_permission(session, path, params, headers)
         part = match.get_participant(session["id"])
 
-        data = {"hand": {"OBJECT": {},
-                         "VERB": {}},
-                "played": {}}
+        data = {}
 
         # Load the data of the hand cards
+        hand_cards = {"OBJECT": {}, "VERB": {}}
         hand = part.get_hand()
         for id in hand:
             hcard = hand[id]
-            data["hand"][hcard.card.type][id] = {"text": hcard.card.text,
-                                                 "chosen": hcard.chosen}
+            hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
+                                               "chosen": hcard.chosen}
+        data["hand"] = hand_cards
 
         # Load the data of the played cards
+        # Note: If the order changes this might lead to inconsistencies but the
+        # client polls this data often so it is no problem.
+        played_cards = []
+        can_view_choices = match.can_view_choices()
         for p in match.get_participants():
-            redacted = not match.can_view_choices() and part is not p
-            data["played"][p.order] = p.get_choose_data(redacted)
+            redacted = not can_view_choices and part is not p
+            order = p.order
+
+            # Ensure list is big enough
+            while len(played_cards) <= order:
+                played_cards.append([])
+
+            played_cards[p.order] = p.get_choose_data(redacted)
+        data["played"] = played_cards
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},
