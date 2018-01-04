@@ -75,6 +75,7 @@ class Webserver(Thread):
 
     def stop(self):
         """Stops the HTTP server if it is running."""
+        ServerHandler.stop_connections = True
         if self._httpd is not None:
             self._httpd.shutdown()
 

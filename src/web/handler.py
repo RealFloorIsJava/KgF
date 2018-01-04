@@ -38,7 +38,11 @@ cgi.maxlen = 8 * 1024 * 1024
 
 
 class ServerHandler(BaseHTTPRequestHandler):
-    """Handles incoming requests to the web server."""
+    """Handles incoming requests to the web server.
+
+    Attributes:
+        stop_connections (bool): Whether to stop connections due to shutdown.
+    """
 
     # Set some metrics
     server_version = "Teapot/2.0"
@@ -47,6 +51,9 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     # Set the default timeout
     timeout = 10
+
+    # Whether to stop connections due to a shutdown
+    stop_connections = False
 
     # The master controller which dispatches requests to leaves
     _master = None
@@ -82,6 +89,11 @@ class ServerHandler(BaseHTTPRequestHandler):
             params (dict): The parameters that were supplied by the client.
                 This includes POST parameters and file uploads.
         """
+        if ServerHandler.stop_connections:
+            self._abort(503, "Unavailable")  # 503 Service Unavailable
+            self.close_connection = True
+            return
+
         # Perform tasks for every request here
         Match.perform_housekeeping()
 
