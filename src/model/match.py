@@ -219,7 +219,8 @@ class Match:
         # The multidecks for improved random drawing
         self._multidecks = {}
 
-        # The state of the match
+        # The state of the match.
+        # One of: PENDING, CHOOSING, PICKING, COOLDOWN, ENDING
         self._state = "PENDING"
 
         # The participants of the match
@@ -272,15 +273,6 @@ class Match:
             This method locks the match's instance lock.
         """
         return pid in self._participants
-
-    def has_started(self):
-        """Checks whether the match has already started.
-
-        Returns:
-            bool: Whether the match has already started.
-        """
-        # Locking is not needed here as access is atomic.
-        return self._state != "PENDING"
 
     @mutex
     def can_view_choices(self):
@@ -541,15 +533,24 @@ class Match:
         Args:
             part (obj): The participant that should be added to the match.
 
+        Raises:
+            ExpectationException: If joining is not possible at this time.
+
         Contract:
             This method locks the match's instance lock.
         """
+        if not self.can_join():
+            raise ExpectationException()
+
         id = part.id
         nick = part.nickname
         self._participants[id] = part
         self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
-        if self._timer - time() < Match._THRESHOLD_JOIN_BONUS:
-            self._timer = time() + Match._THRESHOLD_JOIN_BONUS
+
+        # Add a threshold to the timer if the match has not started yet
+        if self._state == "PENDING":
+            if self._timer - time() < Match._THRESHOLD_JOIN_BONUS:
+                self._timer = time() + Match._THRESHOLD_JOIN_BONUS
 
     def create_deck(self, data):
         """Creates a deck from the given input source.
@@ -690,6 +691,15 @@ class Match:
         """
         # Locking is not needed here as access is atomic.
         return self._state == "PICKING"
+
+    def can_join(self):
+        """Checks whether new participants can join the match.
+
+        Returns:
+            bool: Whether participants can join.
+        """
+        # Locking is not needed here as access is atomic.
+        return self._state in ("PENDING", "COOLDOWN")
 
     def has_card(self):
         """Checks whether this match has a statement card selected.
@@ -943,3 +953,8 @@ class Card:
         self.id = id
         self.type = type
         self.text = text
+
+
+class ExpectationException(Exception):
+    """Raised if an expectation with which a method was called doesn't hold."""
+    pass

@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 from kgf import kconfig
-from model.match import Match
+from model.match import ExpectationException, Match
 from model.participant import Participant
 from pages.controller import Controller
 from pages.templates.engine import Parser
@@ -151,12 +151,15 @@ class MatchController(Controller):
 
         # Get the match from the pool
         match = Match.get_by_id(id)
-        if match is None or match.has_started():
+        if match is None:
             return self.fail_permission(session, path, params, headers)
 
         # Put the player into the match
         part = Participant(session["id"], session["nickname"])
-        match.add_participant(part)
+        try:
+            match.add_participant(part)
+        except ExpectationException:  # Can't join right now
+            return self.fail_permission(session, path, params, headers)
 
         return (303,  # 303 See Other
                 {"Location": "/match"},

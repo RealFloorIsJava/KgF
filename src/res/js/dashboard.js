@@ -64,13 +64,13 @@
       bOwner.html(match.owner)
       bParts.html(match.participants)
       bSeconds.html(match.seconds)
-      divStarting.toggleClass("invisible", match.started)
+      divStarting.toggleClass("invisible", !match.canJoin)
 
       // The DIV for when the match can't be joined
       let [bOwner2, bParts2] = jqUnpack(divRunning.find("b"))
       bOwner2.html(match.owner)
       bParts2.html(match.participants)
-      divRunning.toggleClass("invisible", !match.started)
+      divRunning.toggleClass("invisible", match.canJoin)
     }
 
     // Delete all gone matches

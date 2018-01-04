@@ -376,7 +376,7 @@ class APIController(Controller):
                 "id": match.id,
                 "owner": match.get_owner_nick(),
                 "participants": match.get_num_participants(),
-                "started": match.has_started(),
+                "canJoin": match.can_join(),
                 "seconds": int(match.get_seconds_to_next_phase())
             })
         return (200,  # 200 OK
