@@ -565,7 +565,7 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        if not self.can_join():
+        if not self.can_join() and not part.spectator:
             raise ExpectationException()
 
         id = part.id

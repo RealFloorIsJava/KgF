@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 from kgf import kconfig
-from model.match import ExpectationException, Match
+from model.match import Match
 from model.participant import Participant
 from pages.controller import Controller
 from pages.templates.engine import Parser
@@ -47,9 +47,6 @@ class MatchController(Controller):
                           path_restrict={"create"},
                           params_restrict={"deckupload"})
         self.add_endpoint(self.fail_permission, path_restrict={"create"})
-
-        # Match joining endpoint
-        self.add_endpoint(self.join_match, path_restrict={"join"})
 
         # Match leaving
         self.add_endpoint(self.abandon_match, path_restrict={"abandon"})
@@ -120,49 +117,6 @@ class MatchController(Controller):
 
         return (303,  # 303 See Other
                 {"Location": "/dashboard"},
-                "")
-
-    def join_match(self, session, path, params, headers):
-        """Handles the request to join an existing match.
-
-        Redirects the client to the match view.
-
-        Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
-
-        Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
-        """
-        if Match.get_match_of_player(session["id"]) is not None:
-            # The user is already in a match
-            return (303,  # 303 See Other
-                    {"Location": "/match"},
-                    "")
-
-        # Get the transmitted match ID
-        try:
-            id = int(path[-1])
-        except ValueError:
-            return self.fail_permission(session, path, params, headers)
-
-        # Get the match from the pool
-        match = Match.get_by_id(id)
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-
-        # Put the player into the match
-        part = Participant(session["id"], session["nickname"])
-        try:
-            match.add_participant(part)
-        except ExpectationException:  # Can't join right now
-            return self.fail_permission(session, path, params, headers)
-
-        return (303,  # 303 See Other
-                {"Location": "/match"},
                 "")
 
     def create_match(self, session, path, params, headers):

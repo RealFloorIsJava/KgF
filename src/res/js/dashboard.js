@@ -93,7 +93,10 @@
    * @return The DOM element.
    */
   function createMatchDiv(id) {
+    let joinAsSpec = (() => joinMatch(id, true))
     $("#matchlist").on("click", `#id-joinmatch-${id}`, {}, () => joinMatch(id))
+    $("#matchlist").on("click", `#id-spec1-${id}`, {}, joinAsSpec)
+    $("#matchlist").on("click", `#id-spec2-${id}`, {}, joinAsSpec)
     return (
       $("<div></div>", {"class": "match-box"}).append([
         $("<div></div>", {"class": "match-box-contents"}).append([
@@ -106,6 +109,7 @@
             " seconds..."
           ]),
           $("<div></div>").append([
+            $("<button>Spectate</button>").attr("id", `id-spec1-${id}`),
             $("<button>Join match</button>").attr("id", `id-joinmatch-${id}`)
           ])
         ]),
@@ -117,6 +121,7 @@
             " participants"
           ]),
           $("<div></div>").append([
+            $("<button>Spectate</button>").attr("id", `id-spec2-${id}`),
             $("<button>Can't join now</button>").prop("disabled", true)
           ])
         ])
@@ -135,9 +140,26 @@
    * Joins a match.
    *
    * @param id The ID of the match that will be joined.
+   * @param spectate Whether the match should be joined as a spectator.
    */
-  function joinMatch(id) {
-    window.location.assign("/match/join/" + id)
+  function joinMatch(id, spectate=false) {
+    $.ajax({
+      method: "POST",
+      url: "/api/join",
+      data: {
+        "id": id,
+        "spectator": spectate ? "true" : "false"
+      },
+      success: enterMatch,
+      error: (x, e, f) => console.log(`/api/join error: ${e} ${f}`)
+    })
+  }
+
+  /**
+   * Enters the match view.
+   */
+  function enterMatch() {
+    window.location.assign("/match")
   }
 
   $("#deckEditButton").click(openEditor)

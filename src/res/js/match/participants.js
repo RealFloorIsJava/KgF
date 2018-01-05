@@ -56,8 +56,9 @@
       }
       let elem = participantResolver.get(part.id)
       elem.children(".part-name").text(part.name)
-      elem.children(".part-score").text(`${part.score}pts`)
+      elem.children(".part-score").text(part.spectator ? "" : `${part.score}pts`)
       elem.children(".part-type").text(part.picking ? "Picking" : "")
+      elem.children(".part-status").text(part.spectator ? "(Spectator)" : "")
     }
 
     // Remove missing participants

@@ -4,6 +4,7 @@ The API can be reached via the `/api` endpoints.
 
 *Note: Not every action is currently supported via the API.*
 
+
 ## Response on failure
 
 When the API protocol or requirements are violated, the API serves the
@@ -17,6 +18,36 @@ following response:
   "error": "not authenticated"
 }
 ```
+
+
+## /api/join
+
+|Requirements|Request Type|
+|---|---|
+|Logged in|POST|
+
+### Parameters
+
+|Name|Optional?|Description|
+|---|---|---|
+|id|No|The ID of the match.|
+|spectator|No|`true` or `false`, depending on whether joining as a spectator is intended.|
+
+### Response format
+
+|Key|Type|Description|
+|---|---|---|
+|error|string|A short status describing the result. `OK` on success.|
+
+### Example
+
+```
+> POST /api/join (id=3&spectator=false)
+{
+  "error": "OK"
+}
+```
+
 
 ## /api/list
 
@@ -60,6 +91,7 @@ Returns a JSON array of objects of the following format:
 ]
 ```
 
+
 ## /api/status
 
 |Requirements|Request Type|
@@ -83,6 +115,7 @@ Returns a JSON object of the following format:
 |hasCard|`true` or `false`|Whether the match currently has a statement card selected.|
 |allowChoose|`true` or `false`|Whether choosing hand cards is currently allowed.|
 |allowPick|`true` or `false`|Whether picking a played card set is currently allowed.|
+|isSpectator|`true` or `false`|Whether the client is a spectator.|
 |gaps|number|The number of gaps on the match's statement card.|
 |cardText|string|**(Only if `hasCard` is `true`)** The text of the match's statement card.|
 
@@ -97,10 +130,12 @@ Returns a JSON object of the following format:
   "hasCard": true,
   "allowChoose": true,
   "allowPick": false,
+  "isSpectator": false,
   "gaps": 2,
   "cardText": "The _ of the state|ment _."
 }
 ```
+
 
 ## /api/chat
 
@@ -158,6 +193,7 @@ Returns a JSON array of objects of the following format:
 ]
 ```
 
+
 ## /api/chat/send
 
 |Requirements|Request Type|
@@ -201,6 +237,7 @@ A JSON object is returned.
 }
 ```
 
+
 ## /api/participants
 
 |Requirements|Request Type|
@@ -219,6 +256,7 @@ Returns a JSON array of objects of the following format:
 |name|string|The nickname of the participant. Can't be changed while in the match.|
 |score|number|The score of the participant.|
 |picking|`true` or `false`|Whether the participant is currently picking.|
+|spectator|`true` or `false`|Whether the participant is a spectator.|
 
 ### Example
 
@@ -229,16 +267,19 @@ Returns a JSON array of objects of the following format:
     "id": "xyz-123",
     "name": "PlayerX",
     "score": 0,
-    "picking": false
+    "picking": false,
+    "spectator": false
   },
   {
     "id": "abc-987",
     "name": "PlayerZ",
     "score": 0,
-    "picking": false
+    "picking": false,
+    "spectator": true
   }
 ]
 ```
+
 
 ## /api/cards
 
@@ -329,6 +370,7 @@ Each of the arrays contains objects of the following format:
 }
 ```
 
+
 ## /api/choose
 
 |Requirements|Request Type|
@@ -357,6 +399,7 @@ Chooses or unchooses a hand card.
   "error": "OK"
 }
 ```
+
 
 ## /api/pick
 

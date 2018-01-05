@@ -25,7 +25,8 @@ from html import escape
 from json import dumps
 from time import time
 
-from model.match import Match
+from model.match import ExpectationException, Match
+from model.participant import Participant
 from pages.controller import Controller
 
 
@@ -55,6 +56,9 @@ class APIController(Controller):
         self.add_endpoint(self.api_pick,
                           path_restrict={"pick"},
                           params_restrict={"playedId"})
+        self.add_endpoint(self.api_join,
+                          path_restrict={"join"},
+                          params_restrict={"spectator", "id"})
 
     def check_access(self, session, path, params, headers):
         """Checks whether the user is logged in.
@@ -88,6 +92,49 @@ class APIController(Controller):
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"not authenticated\"}")
+
+    def api_join(self, session, path, params, headers):
+        """Handles joining a match.
+
+        Args:
+            session (obj): The session data of the client.
+            path (list): The path of the request.
+            params (dict): The HTTP POST parameters.
+            headers (dict): The HTTP headers that were sent by the client.
+
+        Returns:
+            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
+                sent and 3) the response to be sent to the client.
+        """
+        if Match.get_match_of_player(session["id"]) is not None:
+            # The user already is in a match
+            return (303,  # 303 See Other
+                    {"Location": "/match"},
+                    "")
+
+        # Get the match ID and participant state
+        try:
+            id = int(params["id"])
+        except ValueError:
+            return self.fail_permission(session, path, params, headers)
+        spectator = params["spectator"] == "true"
+
+        # Get the match
+        match = Match.get_by_id(id)
+        if match is None:
+            return self.fail_permission(session, path, params, headers)
+
+        # Put the player into the match
+        part = Participant(session["id"], session["nickname"])
+        part.spectator = spectator
+        try:
+            match.add_participant(part)
+        except ExpectationException:  # Can't join right now
+            return self.fail_permission(session, path, params, headers)
+
+        return (303,  # 303 See Other
+                {"Location": "/match"},
+                "")
 
     def api_pick(self, session, path, params, headers):
         """Handles picking a round winner.
@@ -241,7 +288,8 @@ class APIController(Controller):
             data.append({"id": part.id,
                          "name": part.nickname,
                          "score": part.score,
-                         "picking": part.picking})
+                         "picking": part.picking,
+                         "spectator": part.spectator})
 
         return (200,  # 200 OK
                 {"Content-Type": "application/json; charset=utf-8"},
@@ -358,6 +406,7 @@ class APIController(Controller):
                 "hasCard": match.has_card(),
                 "allowChoose": allow_choose,
                 "allowPick": allow_pick,
+                "isSpectator": part.spectator,
                 "gaps": match.count_gaps()}
 
         # Add the card text to the output, if possible

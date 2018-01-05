@@ -29,6 +29,7 @@
   let numGaps = 0
   let allowChoose = false
   let allowPick = false
+  let isSpectator = false
   let externalUpdateAllowed = true
   let handResolver = new Map([
     ["OBJECT", new Map()],
@@ -62,6 +63,11 @@
     numGaps = data.gaps
     allowChoose = data.allowChoose
     allowPick = data.allowPick
+    isSpectator = data.isSpectator
+
+    if (isSpectator) {
+      $(".match-hand").css("display", "none")
+    }
 
     updateMatchStatement(data.hasCard, data.cardText || "Waiting...")
 
@@ -120,11 +126,13 @@
       ["OBJECT", new Map()],
       ["VERB", new Map()]
     ])
-    for (let type of sentHand.keys()) {
-      for (let key in data.hand[type]) {
-        sentHand.get(type).set(key, data.hand[type][key])
+    if (data.hasOwnProperty("hand")) {
+      for (let type of sentHand.keys()) {
+        for (let key in data.hand[type]) {
+          sentHand.get(type).set(key, data.hand[type][key])
+        }
+        updateHand(sentHand.get(type), type)
       }
-      updateHand(sentHand.get(type), type)
     }
     updatePlayed(data.played)
   }
