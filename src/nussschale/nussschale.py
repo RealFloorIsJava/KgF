@@ -21,7 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import builtins
 # noinspection PyUnresolvedReferences
 import readline  # noqa: Replaces default 'input' function
 from os import mkdir
@@ -31,44 +30,11 @@ from typing import Callable, List, TYPE_CHECKING, Tuple, Type
 
 from nussschale.config import Config
 from nussschale.log import Log
+from nussschale.util.commands import Command
 
 
 if TYPE_CHECKING:
     from nussschale.leafs.controller import Controller
-
-
-def print(msg: str):
-    """Redefines print to log the message instead of printing it.
-
-    If logging is not set up, messages will be printed via the default print()
-    instead.
-
-    Args:
-        msg: The message to print.
-    """
-    if Nussschale.nlog is None:
-        builtins.print(msg)
-    else:
-        Nussschale.nlog.log(msg)
-
-
-# Exports
-def nconfig() -> Config:
-    """Provides a shortcut to fetch the application's configuration.
-
-    Returns:
-        The application's configuration.
-    """
-    return Nussschale.nconfig
-
-
-def nlog() -> Log:
-    """Provides a shortcut to fetch the application's logger.
-
-    Returns:
-        The application's logger.
-    """
-    return Nussschale.nlog
 
 
 class Nussschale:
@@ -104,7 +70,7 @@ class Nussschale:
         # Setup logging
         Nussschale.nlog = Log()
         Nussschale.nlog.setup("nussschale", 4)
-        print("Starting Nussschale...")
+        nlog().log("Starting Nussschale...")
 
         # Setup configuration
         Nussschale.nconfig = Config()
@@ -117,7 +83,7 @@ class Nussschale:
         # Check whether the webserver should be started or whether it is just
         # an initialization run
         if Nussschale.nconfig.get("dry-run", True):
-            print("Dry run. Exiting...")
+            nlog().log("Dry run. Exiting...")
             exit(0)
             return
 
@@ -129,7 +95,7 @@ class Nussschale:
         ServerHandler.set_master(self._master)
 
         self._webserver.start()
-        print("Up and running!")
+        nlog().log("Up and running!")
 
     def add_leafs(self, leafs: List[Tuple[Type["Controller"], str]]):
         """Adds the given leafs to the server.
@@ -149,51 +115,67 @@ class Nussschale:
         self._webserver.install_request_listener(rq)
 
     def run(self):
-        """Runs the minimal console.
-
-        The console only serves as means for stopping the application by using
-        the command 'quit'.
-        """
-        # Late imports to prevent circular dependencies when other modules
-        # need configuration or logger
-        from model.match import Match
-
-        stdout = builtins.print
+        """Runs the minimal console."""
         try:
-            stdout("Type `quit` or use ^C to stop.")
-            stdout("Type `help` for available commands.")
+            print("Type `quit` to stop.")
+            print("Type `help` for available commands.")
 
             # Run console
             while True:
                 try:
-                    inp = input("> ")
-                except KeyboardInterrupt:
-                    # ^C
-                    stdout()
+                    inp = input("> ").strip()
+                except (KeyboardInterrupt, EOFError):
+                    # ^C, ^D
+                    print()
                     break
-                except EOFError:
-                    # ^D
-                    stdout()
-                    stdout("Type `quit` or use ^C to stop.")
-                    continue
 
+                # Hardcoded quit command
                 if inp == "quit":
                     break
-                elif inp == "help":
-                    stdout("-- Available commands")
-                    stdout("  quit     - Stops the application.")  # todo
-                    stdout("  help     - Shows this help.")
-                    stdout("  freeze   - Freezes all matches.")
-                    stdout("  unfreeze - Unfreezes all matches.")
-                elif inp == "freeze":
-                    Match.frozen = True
-                    stdout("Froze all matches...")
-                elif inp == "unfreeze":
-                    Match.frozen = False
-                    stdout("Unfroze all matches...")
+
+                # Generic command handling
+                if inp not in Command.commands:
+                    print("Unknown command. Type `help` for available"
+                          " commands.")
+                    continue
+                Command.commands[inp].invoke()
         finally:
             # Clean up
-            stdout("Shutting down...")
-            stdout("Please be patient, while clients"
-                   " are gracefully disconnected.")
+            print("Shutting down...")
+            print("Please be patient, while clients"
+                  " are gracefully disconnected.")
             self._webserver.stop()
+
+
+@Command("quit", "Stops the application.")
+def quit():
+    """Dummy command, just for the help entry."""
+    pass
+
+
+@Command("help", "Shows this help.")
+def help():
+    """Provides the command help."""
+    print("-- Available commands")
+    max_len = max([len(x) for x in Command.commands])
+    for cmd in Command.commands.values():  # type: Command
+        req_spaces = max_len - len(cmd.name)
+        print("  %s%s - %s" % (cmd.name, " " * req_spaces, cmd.desc))
+
+
+def nconfig() -> Config:
+    """Provides a shortcut to fetch the application's configuration.
+
+    Returns:
+        The application's configuration.
+    """
+    return Nussschale.nconfig
+
+
+def nlog() -> Log:
+    """Provides a shortcut to fetch the application's logger.
+
+    Returns:
+        The application's logger.
+    """
+    return Nussschale.nlog

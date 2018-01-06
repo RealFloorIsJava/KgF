@@ -30,7 +30,7 @@ from typing import Callable, Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
 from nussschale.leafs.master import MasterController
-from nussschale.nussschale import print
+from nussschale.nussschale import nlog
 from nussschale.session import Session
 from nussschale.util.types import POSTParam
 
@@ -158,16 +158,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                                                     self.headers)
         except Exception as e:
             # Endpoint call failed. Log the error
-            print("=====[ERROR REPORT]=====")
+            nlog().log("=====[ERROR REPORT]=====")
 
             # Walk through the backtrace
             for entry in extract_tb(e.__traceback__):
-                entry = (entry[0], entry[1], entry[2], entry[3])
-                print("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
+                entry = tuple(entry[:4])
+                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
 
             # Log the string representation of the exception as a summary
-            print(str(e))
-            print("========================")
+            nlog().log(str(e))
+            nlog().log("========================")
 
             # Notify the user that the request failed
             self._reply(500,  # 500 Internal Server Error
@@ -318,7 +318,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                                       environ={'REQUEST_METHOD': 'POST'},
                                       keep_blank_values=True)
             except ValueError:
-                print("File upload was too big!")
+                nlog().log("File upload was too big!")
                 return {}
             d = {}
             for key in fs:
@@ -344,12 +344,13 @@ class ServerHandler(BaseHTTPRequestHandler):
                     fp.seek(0, 2)
                     size = fp.tell()
                     fp.seek(0)
-                    print("File upload: '%s', %i bytes" % (x.filename, size))
+                    nlog().log("File upload: '%s', %i bytes" % (x.filename,
+                                                                size))
                     d[x.name] = x
             return d
         else:
             # Unsupported content type!
-            print("Currently unsupported %r %r %r" % (type, args, length))
+            nlog().log("Currently unsupported %r %r %r" % (type, args, length))
             raise RequestError(False)
 
     @staticmethod

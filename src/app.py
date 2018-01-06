@@ -23,6 +23,7 @@ SOFTWARE.
 
 from model.match import Match
 from nussschale.nussschale import Nussschale
+from nussschale.util.commands import Command
 from pages.api import APIController
 from pages.dashboard import DashboardController
 from pages.deckedit import DeckeditController
@@ -31,9 +32,23 @@ from pages.match import MatchController
 from pages.options import OptionsController
 
 
-def request_listener():
+def request_listener():  # TODO
     """Called for every request."""
     Match.perform_housekeeping()
+
+
+@Command("freeze", "Freezes all match timers.")
+def freeze():
+    """Freezes all matches."""
+    Match.frozen = True
+    print("All matchs are now frozen.")
+
+
+@Command("unfreeze", "Unfreezes all match timers.")
+def unfreeze():
+    """Unfreezes all matches."""
+    Match.frozen = False
+    print("All matches are no longer frozen.")
 
 
 # Entry point
