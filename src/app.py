@@ -24,6 +24,7 @@ SOFTWARE.
 from model.match import Match
 from nussschale.nussschale import Nussschale
 from nussschale.util.commands import Command
+from nussschale.util.heartbeat import Heartbeat
 from pages.api import APIController
 from pages.dashboard import DashboardController
 from pages.deckedit import DeckeditController
@@ -32,7 +33,8 @@ from pages.match import MatchController
 from pages.options import OptionsController
 
 
-def request_listener():  # TODO
+@Heartbeat
+def housekeeping():
     """Called for every request."""
     Match.perform_housekeeping()
 
@@ -55,7 +57,6 @@ def unfreeze():
 if __name__ == "__main__":
     ns = Nussschale()
 
-    ns.add_request_listener(request_listener)
     ns.add_leafs([
         (APIController, "api"),
         (DashboardController, "dashboard"),

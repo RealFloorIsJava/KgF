@@ -26,7 +26,7 @@ import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
 from sys import exit
-from typing import Callable, List, TYPE_CHECKING, Tuple, Type
+from typing import List, TYPE_CHECKING, Tuple, Type
 
 from nussschale.config import Config
 from nussschale.log import Log
@@ -105,14 +105,6 @@ class Nussschale:
         """
         for type, leaf in leafs:
             self._master.add_leaf(leaf, type())
-
-    def add_request_listener(self, rq: Callable[[], None]):
-        """Installs a request listener in the request handler.
-
-        Args:
-            rq: The request listener.
-        """
-        self._webserver.install_request_listener(rq)
 
     def run(self):
         """Runs the minimal console."""

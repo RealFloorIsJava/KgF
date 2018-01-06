@@ -25,13 +25,15 @@ import cgi
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
+from sys import exit
 from traceback import extract_tb
-from typing import Callable, Dict, List, Tuple, no_type_check
+from typing import Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
 from nussschale.leafs.master import MasterController
 from nussschale.nussschale import nlog
 from nussschale.session import Session
+from nussschale.util.heartbeat import Heartbeat
 from nussschale.util.types import POSTParam
 
 
@@ -60,9 +62,6 @@ class ServerHandler(BaseHTTPRequestHandler):
     # The master controller which dispatches requests to leaves
     _master = None
 
-    # The installed request listeners
-    _request_listeners = []  # type: List[Callable[[], None]]
-
     @staticmethod
     def set_master(mctrl: MasterController):
         """Sets the master controller for all handlers.
@@ -72,15 +71,6 @@ class ServerHandler(BaseHTTPRequestHandler):
                 the endpoint calls.
         """
         ServerHandler._master = mctrl
-
-    @staticmethod
-    def install_request_listener(rq: Callable[[], None]):
-        """Installs a new request listener.
-
-        Args:
-            rq: The request listener.
-        """
-        ServerHandler._request_listeners.append(rq)
 
     def log_message(self, format: str, *args):
         """Overridden access log handler.
@@ -109,9 +99,23 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.close_connection = True
             return
 
-        # Perform tasks for every request here
-        for fun in ServerHandler._request_listeners:
-            fun()
+        # Handle all heartbeats
+        for fun in Heartbeat.heartbeats:
+            try:
+                fun()
+            except Exception as e:
+                nlog().log("An error occurred while executing"
+                           " a request heartbeat.")
+                for entry in extract_tb(e.__traceback__):
+                    entry = tuple(entry[:4])
+                    nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
+                nlog().log(str(e))
+
+                # Typically, faulty request heartbeats are a reason
+                # to havoc... -- at least to save some log space!
+                nlog().log("Heartbeat crash!")
+                print("Heartbeat crash: See log for info.")
+                exit(1)
 
         # Setup header dictionary
         head = {}

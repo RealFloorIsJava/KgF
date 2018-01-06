@@ -24,8 +24,9 @@ SOFTWARE.
 import ssl
 from http.server import HTTPServer
 from socketserver import ThreadingMixIn
+from sys import exc_info
 from threading import Thread
-from typing import Callable
+from typing import Any
 
 from nussschale.handler import ServerHandler
 from nussschale.nussschale import nconfig
@@ -69,14 +70,6 @@ class Webserver(Thread):
         if self._httpd is not None:
             self._httpd.shutdown()
 
-    def install_request_listener(self, rq: Callable[[], None]):
-        """Installs a request listener in the request handler.
-
-        Args:
-            rq: The request listener.
-        """
-        ServerHandler.install_request_listener(rq)
-
     def _create_ssl_context(self) -> ssl.SSLContext:
         """Creates a SSL context for HTTPS.
 
@@ -93,4 +86,19 @@ class Webserver(Thread):
 
 class MultithreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """A HTTP server which handles each request in a seperate thread."""
-    pass
+
+    def handle_error(self, request: Any, client_addr: str):
+        """Handles an error.
+
+        Args:
+            request: The request.
+            client_addr: The client's address.
+        """
+        if exc_info()[0] == SystemExit:
+            # Do not 'exit', but rather kill the server...
+            print("NOTICE: The web server has been stopped due to an error.")
+            print("NOTICE: Use `quit` to fully exit the application.")
+            ServerHandler.stop_connections = True
+            if self is not None:
+                self.shutdown()
+        super().handle_error(request, client_addr)
