@@ -28,9 +28,9 @@ from typing import Any, Dict, List, Tuple
 
 from model.match import ExpectationException, Match
 from model.participant import Participant
-from pages.controller import Controller
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class APIController(Controller):

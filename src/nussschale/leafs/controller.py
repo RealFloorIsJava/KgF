@@ -23,8 +23,8 @@ SOFTWARE.
 
 from typing import Callable, Dict, List, Set, Tuple
 
-from util.types import Endpoint, HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.session import SessionData
+from nussschale.util.types import Endpoint, HTTPResponse, POSTParam
 
 
 # A restriction function for access to leafs

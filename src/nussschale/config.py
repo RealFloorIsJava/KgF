@@ -30,7 +30,7 @@ from os.path import exists
 from threading import RLock
 from typing import Dict, TypeVar, cast
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
 
 
 # Type for configuration values
@@ -41,7 +41,7 @@ class Config:
     """Manages the JSON configuration file."""
 
     # The configuration file where keys and values will be stored
-    _CONFIG_FILE = "./data/kgf.json"
+    _CONFIG_FILE = "./data/nussschale.json"
 
     def __init__(self):
         """Constructor."""

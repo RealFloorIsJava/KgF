@@ -23,28 +23,28 @@ SOFTWARE.
 
 from typing import Dict, List, Tuple
 
-from kgf import kconfig
-from pages.controller import Controller
-from pages.templates.engine import Parser
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.nussschale import nconfig
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.template import Parser
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
-class DeckeditController(Controller):
-    """Handles the /deckedit leaf."""
+class DashboardController(Controller):
+    """Handles the /dashboard leaf."""
 
     def __init__(self):
         """Constructor."""
         super().__init__()
 
         # Whether the logout link will be shown
-        self._logout_shown = kconfig().get("login-required", True)
+        self._logout_shown = nconfig().get("login-required", True)
 
         # Only allow logged-in users
         self.add_access_restriction(self.check_access)
         self.set_permission_fail_handler(self.fail_permission)
 
-        self.add_endpoint(self.deckedit)
+        self.add_endpoint(self.dashboard)
 
     def check_access(self,
                      session: SessionData,
@@ -89,15 +89,15 @@ class DeckeditController(Controller):
                 {"Location": "/index/authfail"},
                 "")
 
-    def deckedit(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles requests for the deck editor page.
+    def dashboard(self,
+                  session: SessionData,
+                  path: List[str],
+                  params: Dict[str, POSTParam],
+                  headers: Dict[str, str]
+                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+        """Handles requests for the dashboard page.
 
-        Serves the deck editor template.
+        Serves the dashboard template.
 
         Args:
             session: The session data of the client.
@@ -110,12 +110,22 @@ class DeckeditController(Controller):
             sent and 3) the response to be sent to the client.
         """
         # Populate symbol table
-        symtab = {"nickname": session["nickname"],
-                  "theme": session["theme"],
-                  "showLogout": "" if self._logout_shown else None}
+        symtab = {
+            "nickname": session["nickname"],
+            "theme": session["theme"],
+            "showLogout": True if self._logout_shown else None
+        }
+
+        # Check for deck upload errors
+        deck_errors = ["deck_too_big", "invalid_format", "invalid_type",
+                       "illegal_gap", "too_many_gaps", "statement_no_gap",
+                       "deck_too_small"]
+        for err in deck_errors:
+            if err in path:
+                symtab[err] = True
 
         # Parse the template
-        data = Parser.get_template("./res/tpl/deckedit.html", symtab)
+        data = Parser.get_template("./res/tpl/dashboard.html", symtab)
         return (200,  # 200 OK
                 {"Content-Type": "text/html; charset=utf-8"},
                 data)

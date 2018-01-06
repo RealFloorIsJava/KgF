@@ -21,30 +21,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from html import escape
 from typing import Dict, List, Tuple
 
-from kgf import kconfig
-from pages.controller import Controller
-from pages.templates.engine import Parser
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
-class DashboardController(Controller):
-    """Handles the /dashboard leaf."""
+class OptionsController(Controller):
+    """Handles the /options leaf."""
 
     def __init__(self):
         """Constructor."""
         super().__init__()
 
-        # Whether the logout link will be shown
-        self._logout_shown = kconfig().get("login-required", True)
-
         # Only allow logged-in users
         self.add_access_restriction(self.check_access)
         self.set_permission_fail_handler(self.fail_permission)
 
-        self.add_endpoint(self.dashboard)
+        self.add_endpoint(self.theme, params_restrict={"theme"})
+        self.add_endpoint(self.name, params_restrict={"name"})
 
     def check_access(self,
                      session: SessionData,
@@ -73,7 +70,7 @@ class DashboardController(Controller):
                         ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles unauthorized clients.
 
-        Redirects the client to the index page.
+        Informs the client that access was denied.
 
         Args:
             session: The session data of the client.
@@ -85,19 +82,21 @@ class DashboardController(Controller):
             Returns 1) the HTTP status code 2) the HTTP headers to be
             sent and 3) the response to be sent to the client.
         """
-        return (303,  # 303 See Other
-                {"Location": "/index/authfail"},
-                "")
+        return (403,  # 403 Forbidden
+                {"Content-Type": "text/plain"},
+                "Not authenticated")
 
-    def dashboard(self,
-                  session: SessionData,
-                  path: List[str],
-                  params: Dict[str, POSTParam],
-                  headers: Dict[str, str]
-                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles requests for the dashboard page.
+    def theme(self,
+              session: SessionData,
+              path: List[str],
+              params: Dict[str, POSTParam],
+              headers: Dict[str, str]
+              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+        """Handles changing the theme of the application for a client.
 
-        Serves the dashboard template.
+        The theme is set to either 'light' or 'dark', depending on the request
+        parameters.
+        Informs the client of the success of the operation.
 
         Args:
             session: The session data of the client.
@@ -109,23 +108,40 @@ class DashboardController(Controller):
             Returns 1) the HTTP status code 2) the HTTP headers to be
             sent and 3) the response to be sent to the client.
         """
-        # Populate symbol table
-        symtab = {
-            "nickname": session["nickname"],
-            "theme": session["theme"],
-            "showLogout": True if self._logout_shown else None
-        }
-
-        # Check for deck upload errors
-        deck_errors = ["deck_too_big", "invalid_format", "invalid_type",
-                       "illegal_gap", "too_many_gaps", "statement_no_gap",
-                       "deck_too_small"]
-        for err in deck_errors:
-            if err in path:
-                symtab[err] = True
-
-        # Parse the template
-        data = Parser.get_template("./res/tpl/dashboard.html", symtab)
+        new_theme = params["theme"]
+        if new_theme not in ("dark", "light"):
+            new_theme = "light"
+        session["theme"] = new_theme
         return (200,  # 200 OK
-                {"Content-Type": "text/html; charset=utf-8"},
-                data)
+                {"Content-Type": "text/plain"},
+                "OK")
+
+    def name(self,
+             session: SessionData,
+             path: List[str],
+             params: Dict[str, POSTParam],
+             headers: Dict[str, str]
+             ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+        """Handles changing the name of the client.
+
+        If the name is longer than 31 characters it will be cut off after
+        the 31st character.
+        Informs the client of the success of the operation.
+
+        Args:
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
+
+        Returns:
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
+        """
+        if not isinstance(params["name"], str):
+            return self.fail_permission(session, path, params, headers)
+        new_name = escape(params["name"])[:31]
+        session["nickname"] = new_name
+        return (200,  # 200 OK
+                {"Content-Type": "text/plain"},
+                "OK")

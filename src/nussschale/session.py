@@ -32,8 +32,8 @@ from time import time
 from typing import Any, Dict, Tuple
 from uuid import uuid4
 
-from kgf import kconfig
-from util.locks import mutex, named_mutex
+from nussschale.nussschale import nconfig
+from nussschale.util.locks import mutex, named_mutex
 
 
 class Session:
@@ -156,7 +156,7 @@ class Session:
     def refresh(self):
         """Refreshes the session by resetting the expiration timer."""
         # Locking is not needed here as access is atomic.
-        expire_time = kconfig().get("expire_time", 15)
+        expire_time = nconfig().get("expire_time", 15)
         self._expires = time() + expire_time * 60
 
 

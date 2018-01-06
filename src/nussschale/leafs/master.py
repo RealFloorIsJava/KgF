@@ -21,10 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Callable, Dict
+from typing import Dict
 
-from pages.controller import Controller
-from util.types import Endpoint, POSTParam
+from nussschale.leafs.controller import Controller
+from nussschale.util.types import Endpoint, POSTParam
 
 
 class MasterController(Controller):

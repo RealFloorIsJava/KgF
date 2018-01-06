@@ -25,11 +25,11 @@ from random import randint
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from kgf import kconfig
-from pages.controller import Controller
-from pages.templates.engine import Parser
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.nussschale import nconfig
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.template import Parser
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class IndexController(Controller):
@@ -40,10 +40,10 @@ class IndexController(Controller):
         super().__init__()
 
         # Load the login password
-        self._login_pw = kconfig().get("site-pw", "loremipsum")
+        self._login_pw = nconfig().get("site-pw", "loremipsum")
 
         # Whether a login is required
-        self._login_required = kconfig().get("login-required", True)
+        self._login_required = nconfig().get("login-required", True)
 
         # Adds the catch-all endpoint if login is not required
         if not self._login_required:

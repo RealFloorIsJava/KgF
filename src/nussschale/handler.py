@@ -29,11 +29,11 @@ from traceback import extract_tb
 from typing import Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
-from kgf import print
 from model.match import Match
-from pages.master import MasterController
-from util.types import POSTParam
-from web.session import Session
+from nussschale.nussschale import print
+from nussschale.leafs.master import MasterController
+from nussschale.session import Session
+from nussschale.util.types import POSTParam
 
 
 # Set the maximum request length, in bytes: 8 MiB
@@ -48,7 +48,7 @@ class ServerHandler(BaseHTTPRequestHandler):
     """
 
     # Set some metrics
-    server_version = "Teapot/2.0"
+    server_version = "Nussschale/2.0"
     sys_version = "Python"
     protocol_version = "HTTP/1.1"
 

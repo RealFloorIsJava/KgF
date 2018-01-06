@@ -23,13 +23,13 @@ SOFTWARE.
 
 from typing import Any, Dict, List, Tuple, cast
 
-from kgf import kconfig
 from model.match import Match
 from model.participant import Participant
-from pages.controller import Controller
-from pages.templates.engine import Parser
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.nussschale import nconfig
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.template import Parser
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class MatchController(Controller):
@@ -40,7 +40,7 @@ class MatchController(Controller):
         super().__init__()
 
         # Whether the logout link will be shown
-        self._logout_shown = kconfig().get("login-required", True)
+        self._logout_shown = nconfig().get("login-required", True)
 
         # Only allow logged-in users in a match
         self.add_access_restriction(self.check_access)

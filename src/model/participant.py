@@ -30,7 +30,7 @@ from copy import deepcopy
 from threading import RLock
 from time import time
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
 
 
 class Participant:

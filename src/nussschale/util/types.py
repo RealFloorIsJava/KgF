@@ -21,29 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from functools import wraps
+from io import BytesIO
+from typing import Callable, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
 
-from util.types import Decorator
-
-
-def named_mutex(lck_name: str="_lock") -> Decorator:
-    """Decorates a class method / instance method to lock the (R)Lock.
-
-    Args:
-        lck_name: The name of the lock (class) member.
-
-    Returns:
-        The described decorator.
-    """
-    def decorator(f):
-        @wraps(f)
-        def wrapper(ref, *args, **kwargs):
-            lck = getattr(ref, lck_name)
-            with lck:
-                return f(ref, *args, **kwargs)
-        return wrapper
-    return decorator
+if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
+    from nussschale.session import SessionData
 
 
-# Convenience decorator with default '_lock'
-mutex = named_mutex()
+# A decorator returned by a parametrized decorator factory
+Decorator = Callable[[Callable], Callable]
+
+
+# Represents a POST parameter: Either a string, or a file or a list of strings
+# and files.
+POSTParam = Union[str, List[Union[str, BytesIO]], BytesIO]
+
+
+# Represents a possibly encoded HTTP response
+HTTPResponse = Union[str, bytes]
+
+
+# An endpoint of a leaf session, path, params, headers
+Endpoint = Callable[
+    ["SessionData", List[str], Dict[str, POSTParam], Dict[str, str]],
+    Optional[Tuple[int, Dict[str, str], HTTPResponse]]
+]

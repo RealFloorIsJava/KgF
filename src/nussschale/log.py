@@ -30,7 +30,7 @@ from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
 
 
 class Log:

@@ -28,7 +28,7 @@ Module Deadlock Guarantees:
 from random import shuffle
 from threading import RLock
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
 
 
 class MultiDeck:

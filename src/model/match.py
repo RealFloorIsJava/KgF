@@ -36,7 +36,7 @@ from threading import RLock
 from time import time
 
 from model.multideck import MultiDeck
-from util.locks import mutex, named_mutex
+from nussschale.util.locks import mutex, named_mutex
 
 
 class Match:

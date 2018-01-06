@@ -24,9 +24,9 @@ SOFTWARE.
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from pages.controller import Controller
-from util.types import HTTPResponse, POSTParam
-from web.session import SessionData
+from nussschale.leafs.controller import Controller
+from nussschale.session import SessionData
+from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class ResourceController(Controller):

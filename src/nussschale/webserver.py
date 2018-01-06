@@ -26,10 +26,10 @@ from http.server import HTTPServer
 from socketserver import ThreadingMixIn
 from threading import Thread
 
-from kgf import kconfig
-from pages.leaf import Leafs
-from pages.master import MasterController
-from web.handler import ServerHandler
+from nussschale.handler import ServerHandler
+from nussschale.nussschale import nconfig
+from nussschale.leafs.leaf import Leafs
+from nussschale.leafs.master import MasterController
 
 
 class Webserver(Thread):
@@ -41,13 +41,13 @@ class Webserver(Thread):
         # The internal http server which runs in the background
         self._httpd = None
         # The port the server runs on
-        self._port = kconfig().get("port", 8091)
+        self._port = nconfig().get("port", 8091)
         # The certificate used for SSL (if enabled)
-        self._certificate = kconfig().get("certificate", "cert.pem")
+        self._certificate = nconfig().get("certificate", "cert.pem")
         # The private key for above certificate
-        self._private_key = kconfig().get("privatekey", "priv.pem")
+        self._private_key = nconfig().get("privatekey", "priv.pem")
         # Whether SSL shall be used for connections
-        self._use_ssl = kconfig().get("use_ssl", True)
+        self._use_ssl = nconfig().get("use_ssl", True)
 
         # Set up the controller for routing
         m = MasterController()

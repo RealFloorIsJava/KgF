@@ -28,8 +28,8 @@ from os import mkdir
 from os.path import isdir
 from sys import exit
 
-from config import Config
-from log import Log
+from nussschale.config import Config
+from nussschale.log import Log
 
 
 def print(msg: str):
@@ -41,44 +41,44 @@ def print(msg: str):
     Args:
         msg: The message to print.
     """
-    if KgF.klog is None:
+    if Nussschale.nlog is None:
         builtins.print(msg)
     else:
-        KgF.klog.log(msg)
+        Nussschale.nlog.log(msg)
 
 
 # Exports
-def kconfig() -> Config:
+def nconfig() -> Config:
     """Provides a shortcut to fetch the application's configuration.
 
     Returns:
         The application's configuration.
     """
-    return KgF.kconfig
+    return Nussschale.nconfig
 
 
-def klog() -> Log:
+def nlog() -> Log:
     """Provides a shortcut to fetch the application's logger.
 
     Returns:
         The application's logger.
     """
-    return KgF.klog
+    return Nussschale.nlog
 
 
-class KgF:
+class Nussschale:
     """The main class of the application. Manages the web server and console.
 
     Class Attributes:
-        klog: The application's logger.
-        kconfig: The application's configuration.
+        tlog: The application's logger.
+        tconfig: The application's configuration.
     """
 
     # The logger
-    klog = None  # type: Log
+    nlog = None  # type: Log
 
     # The configuration
-    kconfig = None
+    nconfig = None
 
     def __init__(self):
         """Constructor."""
@@ -89,7 +89,7 @@ class KgF:
         """Performs setup tasks and starts the integrated web server."""
         # Late imports to prevent circular dependencies when other modules
         # need configuration or logger
-        from web.webserver import Webserver
+        from nussschale.webserver import Webserver
 
         print("Setting up environment...")
 
@@ -98,12 +98,12 @@ class KgF:
             mkdir("./data", 0o0700)  # rwx --- ---
 
         # Setup logging
-        KgF.klog = Log()
-        KgF.klog.setup("kgf", 4)
-        print("Starting KgF...")
+        Nussschale.nlog = Log()
+        Nussschale.nlog.setup("nussschale", 4)
+        print("Starting Nussschale...")
 
         # Setup configuration
-        KgF.kconfig = Config()
+        Nussschale.nconfig = Config()
 
         # Additional setup happens here
 
@@ -112,7 +112,7 @@ class KgF:
 
         # Check whether the webserver should be started or whether it is just
         # an initialization run
-        if KgF.kconfig.get("dry-run", True):
+        if Nussschale.nconfig.get("dry-run", True):
             print("Dry run. Exiting...")
             exit(0)
             return

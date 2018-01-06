@@ -21,11 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from kgf import KgF
+from nussschale.nussschale import Nussschale
 
 
 # Entry point
 if __name__ == "__main__":
-    snail = KgF()
+    snail = Nussschale()
     snail.setup()
     snail.run()

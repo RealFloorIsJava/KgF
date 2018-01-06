@@ -21,14 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from pages.leafs.api import APIController
-from pages.leafs.dashboard import DashboardController
-from pages.leafs.deckedit import DeckeditController
-from pages.leafs.index import IndexController
-from pages.leafs.match import MatchController
-from pages.leafs.options import OptionsController
-from pages.leafs.resource import ResourceController
-from pages.master import MasterController
+from pages.api import APIController
+from pages.dashboard import DashboardController
+from pages.deckedit import DeckeditController
+from pages.index import IndexController
+from pages.match import MatchController
+from pages.options import OptionsController
+from pages.resource import ResourceController
+from nussschale.leafs.master import MasterController
 
 
 class Leafs:
