@@ -22,6 +22,7 @@ SOFTWARE.
 """
 
 import builtins
+# noinspection PyUnresolvedReferences
 import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
@@ -31,18 +32,14 @@ from config import Config
 from log import Log
 
 
-def print(msg, *args, **kwargs):
+def print(msg: str):
     """Redefines print to log the message instead of printing it.
 
     If logging is not set up, messages will be printed via the default print()
     instead.
 
     Args:
-        msg (str): The message to print.
-        *args: Additional positional arguments are ignored but present for
-            compatibility.
-        **kwargs: Additional keyword arguments are ignored but present for
-            compatibility.
+        msg: The message to print.
     """
     if KgF.klog is None:
         builtins.print(msg)
@@ -51,20 +48,20 @@ def print(msg, *args, **kwargs):
 
 
 # Exports
-def kconfig():
+def kconfig() -> Config:
     """Provides a shortcut to fetch the application's configuration.
 
     Returns:
-        obj: The application's configuration.
+        The application's configuration.
     """
     return KgF.kconfig
 
 
-def klog():
+def klog() -> Log:
     """Provides a shortcut to fetch the application's logger.
 
     Returns:
-        obj: The application's logger.
+        The application's logger.
     """
     return KgF.klog
 
@@ -73,12 +70,12 @@ class KgF:
     """The main class of the application. Manages the web server and console.
 
     Class Attributes:
-        klog (obj): The application's logger.
-        kconfig (obj): The application's configuration.
+        klog: The application's logger.
+        kconfig: The application's configuration.
     """
 
     # The logger
-    klog = None
+    klog = None  # type: Log
 
     # The configuration
     kconfig = None

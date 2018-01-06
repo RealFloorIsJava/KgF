@@ -22,6 +22,24 @@ SOFTWARE.
 """
 
 from html import escape
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
+
+# A symbol table / data set.
+# Note: Due to the recursive nature, an exact type is not possible to create
+# for it. 'Any' is used for dictionary keys of nested datasets. However, only
+# valid data set entries (i.e. Union[str, None, DataSet]) should be used!
+DataSet = List[Dict[str, Union[str, None, List[Dict[str, Any]]]]]
+SymbolTable = Dict[str, Union[str, None, DataSet]]
+
+
+# An abstract syntax tree.
+# Note: Due to the recursive nature, an exact type is not possible to create
+# for it. 'Any' is used for nested trees. However, only valid AST nodes should
+# be used!
+Token = Tuple[str, str]
+ASTNode = Union[Token, List[Union[Token, List[Any]]]]
+AST = List[ASTNode]
 
 
 class Parser:
@@ -71,15 +89,15 @@ class Parser:
                 "/isnot"]
 
     @staticmethod
-    def get_template(path, symtab):
+    def get_template(path: str, symtab: SymbolTable) -> str:
         """Fetches and parses the template using the given symbol table.
 
         Args:
-            path (str): The path to the template file.
-            symtab (dict): The symbol table, mapping names to values.
+            path: The path to the template file.
+            symtab: The symbol table, mapping names to values.
 
         Returns:
-            str: The resulting output of the template.
+            The resulting output of the template.
         """
         # Get the template data
         data = ""
@@ -91,15 +109,15 @@ class Parser:
         return Parser.parse_template(data, symtab)
 
     @staticmethod
-    def parse_template(raw, symtab):
+    def parse_template(raw: str, symtab: SymbolTable) -> str:
         """Parses the given template source using the given symbol table.
 
         Args:
-            raw (str): The template source that should be parsed.
-            symtab (dict): The symbol table, mapping names to values.
+            raw: The template source that should be parsed.
+            symtab: The symbol table, mapping names to values.
 
         Returns:
-            str: The resulting output of the template.
+            The resulting output of the template.
         """
 
         # Add the beginning marker to the data
@@ -118,11 +136,11 @@ class Parser:
         return Parser._parse_command(syntree, symtab)
 
     @staticmethod
-    def _modify_dataset(dataset):
+    def _modify_dataset(dataset: DataSet):
         """Removes empty sub-datasets at any depth recursively.
 
         Args:
-            dataset (dict): The dataset to modify.
+            dataset: The dataset to modify.
         """
         for i in range(len(dataset)):
             entry = dataset[i]
@@ -136,7 +154,7 @@ class Parser:
                         Parser._modify_dataset(val)
 
     @staticmethod
-    def _fetch_tokens(raw):
+    def _fetch_tokens(raw: str) -> List[Token]:
         """Fetches the tokens from the given source.
 
         There are two types of tokens, text tokens (tuples with first element
@@ -146,10 +164,10 @@ class Parser:
         tag will be translated to a text token.
 
         Args:
-            raw (str): The template source.
+            raw: The template source.
 
         Returns:
-            list: The flat list of tokens.
+            The flat list of tokens.
         """
 
         # Command mode: If true, current lexical token is a command ({...})
@@ -159,7 +177,7 @@ class Parser:
         tmp = ""
 
         # The tokens that have been read already
-        tokens = []
+        tokens = []  # type: List[Token]
 
         # The cursor into the raw data
         ptr = 0
@@ -195,23 +213,23 @@ class Parser:
         return tokens
 
     @staticmethod
-    def _create_tree(toks):
+    def _create_tree(toks: List[Token]) -> AST:
         """Creates the token AST which is used to interpret the template.
 
         Scope tokens (Parser._opening) create new child trees.
 
         Args:
-            toks (list): The flat list of tokens.
+            toks: The flat list of tokens.
 
         Returns:
-            list: A list with nested lists representing the AST. Command tags
-                that open a scope are inserted into the list used for
-                representing the scope at the beginning.
+            A list with nested lists representing the AST. Command tags
+            that open a scope are inserted into the list used for
+            representing the scope at the beginning.
         """
 
         # Create tree and node pointer
-        syntree = []
-        synptr = (syntree, None)
+        syntree = []  # type: AST
+        synptr = (syntree, None)  # type: Optional[Tuple[AST, Optional[Tuple]]]
 
         # Add all tokens to the tree
         for token in toks:
@@ -236,7 +254,7 @@ class Parser:
                     synptr = synptr[1]
                 elif cmd in Parser._opening:
                     # Create a new child tree
-                    child = [token]
+                    child = [token]  # type: AST
                     # Add the child tree and enter it
                     synptr[0].append(child)
                     synptr = (child, synptr)
@@ -250,15 +268,15 @@ class Parser:
         return syntree
 
     @staticmethod
-    def _parse_command(tree, symtab):
+    def _parse_command(tree: ASTNode, symtab: SymbolTable) -> str:
         """Parses the given AST to generate the template output.
 
         Args:
-            tree (list): The AST, a list with nested lists inside.
-            symtab (dict): The symbol table.
+            tree: The AST node.
+            symtab: The symbol table.
 
         Returns:
-            str: The template output.
+            The template output.
         """
         val = ""
 
@@ -284,12 +302,16 @@ class Parser:
             elif cmd == "iterate":
                 dataset_name = args
                 dataset = symtab.get(dataset_name, [])
+                if not isinstance(val, list):
+                    raise TypeError("can't iterate over non-dataset")
+                dataset = cast(DataSet, dataset)
 
                 # Execute this nodes contents for every entry in the dataset
                 for entry in dataset:
                     # Import entries
                     for key in entry:
-                        symtab[dataset_name + "." + key] = entry[key]
+                        absolute_key = "%s.%s" % (dataset_name, key)
+                        symtab[absolute_key] = entry[key]
 
                     # Execute contents
                     for elem in tree[1:]:
@@ -343,12 +365,16 @@ class Parser:
                 elif cmd == "echo":
                     var_name = args
                     var_value = symtab.get(var_name, "%s not found" % var_name)
+                    if not isinstance(var_value, str):
+                        raise TypeError("can't echo non-str")
                     val += var_value
 
                 # Encoded print
                 elif cmd == "html":
                     var_name = args
                     var_value = symtab.get(var_name, "%s not found" % var_name)
+                    if not isinstance(var_value, str):
+                        raise TypeError("can't echo (encode) non-str")
                     var_value = escape(var_value)
                     val += var_value
         return val

@@ -1,6 +1,8 @@
 __pycache__
+.mypy_cache
 data
 logs
 .cache
 .idea
 todo.md
+style.md

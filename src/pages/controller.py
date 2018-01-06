@@ -21,6 +21,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Callable, Dict, List, Set, Tuple
+
+from util.types import Endpoint, HTTPResponse, POSTParam
+from web.session import SessionData
+
+
+# A restriction function for access to leafs
+AccessRestriction = Callable[
+    ["SessionData", List[str], Dict[str, POSTParam], Dict[str, str]],
+    bool
+]
+
+
+# An endpoint that is only called under certain conditions
+RestrictedEndpoint = Tuple[Tuple[Set[str], Set[str]], Endpoint]
+
+
+def default_access_denied(session: SessionData,
+                          path: List[str],
+                          params: Dict[str, POSTParam],
+                          headers: Dict[str, str]
+                          ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+    """The default access denied handler.
+
+    Args:
+        session: The session data of the client.
+        path: The path of the request.
+        params: The HTTP POST parameters.
+        headers: The HTTP headers that were sent by the client.
+
+    Returns:
+        Returns 1) the HTTP status code 2) the HTTP headers to be
+        sent and 3) the response to be sent to the client.
+    """
+    return (403,  # 403 Forbidden
+            {"Content-Type": "text/plain"},
+            "Access denied")
+
 
 class Controller:
     """A base page controller, managing access restrictions and endpoints."""
@@ -28,15 +66,13 @@ class Controller:
     def __init__(self):
         """Constructor."""
         # Access restrictions
-        self._restrictions = []
+        self._restrictions = []  # type: List[AccessRestriction]
         # Endpoints
-        self._endpoints = []
+        self._endpoints = []  # type: List[RestrictedEndpoint]
         # The default access denied handler
-        self._access_denied = lambda *a: (403,  # 403 Forbidden
-                                          {"Content-Type": "text/plain"},
-                                          "Access denied")
+        self._access_denied = default_access_denied
 
-    def add_access_restriction(self, chk):
+    def add_access_restriction(self, chk: AccessRestriction):
         """Adds an access restriction for this controller.
 
         The restriction is a function
@@ -47,11 +83,11 @@ class Controller:
         Restrictions will be checked before any endpoint is called.
 
         Args:
-            chk (function): The restriction as described above.
+            chk: The restriction as described above.
         """
         self._restrictions.append(chk)
 
-    def set_permission_fail_handler(self, point):
+    def set_permission_fail_handler(self, point: Endpoint):
         """Sets the handler for when access is denied.
 
         This will be called as an endpoint if any access check fails.
@@ -60,11 +96,14 @@ class Controller:
         See add_endpoint() for a more detailed description of the signature.
 
         Args:
-            point (function): The handler as described above.
+            point: The handler as described above.
         """
         self._access_denied = point
 
-    def add_endpoint(self, point, path_restrict=None, params_restrict=None):
+    def add_endpoint(self,
+                     point: Endpoint,
+                     path_restrict: Set[str]=None,
+                     params_restrict: Set[str]=None):
         """Adds an endpoint to this controller.
 
         The given callback function will be called if and only if the following
@@ -89,11 +128,11 @@ class Controller:
         response is a string that will be sent as the body of the response.
 
         Args:
-            point (function): The endpoint callback function as described
+            point: The endpoint callback function as described
                 above.
-            path_restrict (set, optional): The path restrictions as described
+            path_restrict: The path restrictions as described
                 above.
-            params_restrict (set, optional): The params restrictions as
+            params_restrict: The params restrictions as
                 described above.
         """
         # Default path restriction is no restriction
@@ -107,23 +146,26 @@ class Controller:
         # Structure: [(path,param) -> (endpoint)]
         self._endpoints.append(((path_restrict, params_restrict), point))
 
-    def call_endpoint(self, session_data, path, params, headers):
+    def call_endpoint(self,
+                      session_data: SessionData,
+                      path: List[str],
+                      params: Dict[str, POSTParam],
+                      headers: Dict[str, str]
+                      ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Calls an endpoint and returns the results.
 
         For details on which endpoint(s) will be called, check the
         documentation of add_endpoint or set_permission_fail_handler.
 
         Args:
-            session_data (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The POST parameters of the request.
-            headers (dict): The HTTP headers of the request.
+            session_data: The session data of the client.
+            path: The path of the request.
+            params: The POST parameters of the request.
+            headers: The HTTP headers of the request.
 
         Returns:
-            tuple: Returns a tuple of three values. The first value is the
-                status code that should be sent in response. The second value
-                is a dictionary of HTTP headers for the response. The third
-                value is a string containing the response for the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Access check
         passed = True
@@ -148,8 +190,6 @@ class Controller:
                 if request not in path:
                     fail = True
                     break
-
-            # Early bailout
             if fail:
                 continue
 
@@ -158,8 +198,6 @@ class Controller:
                 if request not in params:
                     fail = True
                     break
-
-            # Late bail out
             if fail:
                 continue
 

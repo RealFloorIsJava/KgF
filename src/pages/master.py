@@ -21,7 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Callable, Dict
+
 from pages.controller import Controller
+from util.types import Endpoint, POSTParam
 
 
 class MasterController(Controller):
@@ -30,44 +33,46 @@ class MasterController(Controller):
     # The key for the parameter that will be injected
     _LEAF_INJECT = "___leaf___"
 
-    def decorate_params(self, leaf, params):
+    @staticmethod
+    def decorate_params(leaf: str, params: Dict[str, POSTParam]):
         """Includes the leaf parameter in the POST parameters.
 
         The parameter is constructed in a way to make name collisions less
         likely.
 
         Args:
-            leaf (str): The leaf that will be selected.
-            params (dict): The dictionary of POST parameters.
+            leaf: The leaf that will be selected.
+            params: The dictionary of POST parameters.
         """
         magic = "%s:%s" % (MasterController._LEAF_INJECT, leaf)
-        params[magic] = True
+        params[magic] = ""
 
-    def add_leaf(self, leaf, ctrl):
+    def add_leaf(self, leaf: str, ctrl: Controller):
         """Adds a leaf controller to the master controller.
 
         Args:
-            leaf (str): The leaf which should be handled by the controller.
-            ctrl (obj): The controller which will handle requests for the leaf.
+            leaf: The leaf which should be handled by the controller.
+            ctrl: The controller which will handle requests for the leaf.
         """
         # Restriction for the magic leaf parameter
         magic = "%s:%s" % (MasterController._LEAF_INJECT, leaf)
 
         # Add the decorated endpoint
         self.add_endpoint(
-            self.decorate_endpoint_call(ctrl.call_endpoint, magic),
+            MasterController.decorate_endpoint_call(ctrl.call_endpoint, magic),
             params_restrict={magic}
         )
 
-    def decorate_endpoint_call(self, call, magic):
+    @staticmethod
+    def decorate_endpoint_call(call: Endpoint, magic: str) -> Endpoint:
         """Wraps an endpoint call to remove the magic leaf parameter.
 
         Args:
-            call (function): The endpoint call that should be wrapped.
-            magic (str): The parameter name that should be removed.
+            call: The endpoint call that should be wrapped.
+            magic: The parameter name that should be removed.
 
         Returns:
-            function: The wrapped endpoint call.
+            The wrapped endpoint call.
         """
         def _decorated_call(session, path, params, headers):
             if magic in params:

@@ -27,11 +27,11 @@ from model.multideck import MultiDeck
 class MockCard:
     """A mock card."""
 
-    def __init__(self, id):
+    def __init__(self, id: int):
         """Constructor.
 
         Args:
-            id (int): The ID of the mock card.
+            id: The ID of the mock card.
         """
         self.id = id
 

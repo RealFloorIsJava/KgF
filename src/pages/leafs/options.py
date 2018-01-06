@@ -22,8 +22,11 @@ SOFTWARE.
 """
 
 from html import escape
+from typing import Dict, List, Tuple
 
 from pages.controller import Controller
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class OptionsController(Controller):
@@ -40,40 +43,55 @@ class OptionsController(Controller):
         self.add_endpoint(self.theme, params_restrict={"theme"})
         self.add_endpoint(self.name, params_restrict={"name"})
 
-    def check_access(self, session, path, params, headers):
+    def check_access(self,
+                     session: SessionData,
+                     path: List[str],
+                     params: Dict[str, POSTParam],
+                     headers: Dict[str, str]
+                     ) -> bool:
         """Checks whether the user is logged in.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            bool: True if and only if the user is logged in.
+            True if and only if the user is logged in.
         """
         return "login" in session
 
-    def fail_permission(self, session, path, params, headers):
+    def fail_permission(self,
+                        session: SessionData,
+                        path: List[str],
+                        params: Dict[str, POSTParam],
+                        headers: Dict[str, str]
+                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles unauthorized clients.
 
         Informs the client that access was denied.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         return (403,  # 403 Forbidden
                 {"Content-Type": "text/plain"},
                 "Not authenticated")
 
-    def theme(self, session, path, params, headers):
+    def theme(self,
+              session: SessionData,
+              path: List[str],
+              params: Dict[str, POSTParam],
+              headers: Dict[str, str]
+              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles changing the theme of the application for a client.
 
         The theme is set to either 'light' or 'dark', depending on the request
@@ -81,14 +99,14 @@ class OptionsController(Controller):
         Informs the client of the success of the operation.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         new_theme = params["theme"]
         if new_theme not in ("dark", "light"):
@@ -98,7 +116,12 @@ class OptionsController(Controller):
                 {"Content-Type": "text/plain"},
                 "OK")
 
-    def name(self, session, path, params, headers):
+    def name(self,
+             session: SessionData,
+             path: List[str],
+             params: Dict[str, POSTParam],
+             headers: Dict[str, str]
+             ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles changing the name of the client.
 
         If the name is longer than 31 characters it will be cut off after
@@ -106,15 +129,17 @@ class OptionsController(Controller):
         Informs the client of the success of the operation.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
+        if not isinstance(params["name"], str):
+            return self.fail_permission(session, path, params, headers)
         new_name = escape(params["name"])[:31]
         session["nickname"] = new_name
         return (200,  # 200 OK

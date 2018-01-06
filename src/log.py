@@ -46,12 +46,12 @@ class Log:
         # The number of logs that are kept
         self._storage = 3
 
-    def setup(self, name, storage):
+    def setup(self, name: str, storage: int):
         """Setup the logger with the given name and log roll setting.
 
         Args:
-            name (str): The name of the log file.
-            storage (int): The number of log files that should be kept in the
+            name: The name of the log file.
+            storage: The number of log files that should be kept in the
                 log directory.
         """
         self._logger = getLogger("%s_log" % name)
@@ -65,17 +65,17 @@ class Log:
 
         # Setup the logger itself
         formatter = Formatter("[%(asctime)s %(levelname)s] %(message)s")
-        handler = FileHandler(self._log_roll(name, self._storage))
+        handler = FileHandler(Log._log_roll(name, self._storage))
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
         self._logger.setLevel(INFO)
 
     @mutex
-    def log(self, msg):
+    def log(self, msg: str):
         """Logs a non-critical message.
 
         Args:
-            msg (str): The message that should be logged.
+            msg: The message that should be logged.
 
         Contract:
             This method locks the logger's lock.
@@ -83,27 +83,27 @@ class Log:
         self._logger.log(msg=msg, level=INFO)
 
     @mutex
-    def error(self, msg):
+    def error(self, msg: str):
         """Logs a message that describes an error or a critical condition.
 
         Args:
-            msg (str): The message that should be logged.
+            msg: The message that should be logged.
 
         Contract:
             This method locks the logger's lock.
         """
         self._logger.log(msg=msg, level=ERROR)
 
-    def _log_roll(self, keyword, storage=5):
+    @staticmethod
+    def _log_roll(keyword: str, storage: int=5) -> str:
         """Deletes and renames old log files and finds a new log file name.
 
         Args:
-            keyword (str): The name of the log file.
-            storage (int, optional): How many log files should be kept. The
-                default is 5.
+            keyword: The name of the log file.
+            storage: How many log files should be kept. The default is 5.
 
         Returns:
-            str: A file name that can be used for the next log file.
+            A file name that can be used for the next log file.
         """
         # Set the format for logger filenames
         fmt = "./logs/%s.%%i.log" % keyword

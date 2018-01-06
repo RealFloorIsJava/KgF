@@ -21,11 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Any, Dict, List, Tuple, cast
+
 from kgf import kconfig
 from model.match import Match
 from model.participant import Participant
 from pages.controller import Controller
 from pages.templates.engine import Parser
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class MatchController(Controller):
@@ -53,63 +57,77 @@ class MatchController(Controller):
 
         self.add_endpoint(self.match)
 
-    def check_access(self, session, path, params, headers):
+    def check_access(self,
+                     session: SessionData,
+                     path: List[str],
+                     params: Dict[str, POSTParam],
+                     headers: Dict[str, str]
+                     ) -> bool:
         """Checks whether the user is logged in (and in a match).
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            bool: True if the user is logged in and in a match (if required).
+            True if the user is logged in and in a match (if required).
         """
         if "login" not in session:
             return False
 
         # Exceptions to the 'user has to be in a match rule':
-        #  - Joining a match
         #  - Creating a match
-        is_exempt = ("create" in path) or ("join" in path)
+        is_exempt = ("create" in path)
         if not is_exempt and Match.get_match_of_player(session["id"]) is None:
             return False
 
         return True
 
-    def fail_permission(self, session, path, params, headers):
+    def fail_permission(self,
+                        session: SessionData,
+                        path: List[str],
+                        params: Dict[str, POSTParam],
+                        headers: Dict[str, str]
+                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles unauthorized clients.
 
         Redirects the client to the dashboard.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         return (303,  # 303 See Other
                 {"Location": "/dashboard"},
                 "")
 
-    def abandon_match(self, session, path, params, headers):
+    def abandon_match(self,
+                      session: SessionData,
+                      path: List[str],
+                      params: Dict[str, POSTParam],
+                      headers: Dict[str, str]
+                      ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles the request to abandon a match.
 
         Redirects the client to the dashboard.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Leave the match
         match = Match.get_match_of_player(session["id"])
@@ -119,21 +137,26 @@ class MatchController(Controller):
                 {"Location": "/dashboard"},
                 "")
 
-    def create_match(self, session, path, params, headers):
+    def create_match(self,
+                     session: SessionData,
+                     path: List[str],
+                     params: Dict[str, POSTParam],
+                     headers: Dict[str, str]
+                     ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles the request to create a match.
 
         Redirects either to the match view (on success) or to the dashboard
         (when the deck is too big or another error occurs).
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         if Match.get_match_of_player(session["id"]) is not None:
             # The user already is in a match
@@ -141,12 +164,13 @@ class MatchController(Controller):
                     {"Location": "/match"},
                     "")
 
-        if not params["deckupload"].filename:
+        deckupload = cast(Any, params["deckupload"])
+        if not deckupload.filename:
             # Make sure the uploaded thing is a file
             return self.fail_permission(session, path, params, headers)
 
         # Check the size of the upload
-        fp = params["deckupload"].file
+        fp = deckupload.file
         fp.seek(0, 2)
         size = fp.tell()
         fp.seek(0)
@@ -184,24 +208,29 @@ class MatchController(Controller):
                 {"Location": "/match"},
                 "")
 
-    def match(self, session, path, params, headers):
+    def match(self,
+              session: SessionData,
+              path: List[str],
+              params: Dict[str, POSTParam],
+              headers: Dict[str, str]
+              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles a request of the match view.
 
         Serves the match template.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Populate symbol table
         symtab = {"theme": session["theme"],
-                  "showLogout": True if self._logout_shown else None}
+                  "showLogout": "" if self._logout_shown else None}
 
         # Parse the template
         data = Parser.get_template("./res/tpl/match.html", symtab)

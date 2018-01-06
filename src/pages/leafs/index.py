@@ -22,11 +22,14 @@ SOFTWARE.
 """
 
 from random import randint
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from kgf import kconfig
 from pages.controller import Controller
 from pages.templates.engine import Parser
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class IndexController(Controller):
@@ -50,20 +53,25 @@ class IndexController(Controller):
         self.add_endpoint(self.logout, path_restrict={"logout"})
         self.add_endpoint(self.index)
 
-    def catchall(self, session, path, params, headers):
+    def catchall(self,
+                 session: SessionData,
+                 path: List[str],
+                 params: Dict[str, POSTParam],
+                 headers: Dict[str, str]
+                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles creating a user when login is disabled.
 
         Will redirect to the dashboard.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         if "login" not in session:
             self._create_user(session)
@@ -71,21 +79,26 @@ class IndexController(Controller):
                 {"Location": "/dashboard"},
                 "")
 
-    def login(self, session, path, params, headers):
+    def login(self,
+              session: SessionData,
+              path: List[str],
+              params: Dict[str, POSTParam],
+              headers: Dict[str, str]
+              ) -> Optional[Tuple[int, Dict[str, str], HTTPResponse]]:
         """Handles requests made with the login form.
 
         Will redirect (via the index endpoint) to the dashboard on success.
         If the login fails the client is redirected to the index endpoint.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         if params["pw"] == self._login_pw:
             self._create_user(session)
@@ -94,52 +107,63 @@ class IndexController(Controller):
                 {"Location": "/index/pwfail"},
                 "")
 
-    def _create_user(self, session):
+    @staticmethod
+    def _create_user(session: SessionData):
         """Initializes a temporary user account.
 
         Args:
-            session (obj): The session data the user will be created in.
+            session: The session data the user will be created in.
         """
         session["login"] = True
         session["id"] = str(uuid4())
         session["nickname"] = "Meme" + str(randint(10000, 99999))
         session["theme"] = "light"
 
-    def logout(self, session, path, params, headers):
+    def logout(self,
+               session: SessionData,
+               path: List[str],
+               params: Dict[str, POSTParam],
+               headers: Dict[str, str]
+               ) -> None:
         """Handles logout requests.
 
         Will show the index page (via the index endpoint).
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         if "login" in session:
             session.remove("login")
 
         return None  # Fall through
 
-    def index(self, session, path, params, headers):
+    def index(self,
+              session: SessionData,
+              path: List[str],
+              params: Dict[str, POSTParam],
+              headers: Dict[str, str]
+              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles requests for the index page.
 
         Redirects to the dashboard if the client is logged in. Serves the
         start template otherwise.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # If the user is already logged in, send him to the dashboard
         if "login" in session:
@@ -148,13 +172,13 @@ class IndexController(Controller):
                     "")
 
         # Populate symbol table
-        symtab = {}
+        symtab = {}  # type: Any
         if "authfail" in path:
-            symtab["authfail"] = True
+            symtab["authfail"] = ""
         elif "pwfail" in path:
-            symtab["pwfail"] = True
+            symtab["pwfail"] = ""
         elif "logout" in path:
-            symtab["logout"] = True
+            symtab["logout"] = ""
 
         # Parse the template
         data = Parser.get_template("./res/tpl/start.html", symtab)

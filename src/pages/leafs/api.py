@@ -24,10 +24,13 @@ SOFTWARE.
 from html import escape
 from json import dumps
 from time import time
+from typing import Any, Dict, List, Tuple
 
 from model.match import ExpectationException, Match
 from model.participant import Participant
 from pages.controller import Controller
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class APIController(Controller):
@@ -60,51 +63,66 @@ class APIController(Controller):
                           path_restrict={"join"},
                           params_restrict={"spectator", "id"})
 
-    def check_access(self, session, path, params, headers):
+    def check_access(self,
+                     session: SessionData,
+                     path: List[str],
+                     params: Dict[str, POSTParam],
+                     headers: Dict[str, str]
+                     ) -> bool:
         """Checks whether the user is logged in.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            bool: True if and only if the user is logged in.
+            True if and only if the user is logged in.
         """
         return "login" in session
 
-    def fail_permission(self, session, path, params, headers):
+    def fail_permission(self,
+                        session: SessionData,
+                        path: List[str],
+                        params: Dict[str, POSTParam],
+                        headers: Dict[str, str]
+                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles unauthorized clients.
 
         Informs the client that access was denied.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         return (403,  # 403 Forbidden
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"not authenticated\"}")
 
-    def api_join(self, session, path, params, headers):
+    def api_join(self,
+                 session: SessionData,
+                 path: List[str],
+                 params: Dict[str, POSTParam],
+                 headers: Dict[str, str]
+                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles joining a match.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         if Match.get_match_of_player(session["id"]) is not None:
             # The user already is in a match
@@ -114,7 +132,7 @@ class APIController(Controller):
 
         # Get the match ID and participant state
         try:
-            id = int(params["id"])
+            id = int(params["id"])  # type: ignore
         except ValueError:
             return self.fail_permission(session, path, params, headers)
         spectator = params["spectator"] == "true"
@@ -136,20 +154,25 @@ class APIController(Controller):
                 {"Location": "/match"},
                 "")
 
-    def api_pick(self, session, path, params, headers):
+    def api_pick(self,
+                 session: SessionData,
+                 path: List[str],
+                 params: Dict[str, POSTParam],
+                 headers: Dict[str, str]
+                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles picking a round winner.
 
         Returns a JSON status.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -162,7 +185,7 @@ class APIController(Controller):
             return self.fail_permission(session, path, params, headers)
 
         try:
-            playedid = int(params["playedId"])
+            playedid = int(params["playedId"])  # type: ignore
         except ValueError:
             return self.fail_permission(session, path, params, headers)
 
@@ -172,20 +195,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"OK\"}")
 
-    def api_choose(self, session, path, params, headers):
+    def api_choose(self,
+                   session: SessionData,
+                   path: List[str],
+                   params: Dict[str, POSTParam],
+                   headers: Dict[str, str]
+                   ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles (un)choosing a hand card.
 
         Returns a JSON status.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -198,7 +226,7 @@ class APIController(Controller):
             return self.fail_permission(session, path, params, headers)
 
         try:
-            handid = int(params["handId"])
+            handid = int(params["handId"])  # type: ignore
         except ValueError:
             return self.fail_permission(session, path, params, headers)
 
@@ -209,20 +237,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"OK\"}")
 
-    def api_cards(self, session, path, params, headers):
+    def api_cards(self,
+                  session: SessionData,
+                  path: List[str],
+                  params: Dict[str, POSTParam],
+                  headers: Dict[str, str]
+                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Retrieves the list of cards (hand, played) in the current match.
 
         Returns a JSON response containing the hand cards and played cards.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -233,7 +266,10 @@ class APIController(Controller):
 
         # Load the data of the hand cards
         if not part.spectator:
-            hand_cards = {"OBJECT": {}, "VERB": {}}
+            hand_cards = {
+                "OBJECT": {},
+                "VERB": {}
+            }  # type: Dict[str, Any]
             hand = part.get_hand()
             for id, hcard in hand.items():
                 hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
@@ -243,7 +279,7 @@ class APIController(Controller):
         # Load the data of the played cards
         # Note: If the order changes this might lead to inconsistencies but the
         # client polls this data often so it is no problem.
-        played_cards = []
+        played_cards = []  # type: Any
         can_view_choices = match.can_view_choices()
         for p in match.get_participants(False):
             redacted = not can_view_choices and part is not p
@@ -259,20 +295,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 dumps(data))
 
-    def api_participants(self, session, path, params, headers):
+    def api_participants(self,
+                         session: SessionData,
+                         path: List[str],
+                         params: Dict[str, POSTParam],
+                         headers: Dict[str, str]
+                         ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Retrieves the list of participants of the client's match.
 
         Returns a JSON response containing the participants of the match.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -290,21 +331,28 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 dumps(data))
 
-    def api_chat_send(self, session, path, params, headers):
+    def api_chat_send(self,
+                      session: SessionData,
+                      path: List[str],
+                      params: Dict[str, POSTParam],
+                      headers: Dict[str, str]
+                      ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles sending a chat message.
 
         Returns a JSON status.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
+        if not isinstance(params["message"], str):
+            return self.fail_permission(session, path, params, headers)
         msg = escape(params["message"])
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -314,9 +362,9 @@ class APIController(Controller):
         # Check whether the user may send a message now
         if "chatcooldown" in session:
             if session["chatcooldown"] > time():
-                return {403,  # 403 Forbidden
+                return (403,  # 403 Forbidden
                         {"Content-Type": "application/json; charset=utf-8"},
-                        "{\"error\":\"spam rejected\"}"}
+                        "{\"error\":\"spam rejected\"}")
         session["chatcooldown"] = time() + 1
 
         # Check the chat message for sanity
@@ -331,20 +379,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 "{\"error\":\"invalid size\"}")
 
-    def api_chat(self, session, path, params, headers):
+    def api_chat(self,
+                 session: SessionData,
+                 path: List[str],
+                 params: Dict[str, POSTParam],
+                 headers: Dict[str, str]
+                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Retrieves the chat history, optionally starting at the given offset.
 
         Returns a JSON response containing the requested chat messages.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -354,7 +407,7 @@ class APIController(Controller):
         offset = 0
         if "offset" in params:
             try:
-                offset = int(params["offset"])
+                offset = int(params["offset"])  # type: ignore
             except ValueError:
                 pass
 
@@ -365,20 +418,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 dumps(data))
 
-    def api_status(self, session, path, params, headers):
+    def api_status(self,
+                   session: SessionData,
+                   path: List[str],
+                   params: Dict[str, POSTParam],
+                   headers: Dict[str, str]
+                   ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Retrieves the status of the client's match.
 
         Returns a JSON response containing the status.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         match = Match.get_match_of_player(session["id"])
         if match is None:
@@ -412,20 +470,25 @@ class APIController(Controller):
                 {"Content-Type": "application/json; charset=utf-8"},
                 dumps(data))
 
-    def api_list(self, session, path, params, headers):
+    def api_list(self,
+                 session: SessionData,
+                 path: List[str],
+                 params: Dict[str, POSTParam],
+                 headers: Dict[str, str]
+                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Retrieves the list of all existing matches.
 
         Returns a JSON response containing all matches.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         data = []
         matches = Match.get_all()

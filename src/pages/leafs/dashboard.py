@@ -21,9 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Dict, List, Tuple
+
 from kgf import kconfig
 from pages.controller import Controller
 from pages.templates.engine import Parser
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class DashboardController(Controller):
@@ -42,53 +46,68 @@ class DashboardController(Controller):
 
         self.add_endpoint(self.dashboard)
 
-    def check_access(self, session, path, params, headers):
+    def check_access(self,
+                     session: SessionData,
+                     path: List[str],
+                     params: Dict[str, POSTParam],
+                     headers: Dict[str, str]
+                     ) -> bool:
         """Checks whether the user is logged in.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            bool: True if and only if the user is logged in.
+            True if and only if the user is logged in.
         """
         return "login" in session
 
-    def fail_permission(self, session, path, params, headers):
+    def fail_permission(self,
+                        session: SessionData,
+                        path: List[str],
+                        params: Dict[str, POSTParam],
+                        headers: Dict[str, str]
+                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles unauthorized clients.
 
         Redirects the client to the index page.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         return (303,  # 303 See Other
                 {"Location": "/index/authfail"},
                 "")
 
-    def dashboard(self, session, path, params, headers):
+    def dashboard(self,
+                  session: SessionData,
+                  path: List[str],
+                  params: Dict[str, POSTParam],
+                  headers: Dict[str, str]
+                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles requests for the dashboard page.
 
         Serves the dashboard template.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The HTTP POST parameters.
-            headers (dict): The HTTP headers that were sent by the client.
+            session: The session data of the client.
+            path: The path of the request.
+            params: The HTTP POST parameters.
+            headers: The HTTP headers that were sent by the client.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Populate symbol table
         symtab = {

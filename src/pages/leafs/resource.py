@@ -21,9 +21,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from pages.controller import Controller
+from util.types import HTTPResponse, POSTParam
+from web.session import SessionData
 
 
 class ResourceController(Controller):
@@ -52,18 +55,23 @@ class ResourceController(Controller):
         # Register the resource delivery endpoint
         self.add_endpoint(self.resource_dealer)
 
-    def resource_dealer(self, session, path, params, headers):
+    def resource_dealer(self,
+                        session: SessionData,
+                        path: List[str],
+                        params: Dict[str, POSTParam],
+                        headers: Dict[str, str]
+                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Delivers resources from the resource folder.
 
         Args:
-            session (obj): The session data of the client.
-            path (list): A list containg all elements in the request path.
-            params (dict): A dictionary of all POST parameters.
-            headers (dict): A dictionary of all HTTP headers.
+            session: The session data of the client.
+            path: A list containg all elements in the request path.
+            params: A dictionary of all POST parameters.
+            headers: A dictionary of all HTTP headers.
 
         Returns:
-            tuple: Returns 1) the HTTP status code 2) the HTTP headers to be
-                sent and 3) the response to be sent to the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Reads the file name from the path
         query = self._get_file_name(path)
@@ -99,14 +107,15 @@ class ResourceController(Controller):
         # 200 OK
         return 200, head, r
 
-    def _get_file_name(self, path):
+    @staticmethod
+    def _get_file_name(path: List[str]) -> Optional[Tuple[str, str]]:
         """Fetches the file name from the path.
 
         Args:
-            path (list): The list of elements in the path
+            path: The list of elements in the path
 
         Returns:
-            tuple or None: None is returned on failure. If the path contains
+            None is returned on failure. If the path contains
             a valid file path the tuple will contain the path in the first
             element. The second element will be the extension of the file.
         """

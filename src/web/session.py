@@ -29,6 +29,7 @@ Module Deadlock Guarantees:
 
 from threading import RLock
 from time import time
+from typing import Any, Dict, Tuple
 from uuid import uuid4
 
 from kgf import kconfig
@@ -39,9 +40,9 @@ class Session:
     """Represents a client session whic is kept open by a session cookie.
 
     Attributes:
-        sid (str): The session ID. Should not be changed once the session
+        sid: The session ID. Should not be changed once the session
             exists.
-        data (obj): The session's data. The data object itself should not be
+        data: The session's data. The data object itself should not be
             overwritten.
     """
 
@@ -49,23 +50,23 @@ class Session:
     # Locking this MutEx can cause the Session MutEx to be locked.
     _pool_lock = RLock()
 
-    # The session pool, all currently existing sessions, sid->session
-    _sessions = {}
+    # The session pool, all currently existing sessions
+    _sessions = {}  # type: Dict[str, Session]
 
     @classmethod
     @named_mutex("_pool_lock")
-    def add_session(cls, sid, session):
+    def add_session(cls, sid: str, session: "Session"):
         """Adds a session to the session pool.
 
         Args:
-            sid (str): The session ID.
-            session (obj): The session that will be stored.
+            sid: The session ID.
+            session: The session that will be stored.
         """
         Session._sessions[sid] = session
 
     @classmethod
     @named_mutex("_pool_lock")
-    def get_session(cls, ip, sid=None):
+    def get_session(cls, ip: str, sid: str=None) -> Tuple["Session", bool]:
         """Retrieves an existing session or creates a new one.
 
         A new session is created for the user if and only if at least one of
@@ -76,13 +77,12 @@ class Session:
             - a session is found but the IP addresses do not match
 
         Args:
-            ip (str): The IP address of the user making the request.
-            sid (str): The session ID provided by the user or None if none was
+            ip: The IP address of the user making the request.
+            sid: The session ID provided by the user or None if none was
                 provided.
 
         Returns:
-            (obj, bool): The session of the user and whether it was newly
-                created.
+            The session of the user and whether it was newly created.
 
         Contract:
             This method will lock
@@ -112,11 +112,11 @@ class Session:
             create = True
         return session, create
 
-    def __init__(self, ip):
+    def __init__(self, ip: str) -> None:
         """Constructor.
 
         Args:
-            ip (str): The IP address of the owner of the session.
+            ip: The IP address of the owner of the session.
         """
         # Generate a random session ID and store the session owner's IP
         self.sid = str(uuid4())
@@ -132,23 +132,23 @@ class Session:
         # Insert this session into the pool
         Session.add_session(self.sid, self)
 
-    def is_expired(self):
+    def is_expired(self) -> bool:
         """Checks whether this session is past its expiration date.
 
         Returns:
-            bool: Whether the session is no longer valid due to expiration.
+            Whether the session is no longer valid due to expiration.
         """
         # Locking is not needed here as access is atomic.
         return self._expires <= time()
 
-    def is_owner(self, ip):
+    def is_owner(self, ip: str) -> bool:
         """Checks whether the given IP is the owner of this session.
 
         Args:
-            ip (str): The IP address of the client.
+            ip: The IP address of the client.
 
         Returns:
-            bool: True if the owner has the same IP, False otherwise.
+            True if the owner has the same IP, False otherwise.
         """
         # Locking is not needed here as access is atomic.
         return self._ip == ip
@@ -170,14 +170,14 @@ class SessionData:
         self._lock = RLock()
 
         # The internals of the session data
-        self._internal = {}
+        self._internal = {}  # type: Dict[Any, Any]
 
     @mutex
-    def remove(self, key):
+    def remove(self, key: Any):
         """Removes the entry with the given key from the session data.
 
         Args:
-            key (any): A suitable dictionary key for the entry.
+            key: A suitable dictionary key for the entry.
 
         Contract:
             This method will lock the session's data lock.
@@ -185,16 +185,16 @@ class SessionData:
         del self._internal[key]
 
     @mutex
-    def get(self, key, default=None):
+    def get(self, key: Any, default: Any=None) -> Any:
         """Retrieves the entry with the given key or the given default value.
 
         Args:
-            key (any): The key of the entry.
-            default (any, optional): The default value when the key is not
+            key: The key of the entry.
+            default: The default value when the key is not
                 found.
 
         Returns:
-            any: The entry for the given key (or the default value).
+            The entry for the given key (or the default value).
 
         Contract:
             This method will lock the session's data lock.
@@ -202,11 +202,11 @@ class SessionData:
         return self._internal.get(key, default)
 
     @mutex
-    def __len__(self):
+    def __len__(self) -> int:
         """Retrieves the length of the data dictionary.
 
         Returns:
-            int: The number of entries in the dictionary
+            The number of entries in the dictionary
 
         Contract:
             This method will lock the session's data lock.
@@ -214,14 +214,14 @@ class SessionData:
         return len(self._internal)
 
     @mutex
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         """Retrieves the entry for the given key.
 
         Args:
-            key (any): The key of the entry to retrieve.
+            key: The key of the entry to retrieve.
 
         Returns:
-            any: The entry associated with the given key.
+            The entry associated with the given key.
 
         Contract:
             This method will lock the session's data lock.
@@ -229,12 +229,12 @@ class SessionData:
         return self._internal[key]
 
     @mutex
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any):
         """Sets the entry for the given key in the session data.
 
         Args:
-            key (any): The key which will be used for storing the entry.
-            value (any): The entry to store associated with the given key.
+            key: The key which will be used for storing the entry.
+            value: The entry to store associated with the given key.
 
         Contract:
             This method will lock the session's data lock.
@@ -242,16 +242,16 @@ class SessionData:
         self._internal[key] = value
 
     @mutex
-    def __contains__(self, item):
+    def __contains__(self, key: Any) -> bool:
         """Checks whether an entry with the given key is present in the data.
 
         Args:
-            item (any): The key to look for in the session data.
+            key: The key to look for in the session data.
 
         Returns:
-            bool: Whether an entry with the given key is present.
+            Whether an entry with the given key is present.
 
         Contract:
             This method will lock the session's data lock.
         """
-        return item in self._internal
+        return key in self._internal

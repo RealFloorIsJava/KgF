@@ -28,17 +28,21 @@ from pages.leafs.index import IndexController
 from pages.leafs.match import MatchController
 from pages.leafs.options import OptionsController
 from pages.leafs.resource import ResourceController
+from pages.master import MasterController
 
 
 class Leafs:
     """The registry where controllers for leafs can be added."""
 
     @staticmethod
-    def add_leafs(mctrl):
+    def add_leafs(mctrl: MasterController):
         """Registers all leafs in the given master controller.
 
         To register a leaf, add a line of the form
-          mctrl.add_leaf("test", TestController())
+            mctrl.add_leaf("test", TestController())
+
+        Args:
+            mctrl: The master controller to put the leafs into.
         """
         # API controller, for interaction with matches and the game itself
         mctrl.add_leaf("api", APIController())

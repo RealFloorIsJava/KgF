@@ -79,8 +79,12 @@ class Webserver(Thread):
         if self._httpd is not None:
             self._httpd.shutdown()
 
-    def _create_ssl_context(self):
-        """Creates a SSL context for HTTPS."""
+    def _create_ssl_context(self) -> ssl.SSLContext:
+        """Creates a SSL context for HTTPS.
+
+        Returns:
+            A SSL context for application to the server's socket.
+        """
         tls = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
         tls.load_cert_chain(certfile=self._certificate,
                             keyfile=self._private_key)
