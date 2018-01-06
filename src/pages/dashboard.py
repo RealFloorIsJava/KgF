@@ -23,8 +23,8 @@ SOFTWARE.
 
 from typing import Dict, List, Tuple
 
-from nussschale.nussschale import nconfig
 from nussschale.leafs.controller import Controller
+from nussschale.nussschale import nconfig
 from nussschale.session import SessionData
 from nussschale.util.template import Parser
 from nussschale.util.types import HTTPResponse, POSTParam

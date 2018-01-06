@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -25,11 +25,12 @@ import ssl
 from http.server import HTTPServer
 from socketserver import ThreadingMixIn
 from threading import Thread
+from typing import Callable
 
 from nussschale.handler import ServerHandler
-from nussschale.nussschale import nconfig
 from nussschale.leafs.leaf import Leafs
 from nussschale.leafs.master import MasterController
+from nussschale.nussschale import nconfig
 
 
 class Webserver(Thread):
@@ -78,6 +79,14 @@ class Webserver(Thread):
         ServerHandler.stop_connections = True
         if self._httpd is not None:
             self._httpd.shutdown()
+
+    def install_request_listener(self, rq: Callable[[], None]):
+        """Installs a request listener in the request handler.
+
+        Args:
+            rq: The request listener.
+        """
+        ServerHandler.install_request_listener(rq)
 
     def _create_ssl_context(self) -> ssl.SSLContext:
         """Creates a SSL context for HTTPS.

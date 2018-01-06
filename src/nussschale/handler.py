@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -26,12 +26,11 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
 from traceback import extract_tb
-from typing import Dict, List, Tuple, no_type_check
+from typing import Callable, Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
-from model.match import Match
-from nussschale.nussschale import print
 from nussschale.leafs.master import MasterController
+from nussschale.nussschale import print
 from nussschale.session import Session
 from nussschale.util.types import POSTParam
 
@@ -61,6 +60,9 @@ class ServerHandler(BaseHTTPRequestHandler):
     # The master controller which dispatches requests to leaves
     _master = None
 
+    # The installed request listeners
+    _request_listeners = []  # type: List[Callable[[], None]]
+
     @staticmethod
     def set_master(mctrl: MasterController):
         """Sets the master controller for all handlers.
@@ -70,6 +72,15 @@ class ServerHandler(BaseHTTPRequestHandler):
                 the endpoint calls.
         """
         ServerHandler._master = mctrl
+
+    @staticmethod
+    def install_request_listener(rq: Callable[[], None]):
+        """Installs a new request listener.
+
+        Args:
+            rq: The request listener.
+        """
+        ServerHandler._request_listeners.append(rq)
 
     def log_message(self, format: str, *args):
         """Overridden access log handler.
@@ -99,7 +110,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             return
 
         # Perform tasks for every request here
-        Match.perform_housekeeping()
+        for fun in ServerHandler._request_listeners:
+            fun()
 
         # Setup header dictionary
         head = {}

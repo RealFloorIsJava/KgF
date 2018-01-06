@@ -21,11 +21,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from model.match import Match
+
 from nussschale.nussschale import Nussschale
+
+
+def request_listener():
+    """Called for every request."""
+    Match.perform_housekeeping()
 
 
 # Entry point
 if __name__ == "__main__":
-    snail = Nussschale()
-    snail.setup()
-    snail.run()
+    ns = Nussschale()
+
+    ns.add_request_listener(request_listener)
+
+    ns.start_server()
+    ns.run()

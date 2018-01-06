@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -27,6 +27,7 @@ import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
 from sys import exit
+from typing import Callable
 
 from nussschale.config import Config
 from nussschale.log import Log
@@ -85,10 +86,7 @@ class Nussschale:
         # The web server of the application
         self._webserver = None
 
-    def setup(self):
-        """Performs setup tasks and starts the integrated web server."""
-        # Late imports to prevent circular dependencies when other modules
-        # need configuration or logger
+        # Late import to prevent circular dependencies
         from nussschale.webserver import Webserver
 
         print("Setting up environment...")
@@ -116,10 +114,19 @@ class Nussschale:
             print("Dry run. Exiting...")
             exit(0)
             return
-        self._webserver.start()
 
-        # Finished setup
+    def start_server(self):
+        """Starts the internal web server."""
+        self._webserver.start()
         print("Up and running!")
+
+    def add_request_listener(self, rq: Callable[[], None]):
+        """Installs a request listener in the request handler.
+
+        Args:
+            rq: The request listener.
+        """
+        self._webserver.install_request_listener(rq)
 
     def run(self):
         """Runs the minimal console.
@@ -154,7 +161,7 @@ class Nussschale:
                     break
                 elif inp == "help":
                     stdout("-- Available commands")
-                    stdout("  quit     - Stops the application.")
+                    stdout("  quit     - Stops the application.")  # todo
                     stdout("  help     - Shows this help.")
                     stdout("  freeze   - Freezes all matches.")
                     stdout("  unfreeze - Unfreezes all matches.")

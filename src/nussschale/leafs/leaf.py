@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from nussschale.leafs.master import MasterController
 from pages.api import APIController
 from pages.dashboard import DashboardController
 from pages.deckedit import DeckeditController
@@ -28,10 +29,9 @@ from pages.index import IndexController
 from pages.match import MatchController
 from pages.options import OptionsController
 from pages.resource import ResourceController
-from nussschale.leafs.master import MasterController
 
 
-class Leafs:
+class Leafs:  # todo
     """The registry where controllers for leafs can be added."""
 
     @staticmethod
