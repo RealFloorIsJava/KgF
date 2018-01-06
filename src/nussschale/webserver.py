@@ -28,8 +28,6 @@ from threading import Thread
 from typing import Callable
 
 from nussschale.handler import ServerHandler
-from nussschale.leafs.leaf import Leafs
-from nussschale.leafs.master import MasterController
 from nussschale.nussschale import nconfig
 
 
@@ -49,15 +47,6 @@ class Webserver(Thread):
         self._private_key = nconfig().get("privatekey", "priv.pem")
         # Whether SSL shall be used for connections
         self._use_ssl = nconfig().get("use_ssl", True)
-
-        # Set up the controller for routing
-        m = MasterController()
-
-        # Add all leafs to the controller
-        Leafs.add_leafs(m)
-
-        # Set the master for the server handler
-        ServerHandler.set_master(m)
 
     def run(self):
         """Starts the HTTP server in the background."""

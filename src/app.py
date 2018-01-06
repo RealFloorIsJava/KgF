@@ -22,8 +22,13 @@ SOFTWARE.
 """
 
 from model.match import Match
-
 from nussschale.nussschale import Nussschale
+from pages.api import APIController
+from pages.dashboard import DashboardController
+from pages.deckedit import DeckeditController
+from pages.index import IndexController
+from pages.match import MatchController
+from pages.options import OptionsController
 
 
 def request_listener():
@@ -36,6 +41,14 @@ if __name__ == "__main__":
     ns = Nussschale()
 
     ns.add_request_listener(request_listener)
+    ns.add_leafs([
+        (APIController, "api"),
+        (DashboardController, "dashboard"),
+        (DeckeditController, "deckedit"),
+        (IndexController, "index"),
+        (MatchController, "match"),
+        (OptionsController, "options")
+    ])
 
     ns.start_server()
     ns.run()

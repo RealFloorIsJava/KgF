@@ -27,10 +27,14 @@ import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
 from sys import exit
-from typing import Callable
+from typing import Callable, List, TYPE_CHECKING, Tuple, Type
 
 from nussschale.config import Config
 from nussschale.log import Log
+
+
+if TYPE_CHECKING:
+    from nussschale.leafs.controller import Controller
 
 
 def print(msg: str):
@@ -88,6 +92,8 @@ class Nussschale:
 
         # Late import to prevent circular dependencies
         from nussschale.webserver import Webserver
+        from nussschale.leafs.master import MasterController
+        from nussschale.leafs.resource import ResourceController
 
         print("Setting up environment...")
 
@@ -103,10 +109,10 @@ class Nussschale:
         # Setup configuration
         Nussschale.nconfig = Config()
 
-        # Additional setup happens here
-
         # Setup web server
         self._webserver = Webserver()
+        self._master = MasterController()
+        self._master.add_leaf("res", ResourceController())
 
         # Check whether the webserver should be started or whether it is just
         # an initialization run
@@ -117,8 +123,22 @@ class Nussschale:
 
     def start_server(self):
         """Starts the internal web server."""
+        from nussschale.handler import ServerHandler
+
+        # Set the master for the server handler
+        ServerHandler.set_master(self._master)
+
         self._webserver.start()
         print("Up and running!")
+
+    def add_leafs(self, leafs: List[Tuple[Type["Controller"], str]]):
+        """Adds the given leafs to the server.
+
+        Args:
+            leafs: The leafs that should be added.
+        """
+        for type, leaf in leafs:
+            self._master.add_leaf(leaf, type())
 
     def add_request_listener(self, rq: Callable[[], None]):
         """Installs a request listener in the request handler.
