@@ -289,7 +289,6 @@ class ServerHandler(BaseHTTPRequestHandler):
             # According to the documentation of urllib, parse_qs might return
             # multiple values even for non-array arguments
             for key in d:
-                key = key
                 if not key.endswith("[]"):
                     # Just use the first element, even if multiple are supplied
                     d[key] = d[key][0]

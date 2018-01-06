@@ -56,7 +56,8 @@ class MasterController(Controller):
         # Add the decorated endpoint
         self.add_endpoint(
             self.decorate_endpoint_call(ctrl.call_endpoint, magic),
-            params_restrict={magic})
+            params_restrict={magic}
+        )
 
     def decorate_endpoint_call(self, call, magic):
         """Wraps an endpoint call to remove the magic leaf parameter.

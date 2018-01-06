@@ -235,8 +235,7 @@ class APIController(Controller):
         if not part.spectator:
             hand_cards = {"OBJECT": {}, "VERB": {}}
             hand = part.get_hand()
-            for id in hand:
-                hcard = hand[id]
+            for id, hcard in hand.items():
                 hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
                                                    "chosen": hcard.chosen}
             data["hand"] = hand_cards
@@ -246,17 +245,13 @@ class APIController(Controller):
         # client polls this data often so it is no problem.
         played_cards = []
         can_view_choices = match.can_view_choices()
-        for p in match.get_participants():
-            if p.spectator:
-                continue
-
+        for p in match.get_participants(False):
             redacted = not can_view_choices and part is not p
             order = p.order
 
-            # Ensure list is big enough
+            # Ensure list is big enough then insert the data
             while len(played_cards) <= order:
                 played_cards.append([])
-
             played_cards[p.order] = p.get_choose_data(redacted)
         data["played"] = played_cards
 
