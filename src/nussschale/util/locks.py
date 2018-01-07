@@ -22,11 +22,13 @@ SOFTWARE.
 """
 
 from functools import wraps
+from typing import Callable
 
-from nussschale.util.types import Decorator
+
+_Decorator = Callable[[Callable], Callable]
 
 
-def named_mutex(lck_name: str="_lock") -> Decorator:
+def named_mutex(lck_name: str="_lock") -> _Decorator:
     """Decorates a class method / instance method to lock the (R)Lock.
 
     Args:

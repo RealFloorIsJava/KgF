@@ -21,30 +21,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
-from nussschale.leafs.endpoint import EndpointNotApplicableException
+from nussschale.leafs.endpoint import EndpointNotApplicableException, \
+    _ComplexAccessRestriction, _ComplexEndpoint, _HTTPResponse, _POSTParam
 from nussschale.session import SessionData
-from nussschale.util.types import Endpoint, HTTPResponse, POSTParam
 
 
-# A restriction function for access to leafs
-AccessRestriction = Callable[
-    ["SessionData", List[str], Dict[str, POSTParam], Dict[str, str]],
-    bool
-]
-
-
-def default_access_denied(session: SessionData, path: List[str],
-                          params: Dict[str, POSTParam], headers: Dict[str, str]
-                          ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+def default_access_denied(*_) -> Tuple[int, Dict[str, str], _HTTPResponse]:
     """The default access denied handler.
 
     Args:
-        session: The session data of the client.
-        path: The path of the request.
-        params: The HTTP POST parameters.
-        headers: The HTTP headers that were sent by the client.
+        *_: Ignored.
 
     Returns:
         Returns 1) the HTTP status code 2) the HTTP headers to be
@@ -61,13 +49,13 @@ class Controller:
     def __init__(self):
         """Constructor."""
         # Access restrictions
-        self._restrictions = []  # type: List[AccessRestriction]
+        self._restrictions = []  # type: List[_ComplexAccessRestriction]
         # Endpoints
-        self._endpoints = []  # type: List[Endpoint]
+        self._endpoints = []  # type: List[_ComplexEndpoint]
         # The default access denied handler
         self._access_denied = default_access_denied
 
-    def add_access_restriction(self, chk: AccessRestriction):
+    def add_access_restriction(self, chk: _ComplexAccessRestriction):
         """Adds an access restriction for this controller.
 
         The restriction is a function
@@ -82,7 +70,7 @@ class Controller:
         """
         self._restrictions.append(chk)
 
-    def set_permission_fail_handler(self, point: Endpoint):
+    def set_permission_fail_handler(self, point: _ComplexEndpoint):
         """Sets the handler for when access is denied.
 
         This will be called as an endpoint if any access check fails.
@@ -95,7 +83,7 @@ class Controller:
         """
         self._access_denied = point
 
-    def add_endpoint(self, point: Endpoint):
+    def add_endpoint(self, point: _ComplexEndpoint):
         """Adds an endpoint to this controller.
 
         The given callback function will be called if and only if the following
@@ -123,8 +111,8 @@ class Controller:
         self._endpoints.append(point)
 
     def call_endpoint(self, session_data: SessionData, path: List[str],
-                      params: Dict[str, POSTParam], headers: Dict[str, str]
-                      ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+                      params: Dict[str, _POSTParam], headers: Dict[str, str]
+                      ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
         """Calls an endpoint and returns the results.
 
         For details on which endpoint(s) will be called, check the

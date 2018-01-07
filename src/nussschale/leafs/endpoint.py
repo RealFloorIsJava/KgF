@@ -22,15 +22,24 @@ SOFTWARE.
 """
 
 from functools import wraps
+from io import BytesIO
 from json import dumps
-from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple
+from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Union
 
 from nussschale.session import SessionData
-from nussschale.util.types import HTTPResponse, POSTParam
 
 
 if TYPE_CHECKING:
     from nussschale.leafs.controller import Controller
+
+
+# Represents a POST parameter: Either a string, or a file or a list of strings
+# and files.
+_POSTParam = Union[str, List[Union[str, BytesIO]], BytesIO]
+
+
+# Represents a possibly encoded HTTP response
+_HTTPResponse = Union[str, bytes]
 
 
 class EndpointContext:
@@ -48,7 +57,7 @@ class EndpointContext:
     """
 
     def __init__(self, ctrl: "Controller", session: SessionData,
-                 path: List[str], params: Dict[str, POSTParam],
+                 path: List[str], params: Dict[str, _POSTParam],
                  headers: Dict[str, str]) -> None:
         """Constructor.
 
@@ -66,9 +75,9 @@ class EndpointContext:
         self.headers = headers
         self.code = 500  # 500 Internal Server Error
         self.response_headers = {"Content-Type": "text/plain; charset=utf-8"}
-        self.response = "Endpoint set no response"  # type: HTTPResponse
+        self.response = "Endpoint set no response"  # type: _HTTPResponse
 
-    def ok(self, content_type: str, response: HTTPResponse):
+    def ok(self, content_type: str, response: _HTTPResponse):
         """Sets the status to 200 OK.
 
         Args:
@@ -90,14 +99,14 @@ class EndpointContext:
 # Endpoint signatures
 _Endpoint = Callable[[EndpointContext], None]
 _ComplexEndpoint = Callable[
-    [SessionData, List[str], Dict[str, POSTParam], Dict[str, str]],
-    Tuple[int, Dict[str, str], HTTPResponse]
+    [SessionData, List[str], Dict[str, _POSTParam], Dict[str, str]],
+    Tuple[int, Dict[str, str], _HTTPResponse]
 ]
 
 # Access Restriction signatures
 _AccessRestriction = Callable[[EndpointContext], bool]
 _ComplexAccessRestriction = Callable[
-    [SessionData, List[str], Dict[str, POSTParam], Dict[str, str]],
+    [SessionData, List[str], Dict[str, _POSTParam], Dict[str, str]],
     bool
 ]
 
@@ -231,7 +240,7 @@ def _wrap_access_check(ctrl: "Controller", access_chk: _AccessRestriction
         The wrapped access restriction.
     """
     def complex_access_check(session: SessionData, path: List[str],
-                             params: Dict[str, POSTParam],
+                             params: Dict[str, _POSTParam],
                              headers: Dict[str, str]) -> bool:
         """A more complex access check, acting as an adapter for a simple one.
 
@@ -261,8 +270,8 @@ def _wrap_endpoint(ctrl: "Controller", endpoint: _Endpoint
         The wrapped endpoint.
     """
     def complex_endpoint(session: SessionData, path: List[str],
-                         params: Dict[str, POSTParam], headers: Dict[str, str]
-                         ) -> Tuple[int, Dict[str, str], HTTPResponse]:
+                         params: Dict[str, _POSTParam], headers: Dict[str, str]
+                         ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
         """A more complex endpoint, acting as an adapter for a simple endpoint.
 
         Args:

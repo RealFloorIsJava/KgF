@@ -25,8 +25,8 @@ from functools import wraps
 from typing import Dict
 
 from nussschale.leafs.controller import Controller
-from nussschale.leafs.endpoint import EndpointNotApplicableException
-from nussschale.util.types import Endpoint, POSTParam
+from nussschale.leafs.endpoint import EndpointNotApplicableException, \
+    _ComplexEndpoint, _POSTParam
 
 
 class MasterController(Controller):
@@ -36,7 +36,7 @@ class MasterController(Controller):
     _LEAF_INJECT = "___leaf___"
 
     @staticmethod
-    def decorate_params(leaf: str, params: Dict[str, POSTParam]):
+    def decorate_params(leaf: str, params: Dict[str, _POSTParam]):
         """Includes the leaf parameter in the POST parameters.
 
         The parameter is constructed in a way to make name collisions less
@@ -64,7 +64,8 @@ class MasterController(Controller):
             MasterController.decorate_endpoint_call(ctrl.call_endpoint, magic))
 
     @staticmethod
-    def decorate_endpoint_call(call: Endpoint, magic: str) -> Endpoint:
+    def decorate_endpoint_call(call: _ComplexEndpoint, magic: str
+                               ) -> _ComplexEndpoint:
         """Wraps an endpoint call to remove the magic leaf parameter.
 
         Args:

@@ -30,11 +30,11 @@ from traceback import extract_tb
 from typing import Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
+from nussschale.leafs.endpoint import _POSTParam
 from nussschale.leafs.master import MasterController
 from nussschale.nussschale import nlog
 from nussschale.session import Session
 from nussschale.util.heartbeat import Heartbeat
-from nussschale.util.types import POSTParam
 
 
 # Set the maximum request length, in bytes: 8 MiB
@@ -85,7 +85,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         pass  # No logging is wanted!
 
     @no_type_check
-    def do_request(self, params: Dict[str, POSTParam]):
+    def do_request(self, params: Dict[str, _POSTParam]):
         """Performs the necessary actions to serve an HTTP request.
 
         Handles GET and POST requests in the same way.
@@ -270,7 +270,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         return path
 
     @no_type_check
-    def _get_post_params(self) -> Dict[str, POSTParam]:
+    def _get_post_params(self) -> Dict[str, _POSTParam]:
         """Retrieves the POST parameters. Also handles file uploads.
 
         Returns:
