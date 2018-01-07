@@ -45,5 +45,5 @@ HTTPResponse = Union[str, bytes]
 # An endpoint of a leaf session, path, params, headers
 Endpoint = Callable[
     ["SessionData", List[str], Dict[str, POSTParam], Dict[str, str]],
-    Optional[Tuple[int, Dict[str, str], HTTPResponse]]
+    Tuple[int, Dict[str, str], HTTPResponse]
 ]

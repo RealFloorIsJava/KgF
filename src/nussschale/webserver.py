@@ -87,7 +87,7 @@ class Webserver(Thread):
 class MultithreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """A HTTP server which handles each request in a seperate thread."""
 
-    def handle_error(self, request: Any, client_addr: str):
+    def handle_error(self, request: Any, client_addr: Any):
         """Handles an error.
 
         Args:

@@ -112,8 +112,8 @@ class Controller:
             - Every key in params_restrict has to be present in the
                 parameters.
             - The access checks must not fail.
-            - Any other endpoint that was added before this endpoint is either
-                not called or returns None.
+            - Any other endpoint that was added before this endpoint is not
+                called.
 
         The callback function has the following signature:
             (session, path, params, headers) -> (status, headers, response)
@@ -202,11 +202,7 @@ class Controller:
                 continue
 
             # Endpoint matches, call endpoint callback
-            res = callback(session_data, path, params, headers)
-            if res is None:
-                # Fall through, the next endpoint should be considered
-                continue
-            return res
+            return callback(session_data, path, params, headers)
 
         # Last resort if there is no matching endpoint
         return (404,  # 404 Not Found

@@ -102,7 +102,9 @@ class IndexController(Controller):
         """
         if params["pw"] == self._login_pw:
             self._create_user(session)
-            return None  # fall through (will redirect to dashboard)
+            return (303,  # 303 See Other
+                    {"Location": "/dashboard"},
+                    "")
         return (303,  # 303 See Other
                 {"Location": "/index/pwfail"},
                 "")
@@ -124,7 +126,7 @@ class IndexController(Controller):
                path: List[str],
                params: Dict[str, POSTParam],
                headers: Dict[str, str]
-               ) -> None:
+               ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Handles logout requests.
 
         Will show the index page (via the index endpoint).
@@ -142,7 +144,7 @@ class IndexController(Controller):
         if "login" in session:
             session.remove("login")
 
-        return None  # Fall through
+        return self.index(session, path, params, headers)
 
     def index(self,
               session: SessionData,

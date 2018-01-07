@@ -33,7 +33,7 @@ class Heartbeat:
     """
 
     # The registered heartbeats.
-    heartbeats = []  # type: List[Heartbeat]
+    heartbeats = []  # type: List[Callable[[], None]]
 
     def __init__(self, f: Callable[[], None]) -> None:
         """Constructor.
