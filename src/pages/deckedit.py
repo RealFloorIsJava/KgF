@@ -21,101 +21,68 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Dict, List, Tuple
-
 from nussschale.leafs.controller import Controller
+from nussschale.leafs.endpoint import AccessRestriction, Endpoint, \
+    EndpointContext, HTTPException, PermissionFailHandler
 from nussschale.nussschale import nconfig
-from nussschale.session import SessionData
 from nussschale.util.template import Parser
-from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class DeckeditController(Controller):
-    """Handles the /deckedit leaf."""
+    """Handles the /deckedit leaf.
 
-    def __init__(self):
-        """Constructor."""
-        super().__init__()
+    Class Attributes:
+        logout_shown: Whether the logout link is shown, i.e. whether login is
+            required.
+    """
 
-        # Whether the logout link will be shown
-        self._logout_shown = nconfig().get("login-required", True)
+    # Whether the logout link will be shown
+    logout_shown = nconfig().get("login-required", True)
 
-        # Only allow logged-in users
-        self.add_access_restriction(self.check_access)
-        self.set_permission_fail_handler(self.fail_permission)
 
-        self.add_endpoint(self.deckedit)
+DeckeditLeaf = DeckeditController()
 
-    def check_access(self,
-                     session: SessionData,
-                     path: List[str],
-                     params: Dict[str, POSTParam],
-                     headers: Dict[str, str]
-                     ) -> bool:
-        """Checks whether the user is logged in.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@AccessRestriction(DeckeditLeaf)
+def check_login(ctx: EndpointContext) -> bool:
+    """Checks whether the user is logged in.
 
-        Returns:
-            True if and only if the user is logged in.
-        """
-        return "login" in session
+    Args:
+        ctx: The context of the request.
 
-    def fail_permission(self,
-                        session: SessionData,
-                        path: List[str],
-                        params: Dict[str, POSTParam],
-                        headers: Dict[str, str]
-                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles unauthorized clients.
+    Returns:
+        Whether the client is logged in.
+    """
+    return "login" in ctx.session
 
-        Redirects the client to the index page.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@PermissionFailHandler(DeckeditLeaf)
+def access_denied(_: EndpointContext):
+    """Handles unauthorized clients.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        return (303,  # 303 See Other
-                {"Location": "/index/authfail"},
-                "")
+    Args:
+        _: The context of the request.
 
-    def deckedit(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles requests for the deck editor page.
+    Raises:
+        HTTPException: (303) Always.
+    """
+    raise HTTPException.see_other().redirect("/index/authfail")
 
-        Serves the deck editor template.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@Endpoint(DeckeditLeaf)
+def deckedit(ctx: EndpointContext):
+    """Handles requests for the deck editor page.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        # Populate symbol table
-        symtab = {"nickname": session["nickname"],
-                  "theme": session["theme"],
-                  "showLogout": "" if self._logout_shown else None}
+    Serves the deck editor template.
 
-        # Parse the template
-        data = Parser.get_template("./res/tpl/deckedit.html", symtab)
-        return (200,  # 200 OK
-                {"Content-Type": "text/html; charset=utf-8"},
-                data)
+    Args:
+        ctx: The request's context.
+    """
+    # Populate symbol table
+    symtab = {"nickname": ctx.session["nickname"],
+              "theme": ctx.session["theme"],
+              "showLogout": "" if DeckeditController.logout_shown else None}
+
+    # Parse the template
+    data = Parser.get_template("./res/tpl/deckedit.html", symtab)
+    ctx.ok("text/html; charset=utf-8", data)

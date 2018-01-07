@@ -25,12 +25,6 @@ from model.match import Match
 from nussschale.nussschale import Nussschale
 from nussschale.util.commands import Command
 from nussschale.util.heartbeat import Heartbeat
-from pages.api import APIController
-from pages.dashboard import DashboardController
-from pages.deckedit import DeckeditController
-from pages.index import IndexController
-from pages.match import MatchController
-from pages.options import OptionsController
 
 
 @Heartbeat
@@ -57,13 +51,20 @@ def unfreeze():
 if __name__ == "__main__":
     ns = Nussschale()
 
+    from pages.api import APILeaf
+    from pages.dashboard import DashboardLeaf
+    from pages.deckedit import DeckeditLeaf
+    from pages.index import IndexLeaf
+    from pages.match import MatchLeaf
+    from pages.options import OptionsLeaf
+
     ns.add_leafs([
-        (APIController, "api"),
-        (DashboardController, "dashboard"),
-        (DeckeditController, "deckedit"),
-        (IndexController, "index"),
-        (MatchController, "match"),
-        (OptionsController, "options")
+        (APILeaf, "api"),
+        (DashboardLeaf, "dashboard"),
+        (DeckeditLeaf, "deckedit"),
+        (IndexLeaf, "index"),
+        (MatchLeaf, "match"),
+        (OptionsLeaf, "options")
     ])
 
     ns.start_server()

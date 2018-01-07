@@ -22,126 +22,76 @@ SOFTWARE.
 """
 
 from html import escape
-from typing import Dict, List, Tuple
 
 from nussschale.leafs.controller import Controller
-from nussschale.session import SessionData
-from nussschale.util.types import HTTPResponse, POSTParam
+from nussschale.leafs.endpoint import AccessRestriction, Endpoint, \
+    EndpointContext, HTTPException, PermissionFailHandler, RequireParameters
 
 
-class OptionsController(Controller):
-    """Handles the /options leaf."""
+# The /option leaf
+OptionsLeaf = Controller()
 
-    def __init__(self):
-        """Constructor."""
-        super().__init__()
 
-        # Only allow logged-in users
-        self.add_access_restriction(self.check_access)
-        self.set_permission_fail_handler(self.fail_permission)
+@AccessRestriction(OptionsLeaf)
+def login_required(ctx: EndpointContext) -> bool:
+    """Checks whether the user is logged in.
 
-        self.add_endpoint(self.theme, params_restrict={"theme"})
-        self.add_endpoint(self.name, params_restrict={"name"})
+    Args:
+        ctx: The context of the request.
 
-    def check_access(self,
-                     session: SessionData,
-                     path: List[str],
-                     params: Dict[str, POSTParam],
-                     headers: Dict[str, str]
-                     ) -> bool:
-        """Checks whether the user is logged in.
+    Returns:
+        True iff the client is logged in.
+    """
+    return "login" in ctx.session
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
 
-        Returns:
-            True if and only if the user is logged in.
-        """
-        return "login" in session
+@PermissionFailHandler(OptionsLeaf)
+def not_logged_in(_: EndpointContext):
+    """Informs the client that access was denied.
 
-    def fail_permission(self,
-                        session: SessionData,
-                        path: List[str],
-                        params: Dict[str, POSTParam],
-                        headers: Dict[str, str]
-                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles unauthorized clients.
+    Args:
+        _: Ignored.
 
-        Informs the client that access was denied.
+    Raises:
+        HTTPException: (403, json) Always.
+    """
+    raise HTTPException.forbidden(True)
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        return (403,  # 403 Forbidden
-                {"Content-Type": "text/plain"},
-                "Not authenticated")
+@Endpoint(OptionsLeaf)
+@RequireParameters("theme")
+def theme(ctx: EndpointContext):
+    """Handles changing the theme of the application for a client.
 
-    def theme(self,
-              session: SessionData,
-              path: List[str],
-              params: Dict[str, POSTParam],
-              headers: Dict[str, str]
-              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles changing the theme of the application for a client.
+    The theme is set to either 'light' or 'dark', depending on the request
+    parameters.
+    Informs the client of the success of the operation.
 
-        The theme is set to either 'light' or 'dark', depending on the request
-        parameters.
-        Informs the client of the success of the operation.
+    Args:
+        ctx: The request's context.
+    """
+    new_theme = ctx.params["theme"]
+    if new_theme not in ("dark", "light"):
+        new_theme = "light"
+    ctx.session["theme"] = new_theme
+    ctx.json_ok()
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        new_theme = params["theme"]
-        if new_theme not in ("dark", "light"):
-            new_theme = "light"
-        session["theme"] = new_theme
-        return (200,  # 200 OK
-                {"Content-Type": "text/plain"},
-                "OK")
+@Endpoint(OptionsLeaf)
+@RequireParameters("name")
+def name(ctx: EndpointContext):
+    """Handles changing the name of the client.
 
-    def name(self,
-             session: SessionData,
-             path: List[str],
-             params: Dict[str, POSTParam],
-             headers: Dict[str, str]
-             ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles changing the name of the client.
+    If the name is longer than 31 characters it will be cut off after
+    the 31st character.
+    Informs the client of the success of the operation.
 
-        If the name is longer than 31 characters it will be cut off after
-        the 31st character.
-        Informs the client of the success of the operation.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if not isinstance(params["name"], str):
-            return self.fail_permission(session, path, params, headers)
-        new_name = escape(params["name"])[:31]
-        session["nickname"] = new_name
-        return (200,  # 200 OK
-                {"Content-Type": "text/plain"},
-                "OK")
+    Args:
+        ctx: The request's context.
+    """
+    name_param = ctx.params["name"]
+    if not isinstance(name_param, str):
+        raise HTTPException.unsupported_media_type(True)
+    new_name = escape(name_param)[:31]
+    ctx.session["nickname"] = new_name
+    ctx.json_ok()

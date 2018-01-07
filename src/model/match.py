@@ -28,6 +28,7 @@ Module Deadlock Guarantees:
     can not be part of any deadlock.
 """
 
+
 import re
 from collections import OrderedDict
 from html import escape
@@ -82,7 +83,7 @@ class Match:
     _THRESHOLD_CHOOSING_FINISH = 10
 
     # The match id -> match registry and the ID counter
-    _registry = OrderedDict()
+    _registry = OrderedDict()  # type: ignore
     _id_counter = 0
 
     # MutEx for the match registry

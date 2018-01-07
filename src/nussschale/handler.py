@@ -175,7 +175,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             # Notify the user that the request failed
             self._reply(500,  # 500 Internal Server Error
-                        {"Content-Type": "text/plain"},
+                        {"Content-Type": "text/plain; charset=utf-8"},
                         ("The server encountered an unexpected condition and"
                          " is unable to continue.").encode())
             return
@@ -402,7 +402,9 @@ class ServerHandler(BaseHTTPRequestHandler):
             code: The HTTP status code that will be sent.
             msg: The response string that will be sent.
         """
-        self._reply(code, {"Content-Type": "text/plain"}, msg.encode())
+        self._reply(code,
+                    {"Content-Type": "text/plain; charset=utf-8"},
+                    msg.encode())
 
     def _reply(self, code: int, headers: Dict[str, str], data: bytes):
         """Sends an HTTP response to the client.

@@ -22,168 +22,123 @@ SOFTWARE.
 """
 
 from random import randint
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import uuid4
 
 from nussschale.leafs.controller import Controller
+from nussschale.leafs.endpoint import Endpoint, EndpointContext, \
+    HTTPException, OnlyIf, RequireParameters, RequirePath
 from nussschale.nussschale import nconfig
 from nussschale.session import SessionData
 from nussschale.util.template import Parser
-from nussschale.util.types import HTTPResponse, POSTParam
+
+
+def _create_user(session: SessionData):
+    """Initializes a temporary user account.
+
+    Args:
+        session: The session data the user will be created in.
+    """
+    session["login"] = True
+    session["id"] = str(uuid4())
+    session["nickname"] = "Meme" + str(randint(10000, 99999))
+    session["theme"] = "light"
 
 
 class IndexController(Controller):
-    """Handles the /index leaf."""
+    """Handles the /index leaf.
 
-    def __init__(self):
-        """Constructor."""
-        super().__init__()
+    Class Attributes:
+        login_pw: The login password.
+        login_required: Whether login is required.
+    """
 
-        # Load the login password
-        self._login_pw = nconfig().get("site-pw", "loremipsum")
+    # Load the login password
+    login_pw = nconfig().get("site-pw", "loremipsum")
 
-        # Whether a login is required
-        self._login_required = nconfig().get("login-required", True)
+    # Whether a login is required
+    login_required = nconfig().get("login-required", True)
 
-        # Adds the catch-all endpoint if login is not required
-        if not self._login_required:
-            self.add_endpoint(self.catchall)
 
-        self.add_endpoint(self.login, params_restrict={"pw"})
-        self.add_endpoint(self.logout, path_restrict={"logout"})
-        self.add_endpoint(self.index)
+IndexLeaf = IndexController()
 
-    def catchall(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles creating a user when login is disabled.
 
-        Will redirect to the dashboard.
+@Endpoint(IndexLeaf)
+@OnlyIf(not IndexController.login_required)
+def no_login_required(ctx: EndpointContext):
+    """Handles creating a user when login is disabled.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Will redirect to the dashboard.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if "login" not in session:
-            self._create_user(session)
-        return (303,  # 303 See Other
-                {"Location": "/dashboard"},
-                "")
+    Args:
+        ctx: The request's context.
 
-    def login(self,
-              session: SessionData,
-              path: List[str],
-              params: Dict[str, POSTParam],
-              headers: Dict[str, str]
-              ) -> Optional[Tuple[int, Dict[str, str], HTTPResponse]]:
-        """Handles requests made with the login form.
+    Raises:
+        HTTPException: (303) Always.
+    """
+    if "login" not in ctx.session:
+        _create_user(ctx.session)
+    raise HTTPException.see_other().redirect("/dashboard")
 
-        Will redirect (via the index endpoint) to the dashboard on success.
-        If the login fails the client is redirected to the index endpoint.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@Endpoint(IndexLeaf)
+@RequireParameters("pw")
+def login(ctx: EndpointContext):
+    """Handles requests made with the login form.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if params["pw"] == self._login_pw:
-            self._create_user(session)
-            return (303,  # 303 See Other
-                    {"Location": "/dashboard"},
-                    "")
-        return (303,  # 303 See Other
-                {"Location": "/index/pwfail"},
-                "")
+    Will redirect to the dashboard on success.
+    If the login fails the client is redirected to the index endpoint.
 
-    @staticmethod
-    def _create_user(session: SessionData):
-        """Initializes a temporary user account.
+    Args:
+        ctx: The request's context.
 
-        Args:
-            session: The session data the user will be created in.
-        """
-        session["login"] = True
-        session["id"] = str(uuid4())
-        session["nickname"] = "Meme" + str(randint(10000, 99999))
-        session["theme"] = "light"
+    Raises:
+        HTTPException: (303) Always.
+    """
+    if ctx.params["pw"] == IndexController.login_pw:
+        _create_user(ctx.session)
+        raise HTTPException.see_other().redirect("/dashboard")
+    raise HTTPException.see_other().redirect("/index/pwfail")
 
-    def logout(self,
-               session: SessionData,
-               path: List[str],
-               params: Dict[str, POSTParam],
-               headers: Dict[str, str]
-               ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles logout requests.
 
-        Will show the index page (via the index endpoint).
+@Endpoint(IndexLeaf)
+@RequirePath("logout")
+def logout(ctx: EndpointContext):
+    """Handles logout requests.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Will show the index page (via the index endpoint).
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if "login" in session:
-            session.remove("login")
+    Args:
+        ctx: The context of the request.
+    """
+    if "login" in ctx.session:
+        ctx.session.remove("login")
+    index(ctx)
 
-        return self.index(session, path, params, headers)
 
-    def index(self,
-              session: SessionData,
-              path: List[str],
-              params: Dict[str, POSTParam],
-              headers: Dict[str, str]
-              ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles requests for the index page.
+@Endpoint(IndexLeaf)
+def index(ctx: EndpointContext):
+    """Handles requests for the index page.
 
-        Redirects to the dashboard if the client is logged in. Serves the
-        start template otherwise.
+    Redirects to the dashboard if the client is logged in. Serves the
+    start template otherwise.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Args:
+        ctx: The context of the request.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        # If the user is already logged in, send him to the dashboard
-        if "login" in session:
-            return (303,  # 303 See Other
-                    {"Location": "/dashboard"},
-                    "")
+    Raises:
+        HTTPException: (303) When logged in.
+    """
+    if "login" in ctx.session:
+        raise HTTPException.see_other().redirect("/dashboard")
 
-        # Populate symbol table
-        symtab = {}  # type: Any
-        if "authfail" in path:
-            symtab["authfail"] = ""
-        elif "pwfail" in path:
-            symtab["pwfail"] = ""
-        elif "logout" in path:
-            symtab["logout"] = ""
+    # Populate symbol table
+    symtab = {}  # type: Any
+    msg_indicators = ["authfail", "pwfail", "logout"]
+    for ind in msg_indicators:
+        if ind in ctx.path:
+            symtab[ind] = ""
 
-        # Parse the template
-        data = Parser.get_template("./res/tpl/start.html", symtab)
-        return (200,  # 200 OK
-                {"Content-Type": "text/html; charset=utf-8"},
-                data)
+    # Parse the template
+    data = Parser.get_template("./res/tpl/start.html", symtab)
+    ctx.ok("text/html; charset=utf-8", data)

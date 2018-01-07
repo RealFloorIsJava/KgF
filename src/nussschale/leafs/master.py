@@ -21,9 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from functools import wraps
 from typing import Dict
 
 from nussschale.leafs.controller import Controller
+from nussschale.leafs.endpoint import EndpointNotApplicableException
 from nussschale.util.types import Endpoint, POSTParam
 
 
@@ -59,9 +61,7 @@ class MasterController(Controller):
 
         # Add the decorated endpoint
         self.add_endpoint(
-            MasterController.decorate_endpoint_call(ctrl.call_endpoint, magic),
-            params_restrict={magic}
-        )
+            MasterController.decorate_endpoint_call(ctrl.call_endpoint, magic))
 
     @staticmethod
     def decorate_endpoint_call(call: Endpoint, magic: str) -> Endpoint:
@@ -74,10 +74,10 @@ class MasterController(Controller):
         Returns:
             The wrapped endpoint call.
         """
+        @wraps(call)
         def _decorated_call(session, path, params, headers):
-            if magic in params:
-                del params[magic]
+            if magic not in params:
+                raise EndpointNotApplicableException()
+            del params[magic]
             return call(session, path, params, headers)
-        _decorated_call.__doc__ = call.__doc__
-        _decorated_call.__name__ = call.__name__
         return _decorated_call

@@ -21,8 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Callable, Dict, List, Set, Tuple
+from typing import Callable, Dict, List, Tuple
 
+from nussschale.leafs.endpoint import EndpointNotApplicableException
 from nussschale.session import SessionData
 from nussschale.util.types import Endpoint, HTTPResponse, POSTParam
 
@@ -34,14 +35,8 @@ AccessRestriction = Callable[
 ]
 
 
-# An endpoint that is only called under certain conditions
-RestrictedEndpoint = Tuple[Tuple[Set[str], Set[str]], Endpoint]
-
-
-def default_access_denied(session: SessionData,
-                          path: List[str],
-                          params: Dict[str, POSTParam],
-                          headers: Dict[str, str]
+def default_access_denied(session: SessionData, path: List[str],
+                          params: Dict[str, POSTParam], headers: Dict[str, str]
                           ) -> Tuple[int, Dict[str, str], HTTPResponse]:
     """The default access denied handler.
 
@@ -56,7 +51,7 @@ def default_access_denied(session: SessionData,
         sent and 3) the response to be sent to the client.
     """
     return (403,  # 403 Forbidden
-            {"Content-Type": "text/plain"},
+            {"Content-Type": "text/plain; charset=utf-8"},
             "Access denied")
 
 
@@ -68,7 +63,7 @@ class Controller:
         # Access restrictions
         self._restrictions = []  # type: List[AccessRestriction]
         # Endpoints
-        self._endpoints = []  # type: List[RestrictedEndpoint]
+        self._endpoints = []  # type: List[Endpoint]
         # The default access denied handler
         self._access_denied = default_access_denied
 
@@ -100,20 +95,14 @@ class Controller:
         """
         self._access_denied = point
 
-    def add_endpoint(self,
-                     point: Endpoint,
-                     path_restrict: Set[str]=None,
-                     params_restrict: Set[str]=None):
+    def add_endpoint(self, point: Endpoint):
         """Adds an endpoint to this controller.
 
         The given callback function will be called if and only if the following
         conditions hold:
-            - Every element in path_restrict has to be present in the path.
-            - Every key in params_restrict has to be present in the
-                parameters.
             - The access checks must not fail.
             - Any other endpoint that was added before this endpoint is not
-                called.
+                called or raises an EndpointNotApplicableException.
 
         The callback function has the following signature:
             (session, path, params, headers) -> (status, headers, response)
@@ -130,27 +119,11 @@ class Controller:
         Args:
             point: The endpoint callback function as described
                 above.
-            path_restrict: The path restrictions as described
-                above.
-            params_restrict: The params restrictions as
-                described above.
         """
-        # Default path restriction is no restriction
-        if path_restrict is None:
-            path_restrict = set()
+        self._endpoints.append(point)
 
-        # Default parameter restriction is no restriction
-        if params_restrict is None:
-            params_restrict = set()
-
-        # Structure: [(path,param) -> (endpoint)]
-        self._endpoints.append(((path_restrict, params_restrict), point))
-
-    def call_endpoint(self,
-                      session_data: SessionData,
-                      path: List[str],
-                      params: Dict[str, POSTParam],
-                      headers: Dict[str, str]
+    def call_endpoint(self, session_data: SessionData, path: List[str],
+                      params: Dict[str, POSTParam], headers: Dict[str, str]
                       ) -> Tuple[int, Dict[str, str], HTTPResponse]:
         """Calls an endpoint and returns the results.
 
@@ -180,31 +153,12 @@ class Controller:
 
         # Find endpoint
         for point in self._endpoints:
-            path_restrict = point[0][0]
-            params_restrict = point[0][1]
-            callback = point[1]
-            fail = False
-
-            # Check path
-            for request in path_restrict:
-                if request not in path:
-                    fail = True
-                    break
-            if fail:
-                continue
-
-            # Check params
-            for request in params_restrict:
-                if request not in params:
-                    fail = True
-                    break
-            if fail:
-                continue
-
-            # Endpoint matches, call endpoint callback
-            return callback(session_data, path, params, headers)
+            try:
+                return point(session_data, path, params, headers)
+            except EndpointNotApplicableException:
+                pass  # Check next endpoint
 
         # Last resort if there is no matching endpoint
-        return (404,  # 404 Not Found
-                {"Content-Type": "text/plain"},
+        return (500,  # 500 Internal Server Error
+                {"Content-Type": "text/plain; charset=utf-8"},
                 "No applicable endpoint found")

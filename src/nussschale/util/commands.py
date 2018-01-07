@@ -64,7 +64,7 @@ class Command:
             nlog().log(str(e))
             print("An error occurred - check the log for details.")
 
-    def __call__(self, fn: Callable[[], None]):
+    def __call__(self, fn: Callable[[], None]) -> Callable[[], None]:
         """Decorates the command's function.
 
         Args:

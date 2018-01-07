@@ -26,7 +26,7 @@ import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
 from sys import exit
-from typing import List, TYPE_CHECKING, Tuple, Type
+from typing import List, TYPE_CHECKING, Tuple
 
 from nussschale.config import Config
 from nussschale.log import Log
@@ -59,7 +59,7 @@ class Nussschale:
         # Late import to prevent circular dependencies
         from nussschale.webserver import Webserver
         from nussschale.leafs.master import MasterController
-        from nussschale.leafs.resource import ResourceController
+        from nussschale.leafs.resource import ResourceLeaf
 
         print("Setting up environment...")
 
@@ -67,18 +67,18 @@ class Nussschale:
         if not isdir("./data"):
             mkdir("./data", 0o0700)  # rwx --- ---
 
+        # Setup configuration
+        Nussschale.nconfig = Config()
+
         # Setup logging
         Nussschale.nlog = Log()
         Nussschale.nlog.setup("nussschale", 4)
         nlog().log("Starting Nussschale...")
 
-        # Setup configuration
-        Nussschale.nconfig = Config()
-
         # Setup web server
         self._webserver = Webserver()
         self._master = MasterController()
-        self._master.add_leaf("res", ResourceController())
+        self._master.add_leaf("res", ResourceLeaf)
 
         # Check whether the webserver should be started or whether it is just
         # an initialization run
@@ -97,14 +97,14 @@ class Nussschale:
         self._webserver.start()
         nlog().log("Up and running!")
 
-    def add_leafs(self, leafs: List[Tuple[Type["Controller"], str]]):
+    def add_leafs(self, leafs: List[Tuple["Controller", str]]):
         """Adds the given leafs to the server.
 
         Args:
             leafs: The leafs that should be added.
         """
-        for type, leaf in leafs:
-            self._master.add_leaf(leaf, type())
+        for controller, leaf in leafs:
+            self._master.add_leaf(leaf, controller)
 
     def run(self):
         """Runs the minimal console."""

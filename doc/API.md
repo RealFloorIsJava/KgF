@@ -15,7 +15,7 @@ following response:
 ```
 > POST /api/choose (handId=abc)
 {
-  "error": "not authenticated"
+  "error": "Forbidden"
 }
 ```
 

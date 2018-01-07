@@ -24,482 +24,376 @@ SOFTWARE.
 from html import escape
 from json import dumps
 from time import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 from model.match import ExpectationException, Match
 from model.participant import Participant
 from nussschale.leafs.controller import Controller
-from nussschale.session import SessionData
-from nussschale.util.types import HTTPResponse, POSTParam
+from nussschale.leafs.endpoint import AccessRestriction, Endpoint, \
+    EndpointContext, HTTPException, PermissionFailHandler, RequireParameters, \
+    RequirePath
 
 
-class APIController(Controller):
-    """Handles the /api leaf."""
+# Handles the /api leaf.
+APILeaf = Controller()
 
-    def __init__(self):
-        """Constructor."""
-        super().__init__()
 
-        # Only allow logged-in users
-        self.add_access_restriction(self.check_access)
-        self.set_permission_fail_handler(self.fail_permission)
+@AccessRestriction(APILeaf)
+def check_login(ctx: EndpointContext) -> bool:
+    """Checks whether the user is logged in.
 
-        self.add_endpoint(self.api_list, path_restrict={"list"})
-        self.add_endpoint(self.api_status, path_restrict={"status"})
-        self.add_endpoint(self.api_chat_send,
-                          path_restrict={"chat", "send"},
-                          params_restrict={"message"})
-        self.add_endpoint(self.api_chat, path_restrict={"chat"})
-        self.add_endpoint(self.api_participants,
-                          path_restrict={"participants"})
-        self.add_endpoint(self.api_cards, path_restrict={"cards"})
-        self.add_endpoint(self.api_choose,
-                          path_restrict={"choose"},
-                          params_restrict={"handId"})
-        self.add_endpoint(self.api_pick,
-                          path_restrict={"pick"},
-                          params_restrict={"playedId"})
-        self.add_endpoint(self.api_join,
-                          path_restrict={"join"},
-                          params_restrict={"spectator", "id"})
+    Args:
+        ctx: The context of the request.
 
-    def check_access(self,
-                     session: SessionData,
-                     path: List[str],
-                     params: Dict[str, POSTParam],
-                     headers: Dict[str, str]
-                     ) -> bool:
-        """Checks whether the user is logged in.
+    Returns:
+        Whether the client is logged in.
+    """
+    return "login" in ctx.session
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
 
-        Returns:
-            True if and only if the user is logged in.
-        """
-        return "login" in session
+@PermissionFailHandler(APILeaf)
+def access_denied(_: EndpointContext):
+    """Handles unauthorized clients.
 
-    def fail_permission(self,
-                        session: SessionData,
-                        path: List[str],
-                        params: Dict[str, POSTParam],
-                        headers: Dict[str, str]
-                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles unauthorized clients.
+    Args:
+        _: The context of the request.
 
-        Informs the client that access was denied.
+    Raises:
+        HTTPException: (403) Always.
+    """
+    raise HTTPException.forbidden(True)
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        return (403,  # 403 Forbidden
-                {"Content-Type": "application/json; charset=utf-8"},
-                "{\"error\":\"not authenticated\"}")
+@Endpoint(APILeaf)
+@RequirePath("join")
+@RequireParameters("spectator", "id")
+def api_join(ctx: EndpointContext):
+    """Handles joining a match.
 
-    def api_join(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles joining a match.
+    Args:
+        ctx: The context of the request.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Raises:
+        HTTPException: (403) When the user is already in a match,
+                             or invalid data is sent.
+    """
+    if Match.get_match_of_player(ctx.session["id"]) is not None:
+        # The user is already in a match
+        raise HTTPException.forbidden(True)
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if Match.get_match_of_player(session["id"]) is not None:
-            # The user already is in a match
-            return (303,  # 303 See Other
-                    {"Location": "/match"},
-                    "")
+    # Get the match ID and participant state
+    try:
+        id = int(ctx.params["id"])  # type: ignore
+    except ValueError:
+        raise HTTPException.forbidden(True)
+    spectator = ctx.params["spectator"] == "true"
 
-        # Get the match ID and participant state
+    # Get the match
+    match = Match.get_by_id(id)
+    if match is None:
+        raise HTTPException.forbidden(True)
+
+    # Put the player into the match
+    part = Participant(ctx.session["id"], ctx.session["nickname"])
+    part.spectator = spectator
+    try:
+        match.add_participant(part)
+    except ExpectationException:
+        # Can't join right now
+        raise HTTPException.forbidden(True)
+
+    ctx.json_ok()
+
+
+@Endpoint(APILeaf)
+@RequirePath("pick")
+@RequireParameters("playedId")
+def api_pick(ctx: EndpointContext):
+    """Handles picking a round winner.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+
+    # Get the participant. Participant must not be a spectator.
+    part = match.get_participant(ctx.session["id"])
+    if part.spectator:
+        raise HTTPException.forbidden(True)
+
+    # Check whether the participant is allowed to pick a winner.
+    if not match.is_picking() or not part.picking:
+        raise HTTPException.forbidden(True)
+
+    # Pick the winner.
+    try:
+        playedid = int(ctx.params["playedId"])  # type: ignore
+    except ValueError:
+        raise HTTPException.forbidden(True)
+    match.declare_round_winner(playedid)
+    ctx.json_ok()
+
+
+@Endpoint(APILeaf)
+@RequirePath("choose")
+@RequireParameters("handId")
+def api_choose(ctx: EndpointContext):
+    """Handles (un)choosing a hand card.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+    part = match.get_participant(ctx.session["id"])
+    if part.spectator:
+        raise HTTPException.forbidden(True)
+
+    if not match.is_choosing() or part.picking:
+        raise HTTPException.forbidden(True)
+
+    try:
+        handid = int(ctx.params["handId"])  # type: ignore
+    except ValueError:
+        raise HTTPException.forbidden(True)
+
+    part.toggle_chosen(handid, match.count_gaps())
+    match.check_choosing_done()
+    ctx.json_ok()
+
+
+@Endpoint(APILeaf)
+@RequirePath("cards")
+def api_cards(ctx: EndpointContext):
+    """Retrieves the list of cards (hand, played) in the current match.
+
+    Returns a JSON response containing the hand cards and played cards.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+    part = match.get_participant(ctx.session["id"])
+
+    data = {}
+
+    # Load the data of the hand cards
+    if not part.spectator:
+        hand_cards = {
+            "OBJECT": {},
+            "VERB": {}
+        }  # type: Dict[str, Dict]
+        hand = part.get_hand()
+        for id, hcard in hand.items():
+            hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
+                                               "chosen": hcard.chosen}
+        data["hand"] = hand_cards
+
+    # Load the data of the played cards
+    # Note: If the order changes this might lead to inconsistencies but the
+    # client polls this data often so it is no problem.
+    played_cards = []  # type: Any
+    can_view_choices = match.can_view_choices()
+    for p in match.get_participants(False):
+        redacted = not can_view_choices and part is not p
+        order = p.order
+
+        # Ensure list is big enough then insert the data
+        while len(played_cards) <= order:
+            played_cards.append([])
+        played_cards[p.order] = p.get_choose_data(redacted)
+    data["played"] = played_cards
+
+    ctx.ok("application/json; charset=utf-8", dumps(data))
+
+
+@Endpoint(APILeaf)
+@RequirePath("participants")
+def api_participants(ctx: EndpointContext):
+    """Retrieves the list of participants of the client's match.
+
+    Returns a JSON response containing the participants of the match.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+
+    data = []
+    for part in match.get_participants():
+        data.append({"id": part.id,
+                     "name": part.nickname,
+                     "score": part.score,
+                     "picking": part.picking,
+                     "spectator": part.spectator})
+
+    ctx.ok("application/json; charset=utf-8", dumps(data))
+
+
+@Endpoint(APILeaf)
+@RequirePath("chat", "send")
+@RequireParameters("message")
+def api_chat_send(ctx: EndpointContext):
+    """Handles sending a chat message.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    if not isinstance(ctx.params["message"], str):
+        raise HTTPException.forbidden(True)
+    msg = escape(ctx.params["message"])
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+    part = match.get_participant(ctx.session["id"])
+
+    # Check whether the user may send a message now
+    if "chatcooldown" in ctx.session:
+        if ctx.session["chatcooldown"] > time():
+            ctx.code = 403  # 403 Forbidden
+            ctx.response_headers["Content-Type"] = ("application/json;"
+                                                    " charset=utf-8")
+            ctx.response = dumps({"error": "spam rejected"})
+            return
+    ctx.session["chatcooldown"] = time() + 1
+
+    # Check the chat message for sanity
+    if 0 < len(msg) < 200:
+        # Send the message
+        match.send_message(part.nickname, msg)
+        ctx.json_ok()
+    else:
+        ctx.code = 403  # 403 Forbidden
+        ctx.response_headers["Content-Type"] = ("application/json;"
+                                                " charset=utf-8")
+        ctx.response = dumps({"error": "invalid size"})
+
+
+@Endpoint(APILeaf)
+@RequirePath("chat")
+def api_chat(ctx: EndpointContext):
+    """Retrieves the chat history, optionally starting at the given offset.
+
+    Returns a JSON response containing the requested chat messages.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+
+    # Check whether a message offset was supplied
+    offset = 0
+    if "offset" in ctx.params:
         try:
-            id = int(params["id"])  # type: ignore
+            offset = int(ctx.params["offset"])  # type: ignore
         except ValueError:
-            return self.fail_permission(session, path, params, headers)
-        spectator = params["spectator"] == "true"
+            pass
 
-        # Get the match
-        match = Match.get_by_id(id)
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
+    # Fetch the chat data
+    data = match.retrieve_chat(offset)
+    ctx.ok("application/json; charset=utf-8", dumps(data))
 
-        # Put the player into the match
-        part = Participant(session["id"], session["nickname"])
-        part.spectator = spectator
-        try:
-            match.add_participant(part)
-        except ExpectationException:  # Can't join right now
-            return self.fail_permission(session, path, params, headers)
 
-        return (303,  # 303 See Other
-                {"Location": "/match"},
-                "")
+@Endpoint(APILeaf)
+@RequirePath("status")
+def api_status(ctx: EndpointContext):
+    """Retrieves the status of the client's match.
 
-    def api_pick(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles picking a round winner.
+    Returns a JSON response containing the status.
 
-        Returns a JSON status.
+    Args:
+        ctx: The context of the request.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True)
+    part = match.get_participant(ctx.session["id"])
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-        part = match.get_participant(session["id"])
-        if part.spectator:
-            return self.fail_permission(session, path, params, headers)
+    # Refresh the timeout timer of the participant
+    part.refresh()
 
-        if not match.is_picking() or not part.picking:
-            return self.fail_permission(session, path, params, headers)
+    # Prepare the data for the status request
+    allow_choose = (match.is_choosing()
+                    and not part.picking
+                    and not part.spectator)
+    allow_pick = (match.is_picking()
+                  and part.picking
+                  and not part.spectator)
+    data = {"timer": int(match.get_seconds_to_next_phase()),
+            "status": match.get_status(),
+            "ending": match.is_ending(),
+            "hasCard": match.has_card(),
+            "allowChoose": allow_choose,
+            "allowPick": allow_pick,
+            "isSpectator": part.spectator,
+            "gaps": match.count_gaps()}
 
-        try:
-            playedid = int(params["playedId"])  # type: ignore
-        except ValueError:
-            return self.fail_permission(session, path, params, headers)
+    # Add the card text to the output, if possible
+    if data["hasCard"]:
+        data["cardText"] = match.current_card.text
 
-        match.declare_round_winner(playedid)
+    ctx.ok("application/json; charset=utf-8", dumps(data))
 
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                "{\"error\":\"OK\"}")
 
-    def api_choose(self,
-                   session: SessionData,
-                   path: List[str],
-                   params: Dict[str, POSTParam],
-                   headers: Dict[str, str]
-                   ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles (un)choosing a hand card.
+@Endpoint(APILeaf)
+@RequirePath("list")
+def api_list(ctx: EndpointContext):
+    """Retrieves the list of all existing matches.
 
-        Returns a JSON status.
+    Returns a JSON response containing all matches.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+    Args:
+        ctx: The context of the request.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-        part = match.get_participant(session["id"])
-        if part.spectator:
-            return self.fail_permission(session, path, params, headers)
-
-        if not match.is_choosing() or part.picking:
-            return self.fail_permission(session, path, params, headers)
-
-        try:
-            handid = int(params["handId"])  # type: ignore
-        except ValueError:
-            return self.fail_permission(session, path, params, headers)
-
-        part.toggle_chosen(handid, match.count_gaps())
-        match.check_choosing_done()
-
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                "{\"error\":\"OK\"}")
-
-    def api_cards(self,
-                  session: SessionData,
-                  path: List[str],
-                  params: Dict[str, POSTParam],
-                  headers: Dict[str, str]
-                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Retrieves the list of cards (hand, played) in the current match.
-
-        Returns a JSON response containing the hand cards and played cards.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-        part = match.get_participant(session["id"])
-
-        data = {}
-
-        # Load the data of the hand cards
-        if not part.spectator:
-            hand_cards = {
-                "OBJECT": {},
-                "VERB": {}
-            }  # type: Dict[str, Any]
-            hand = part.get_hand()
-            for id, hcard in hand.items():
-                hand_cards[hcard.card.type][id] = {"text": hcard.card.text,
-                                                   "chosen": hcard.chosen}
-            data["hand"] = hand_cards
-
-        # Load the data of the played cards
-        # Note: If the order changes this might lead to inconsistencies but the
-        # client polls this data often so it is no problem.
-        played_cards = []  # type: Any
-        can_view_choices = match.can_view_choices()
-        for p in match.get_participants(False):
-            redacted = not can_view_choices and part is not p
-            order = p.order
-
-            # Ensure list is big enough then insert the data
-            while len(played_cards) <= order:
-                played_cards.append([])
-            played_cards[p.order] = p.get_choose_data(redacted)
-        data["played"] = played_cards
-
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                dumps(data))
-
-    def api_participants(self,
-                         session: SessionData,
-                         path: List[str],
-                         params: Dict[str, POSTParam],
-                         headers: Dict[str, str]
-                         ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Retrieves the list of participants of the client's match.
-
-        Returns a JSON response containing the participants of the match.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-
-        data = []
-        for part in match.get_participants():
-            data.append({"id": part.id,
-                         "name": part.nickname,
-                         "score": part.score,
-                         "picking": part.picking,
-                         "spectator": part.spectator})
-
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                dumps(data))
-
-    def api_chat_send(self,
-                      session: SessionData,
-                      path: List[str],
-                      params: Dict[str, POSTParam],
-                      headers: Dict[str, str]
-                      ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles sending a chat message.
-
-        Returns a JSON status.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        if not isinstance(params["message"], str):
-            return self.fail_permission(session, path, params, headers)
-        msg = escape(params["message"])
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-        part = match.get_participant(session["id"])
-
-        # Check whether the user may send a message now
-        if "chatcooldown" in session:
-            if session["chatcooldown"] > time():
-                return (403,  # 403 Forbidden
-                        {"Content-Type": "application/json; charset=utf-8"},
-                        "{\"error\":\"spam rejected\"}")
-        session["chatcooldown"] = time() + 1
-
-        # Check the chat message for sanity
-        if 0 < len(msg) < 200:
-            # Send the message
-            match.send_message(part.nickname, msg)
-            return (200,  # 200 OK
-                    {"Content-Type": "application/json; charset=utf-8"},
-                    "{\"error\":\"OK\"}")
-
-        return (403,  # 403 Forbidden
-                {"Content-Type": "application/json; charset=utf-8"},
-                "{\"error\":\"invalid size\"}")
-
-    def api_chat(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Retrieves the chat history, optionally starting at the given offset.
-
-        Returns a JSON response containing the requested chat messages.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-
-        # Check whether a message offset was supplied
-        offset = 0
-        if "offset" in params:
-            try:
-                offset = int(params["offset"])  # type: ignore
-            except ValueError:
-                pass
-
-        # Fetch the chat data
-        data = match.retrieve_chat(offset)
-
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                dumps(data))
-
-    def api_status(self,
-                   session: SessionData,
-                   path: List[str],
-                   params: Dict[str, POSTParam],
-                   headers: Dict[str, str]
-                   ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Retrieves the status of the client's match.
-
-        Returns a JSON response containing the status.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        match = Match.get_match_of_player(session["id"])
-        if match is None:
-            return self.fail_permission(session, path, params, headers)
-        part = match.get_participant(session["id"])
-
-        # Refresh the timeout timer of the participant
-        part.refresh()
-
-        # Prepare the data for the status request
-        allow_choose = (match.is_choosing()
-                        and not part.picking
-                        and not part.spectator)
-        allow_pick = (match.is_picking()
-                      and part.picking
-                      and not part.spectator)
-        data = {"timer": int(match.get_seconds_to_next_phase()),
-                "status": match.get_status(),
-                "ending": match.is_ending(),
-                "hasCard": match.has_card(),
-                "allowChoose": allow_choose,
-                "allowPick": allow_pick,
-                "isSpectator": part.spectator,
-                "gaps": match.count_gaps()}
-
-        # Add the card text to the output, if possible
-        if data["hasCard"]:
-            data["cardText"] = match.current_card.text
-
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                dumps(data))
-
-    def api_list(self,
-                 session: SessionData,
-                 path: List[str],
-                 params: Dict[str, POSTParam],
-                 headers: Dict[str, str]
-                 ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Retrieves the list of all existing matches.
-
-        Returns a JSON response containing all matches.
-
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
-
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        data = []
-        matches = Match.get_all()
-        for match in matches:
-            data.append({
-                "id": match.id,
-                "owner": match.get_owner_nick(),
-                "participants": match.get_num_participants(),
-                "canJoin": match.can_join(),
-                "seconds": int(match.get_seconds_to_next_phase())
-            })
-        return (200,  # 200 OK
-                {"Content-Type": "application/json; charset=utf-8"},
-                dumps(data))
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    data = []
+    matches = Match.get_all()
+    for match in matches:
+        data.append({
+            "id": match.id,
+            "owner": match.get_owner_nick(),
+            "participants": match.get_num_participants(),
+            "canJoin": match.can_join(),
+            "seconds": int(match.get_seconds_to_next_phase())
+        })
+    ctx.ok("application/json; charset=utf-8", dumps(data))

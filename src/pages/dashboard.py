@@ -21,111 +21,75 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Dict, List, Tuple
-
 from nussschale.leafs.controller import Controller
+from nussschale.leafs.endpoint import AccessRestriction, Endpoint, \
+    EndpointContext, HTTPException, PermissionFailHandler
 from nussschale.nussschale import nconfig
-from nussschale.session import SessionData
 from nussschale.util.template import Parser
-from nussschale.util.types import HTTPResponse, POSTParam
 
 
 class DashboardController(Controller):
-    """Handles the /dashboard leaf."""
+    """Handles the /dashboard leaf.
 
-    def __init__(self):
-        """Constructor."""
-        super().__init__()
+    Class Attributes:
+        logout_shown: Whether the logout link is shown, i.e.
+    """
 
-        # Whether the logout link will be shown
-        self._logout_shown = nconfig().get("login-required", True)
+    # Whether the logout link will be shown
+    logout_shown = nconfig().get("login-required", True)
 
-        # Only allow logged-in users
-        self.add_access_restriction(self.check_access)
-        self.set_permission_fail_handler(self.fail_permission)
 
-        self.add_endpoint(self.dashboard)
+DashboardLeaf = DashboardController()
 
-    def check_access(self,
-                     session: SessionData,
-                     path: List[str],
-                     params: Dict[str, POSTParam],
-                     headers: Dict[str, str]
-                     ) -> bool:
-        """Checks whether the user is logged in.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@AccessRestriction(DashboardLeaf)
+def check_login(ctx: EndpointContext) -> bool:
+    """Checks whether the user is logged in.
 
-        Returns:
-            True if and only if the user is logged in.
-        """
-        return "login" in session
+    Args:
+        ctx: The context of the request.
 
-    def fail_permission(self,
-                        session: SessionData,
-                        path: List[str],
-                        params: Dict[str, POSTParam],
-                        headers: Dict[str, str]
-                        ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles unauthorized clients.
+    Returns:
+        Whether the client is logged in.
+    """
+    return "login" in ctx.session
 
-        Redirects the client to the index page.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@PermissionFailHandler(DashboardLeaf)
+def access_denied(_: EndpointContext):
+    """Handles unauthorized clients.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        return (303,  # 303 See Other
-                {"Location": "/index/authfail"},
-                "")
+    Args:
+        _: The context of the request.
 
-    def dashboard(self,
-                  session: SessionData,
-                  path: List[str],
-                  params: Dict[str, POSTParam],
-                  headers: Dict[str, str]
-                  ) -> Tuple[int, Dict[str, str], HTTPResponse]:
-        """Handles requests for the dashboard page.
+    Raises:
+        HTTPException: (303) Always.
+    """
+    raise HTTPException.see_other().redirect("/index/authfail")
 
-        Serves the dashboard template.
 
-        Args:
-            session: The session data of the client.
-            path: The path of the request.
-            params: The HTTP POST parameters.
-            headers: The HTTP headers that were sent by the client.
+@Endpoint(DashboardLeaf)
+def dashboard(ctx: EndpointContext):
+    """Handles requests for the dashboard page.
 
-        Returns:
-            Returns 1) the HTTP status code 2) the HTTP headers to be
-            sent and 3) the response to be sent to the client.
-        """
-        # Populate symbol table
-        symtab = {
-            "nickname": session["nickname"],
-            "theme": session["theme"],
-            "showLogout": True if self._logout_shown else None
-        }
+    Serves the dashboard template.
 
-        # Check for deck upload errors
-        deck_errors = ["deck_too_big", "invalid_format", "invalid_type",
-                       "illegal_gap", "too_many_gaps", "statement_no_gap",
-                       "deck_too_small"]
-        for err in deck_errors:
-            if err in path:
-                symtab[err] = True
+    Args:
+        ctx: The context of the request.
+    """
+    # Populate symbol table
+    symtab = {"nickname": ctx.session["nickname"],
+              "theme": ctx.session["theme"],
+              "showLogout": True if DashboardController.logout_shown else None}
 
-        # Parse the template
-        data = Parser.get_template("./res/tpl/dashboard.html", symtab)
-        return (200,  # 200 OK
-                {"Content-Type": "text/html; charset=utf-8"},
-                data)
+    # Check for deck upload errors
+    deck_errors = ["deck_too_big", "invalid_format", "invalid_type",
+                   "illegal_gap", "too_many_gaps", "statement_no_gap",
+                   "deck_too_small"]
+    for err in deck_errors:
+        if err in ctx.path:
+            symtab[err] = ""
+
+    # Parse the template
+    data = Parser.get_template("./res/tpl/dashboard.html", symtab)
+    ctx.ok("text/html; charset=utf-8", data)
