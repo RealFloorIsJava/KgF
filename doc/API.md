@@ -19,6 +19,8 @@ following response:
 }
 ```
 
+*Note: More detailed messages (except `OK`) might be sent.*
+
 
 ## /api/join
 

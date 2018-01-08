@@ -79,19 +79,19 @@ def api_join(ctx: EndpointContext) -> None:
     """
     if Match.get_match_of_player(ctx.session["id"]) is not None:
         # The user is already in a match
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "already in match")
 
     # Get the match ID and participant state
     try:
         id = int(ctx.params["id"])  # type: ignore
     except ValueError:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "invalid id")
     spectator = ctx.params["spectator"] == "true"
 
     # Get the match
     match = Match.get_by_id(id)
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "invalid match")
 
     # Put the player into the match
     part = Participant(ctx.session["id"], ctx.session["nickname"])
@@ -100,7 +100,7 @@ def api_join(ctx: EndpointContext) -> None:
         match.add_participant(part)
     except ExpectationException:
         # Can't join right now
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "can not join")
 
     ctx.json_ok()
 
@@ -120,23 +120,23 @@ def api_pick(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
 
     # Get the participant. Participant must not be a spectator.
     part = match.get_participant(ctx.session["id"])
     if part.spectator:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "illegal action for spectator")
 
     # Check whether the participant is allowed to pick a winner.
     if not match.is_picking() or not part.picking:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not allowed to pick")
 
     # Pick the winner.
     try:
         playedid = int(ctx.params["playedId"])  # type: ignore
     except ValueError:
-        raise HTTPException.forbidden(True)
-    match.declare_round_winner(playedid)
+        raise HTTPException.forbidden(True, "invalid id")
+    match.declare_round_winner(playedid)  # todo: make this fail on invalid id
     ctx.json_ok()
 
 
@@ -155,20 +155,20 @@ def api_choose(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
     part = match.get_participant(ctx.session["id"])
     if part.spectator:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "illegal action for spectator")
 
     if not match.is_choosing() or part.picking:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not allowed to choose")
 
     try:
         handid = int(ctx.params["handId"])  # type: ignore
     except ValueError:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "invalid id")
 
-    part.toggle_chosen(handid, match.count_gaps())
+    part.toggle_chosen(handid, match.count_gaps())  # todo: check for wrong id
     match.check_choosing_done()
     ctx.json_ok()
 
@@ -189,7 +189,7 @@ def api_cards(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
     part = match.get_participant(ctx.session["id"])
 
     data = {}
@@ -240,7 +240,7 @@ def api_participants(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
 
     data = []
     for part in match.get_participants():
@@ -267,21 +267,17 @@ def api_chat_send(ctx: EndpointContext) -> None:
                              or invalid data is sent.
     """
     if not isinstance(ctx.params["message"], str):
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "invalid message")
     msg = escape(ctx.params["message"])
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
     part = match.get_participant(ctx.session["id"])
 
     # Check whether the user may send a message now
     if "chatcooldown" in ctx.session:
         if ctx.session["chatcooldown"] > time():
-            ctx.code = 403  # 403 Forbidden
-            ctx.response_headers["Content-Type"] = ("application/json;"
-                                                    " charset=utf-8")
-            ctx.response = dumps({"error": "spam rejected"})
-            return
+            raise HTTPException.forbidden(True, "spam rejected")
     ctx.session["chatcooldown"] = time() + 1
 
     # Check the chat message for sanity
@@ -290,10 +286,7 @@ def api_chat_send(ctx: EndpointContext) -> None:
         match.send_message(part.nickname, msg)
         ctx.json_ok()
     else:
-        ctx.code = 403  # 403 Forbidden
-        ctx.response_headers["Content-Type"] = ("application/json;"
-                                                " charset=utf-8")
-        ctx.response = dumps({"error": "invalid size"})
+        raise HTTPException.forbidden(True, "invalid size")
 
 
 @Endpoint(APILeaf)
@@ -312,7 +305,7 @@ def api_chat(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
 
     # Check whether a message offset was supplied
     offset = 0
@@ -343,7 +336,7 @@ def api_status(ctx: EndpointContext) -> None:
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
-        raise HTTPException.forbidden(True)
+        raise HTTPException.forbidden(True, "not in match")
     part = match.get_participant(ctx.session["id"])
 
     # Refresh the timeout timer of the participant

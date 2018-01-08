@@ -137,11 +137,13 @@ class _HTTPExceptionGen(type):
         if key in self._http_status:
             tup = self._http_status[key]
 
-            def create(json: bool=False) -> "HTTPException":
+            def create(json: bool=False, custom_msg: str=None
+                       ) -> "HTTPException":
+                msg = tup[1] if custom_msg is None else custom_msg
                 if json:
-                    return self._json(tup[0], {"error": tup[1]})
+                    return self._json(tup[0], {"error": msg})
                 else:
-                    return self._plain(tup[0], tup[1])
+                    return self._plain(tup[0], msg)
             return create
         raise AttributeError(key)
 
