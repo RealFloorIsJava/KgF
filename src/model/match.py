@@ -83,7 +83,7 @@ class Match:
     _THRESHOLD_CHOOSING_FINISH = 10
 
     # The match id -> match registry and the ID counter
-    _registry = OrderedDict()  # type: ignore
+    _registry = OrderedDict()  # type: OrderedDict
     _id_counter = 0
 
     # MutEx for the match registry

@@ -83,7 +83,7 @@ def api_join(ctx: EndpointContext) -> None:
 
     # Get the match ID and participant state
     try:
-        id = int(ctx.params["id"])  # type: ignore
+        id = ctx.get_param_as("id", int)
     except ValueError:
         raise HTTPException.forbidden(True, "invalid id")
     spectator = ctx.params["spectator"] == "true"
@@ -133,7 +133,7 @@ def api_pick(ctx: EndpointContext) -> None:
 
     # Pick the winner.
     try:
-        playedid = int(ctx.params["playedId"])  # type: ignore
+        playedid = ctx.get_param_as("playedId", int)
     except ValueError:
         raise HTTPException.forbidden(True, "invalid id")
     match.declare_round_winner(playedid)  # todo: make this fail on invalid id
@@ -156,6 +156,7 @@ def api_choose(ctx: EndpointContext) -> None:
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
         raise HTTPException.forbidden(True, "not in match")
+
     part = match.get_participant(ctx.session["id"])
     if part.spectator:
         raise HTTPException.forbidden(True, "illegal action for spectator")
@@ -164,7 +165,7 @@ def api_choose(ctx: EndpointContext) -> None:
         raise HTTPException.forbidden(True, "not allowed to choose")
 
     try:
-        handid = int(ctx.params["handId"])  # type: ignore
+        handid = ctx.get_param_as("handId", int)
     except ValueError:
         raise HTTPException.forbidden(True, "invalid id")
 
@@ -190,8 +191,8 @@ def api_cards(ctx: EndpointContext) -> None:
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
         raise HTTPException.forbidden(True, "not in match")
-    part = match.get_participant(ctx.session["id"])
 
+    part = match.get_participant(ctx.session["id"])
     data = {}
 
     # Load the data of the hand cards
@@ -266,12 +267,14 @@ def api_chat_send(ctx: EndpointContext) -> None:
         HTTPException: (403) When the user is not in a match,
                              or invalid data is sent.
     """
-    if not isinstance(ctx.params["message"], str):
-        raise HTTPException.forbidden(True, "invalid message")
-    msg = escape(ctx.params["message"])
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
         raise HTTPException.forbidden(True, "not in match")
+
+    try:
+        msg = ctx.get_param_as("message", str)
+    except ValueError:
+        raise HTTPException.forbidden(True, "invalid message")
     part = match.get_participant(ctx.session["id"])
 
     # Check whether the user may send a message now
@@ -311,9 +314,9 @@ def api_chat(ctx: EndpointContext) -> None:
     offset = 0
     if "offset" in ctx.params:
         try:
-            offset = int(ctx.params["offset"])  # type: ignore
+            offset = ctx.get_param_as("offset", int)
         except ValueError:
-            pass
+            raise HTTPException.forbidden(True, "invalid offset")
 
     # Fetch the chat data
     data = match.retrieve_chat(offset)

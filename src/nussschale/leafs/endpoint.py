@@ -24,13 +24,17 @@ SOFTWARE.
 from functools import wraps
 from io import BytesIO
 from json import dumps
-from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Union
+from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Type, \
+    TypeVar, Union, cast
 
 from nussschale.session import SessionData
 
 
 if TYPE_CHECKING:
     from nussschale.leafs.controller import Controller
+
+
+T = TypeVar("T")
 
 
 # Represents a POST parameter: Either a string, or a file or a list of strings
@@ -76,6 +80,31 @@ class EndpointContext:
         self.code = 500  # 500 Internal Server Error
         self.response_headers = {"Content-Type": "text/plain; charset=utf-8"}
         self.response = "Endpoint set no response"  # type: _HTTPResponse
+
+    def get_param_as(self, x: str, type: Type[T]) -> T:
+        """Retrieves a parameter and checks the type.
+
+        Args:
+            x: The name of the parameter.
+            type: The type of the parameter.
+
+        Returns:
+            The converted parameter.
+
+        Raises:
+            ValueError: If conversion wasn't possible or the requested type is
+                not supported.
+        """
+        val = self.params[x]
+        if type == int:
+            if not isinstance(val, str):
+                raise ValueError()
+            return cast(T, int(val))
+        elif type == str:
+            if not isinstance(val, str):
+                raise ValueError()
+            return cast(T, val)
+        raise ValueError("unsupported type")
 
     def ok(self, content_type: str, response: _HTTPResponse) -> None:
         """Sets the status to 200 OK.
@@ -139,6 +168,15 @@ class _HTTPExceptionGen(type):
 
             def create(json: bool=False, custom_msg: str=None
                        ) -> "HTTPException":
+                """Creates a HTTP exception.
+
+                Args:
+                    json: Whether the result should be returned as JSON.
+                    custom_msg: A custom message for the error.
+
+                Returns:
+                    The created HTTP exception.
+                """
                 msg = tup[1] if custom_msg is None else custom_msg
                 if json:
                     return self._json(tup[0], {"error": msg})
