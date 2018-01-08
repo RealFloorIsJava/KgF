@@ -272,7 +272,7 @@ def api_chat_send(ctx: EndpointContext) -> None:
         raise HTTPException.forbidden(True, "not in match")
 
     try:
-        msg = ctx.get_param_as("message", str)
+        msg = escape(ctx.get_param_as("message", str))
     except ValueError:
         raise HTTPException.forbidden(True, "invalid message")
     part = match.get_participant(ctx.session["id"])
