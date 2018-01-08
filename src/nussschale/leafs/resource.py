@@ -108,7 +108,7 @@ ResourceLeaf = ResourceController()
 
 
 @Endpoint(ResourceLeaf)
-def resource_dealer(ctx: EndpointContext):
+def resource_dealer(ctx: EndpointContext) -> None:
     """Delivers resources from the resource folder.
 
     Args:

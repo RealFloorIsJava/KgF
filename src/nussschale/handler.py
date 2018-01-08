@@ -63,7 +63,7 @@ class ServerHandler(BaseHTTPRequestHandler):
     _master = None
 
     @staticmethod
-    def set_master(mctrl: MasterController):
+    def set_master(mctrl: MasterController) -> None:
         """Sets the master controller for all handlers.
 
         Args:
@@ -72,7 +72,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         ServerHandler._master = mctrl
 
-    def log_message(self, format: str, *args):
+    def log_message(self, format: str, *args) -> None:
         """Overridden access log handler.
 
         This is automatically called, but we do not want to generate an access
@@ -85,7 +85,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         pass  # No logging is wanted!
 
     @no_type_check
-    def do_request(self, params: Dict[str, _POSTParam]):
+    def do_request(self, params: Dict[str, _POSTParam]) -> None:
         """Performs the necessary actions to serve an HTTP request.
 
         Handles GET and POST requests in the same way.
@@ -200,12 +200,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Send the reply to the client
         self._reply(code, head, response)
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self) -> None:  # noqa: N802
         """Processes an HTTP GET request."""
         # Handle a GET request as a POST request with no parameters
         self.do_request({})
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self) -> None:  # noqa: N802
         """Processes an HTTP POST request."""
         try:
             self.do_request(self._get_post_params())
@@ -395,7 +395,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         return type, param
 
-    def _abort(self, code: int, msg: str):
+    def _abort(self, code: int, msg: str) -> None:
         """Reports an error back to the client.
 
         Args:
@@ -406,7 +406,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                     {"Content-Type": "text/plain; charset=utf-8"},
                     msg.encode())
 
-    def _reply(self, code: int, headers: Dict[str, str], data: bytes):
+    def _reply(self, code: int, headers: Dict[str, str], data: bytes) -> None:
         """Sends an HTTP response to the client.
 
         Args:

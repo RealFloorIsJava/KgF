@@ -25,7 +25,7 @@ Module Deadlock Guarantees:
     Thus the logger's mutex can not be part of any deadlock.
 """
 
-from logging import ERROR, FileHandler, Formatter, INFO, getLogger
+from logging import ERROR, FileHandler, Formatter, INFO, Logger, getLogger
 from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
@@ -36,17 +36,17 @@ from nussschale.util.locks import mutex
 class Log:
     """Provides logging utilities and log rotation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # MutEx to enable multiple connections logging at the same time
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
         # The logger itself
-        self._logger = None
+        self._logger = None  # type: Logger
         # The number of logs that are kept
         self._storage = 3
 
-    def setup(self, name: str, storage: int):
+    def setup(self, name: str, storage: int) -> None:
         """Setup the logger with the given name and log roll setting.
 
         Args:
@@ -71,7 +71,7 @@ class Log:
         self._logger.setLevel(INFO)
 
     @mutex
-    def log(self, msg: str):
+    def log(self, msg: str) -> None:
         """Logs a non-critical message.
 
         Args:
@@ -80,10 +80,10 @@ class Log:
         Contract:
             This method locks the logger's lock.
         """
-        self._logger.log(msg=msg, level=INFO)
+        self._logger.log(msg=msg, level=INFO)  # type: ignore
 
     @mutex
-    def error(self, msg: str):
+    def error(self, msg: str) -> None:
         """Logs a message that describes an error or a critical condition.
 
         Args:
@@ -92,7 +92,7 @@ class Log:
         Contract:
             This method locks the logger's lock.
         """
-        self._logger.log(msg=msg, level=ERROR)
+        self._logger.log(msg=msg, level=ERROR)  # type: ignore
 
     @staticmethod
     def _log_roll(keyword: str, storage: int=5) -> str:

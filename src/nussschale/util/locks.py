@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 from functools import wraps
-from typing import Callable
+from typing import Any, Callable
 
 
 _Decorator = Callable[[Callable], Callable]
@@ -37,9 +37,9 @@ def named_mutex(lck_name: str="_lock") -> _Decorator:
     Returns:
         The described decorator.
     """
-    def decorator(f):
+    def decorator(f: Callable):
         @wraps(f)
-        def wrapper(ref, *args, **kwargs):
+        def wrapper(ref: Any, *args, **kwargs) -> Any:
             lck = getattr(ref, lck_name)
             with lck:
                 return f(ref, *args, **kwargs)

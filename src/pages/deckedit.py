@@ -57,7 +57,7 @@ def check_login(ctx: EndpointContext) -> bool:
 
 
 @PermissionFailHandler(DeckeditLeaf)
-def access_denied(_: EndpointContext):
+def access_denied(_: EndpointContext) -> None:
     """Handles unauthorized clients.
 
     Args:
@@ -70,7 +70,7 @@ def access_denied(_: EndpointContext):
 
 
 @Endpoint(DeckeditLeaf)
-def deckedit(ctx: EndpointContext):
+def deckedit(ctx: EndpointContext) -> None:
     """Handles requests for the deck editor page.
 
     Serves the deck editor template.

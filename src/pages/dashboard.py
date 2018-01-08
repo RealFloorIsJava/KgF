@@ -56,7 +56,7 @@ def check_login(ctx: EndpointContext) -> bool:
 
 
 @PermissionFailHandler(DashboardLeaf)
-def access_denied(_: EndpointContext):
+def access_denied(_: EndpointContext) -> None:
     """Handles unauthorized clients.
 
     Args:
@@ -69,7 +69,7 @@ def access_denied(_: EndpointContext):
 
 
 @Endpoint(DashboardLeaf)
-def dashboard(ctx: EndpointContext):
+def dashboard(ctx: EndpointContext) -> None:
     """Handles requests for the dashboard page.
 
     Serves the dashboard template.

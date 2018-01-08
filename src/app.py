@@ -28,20 +28,20 @@ from nussschale.util.heartbeat import Heartbeat
 
 
 @Heartbeat
-def housekeeping():
+def housekeeping() -> None:
     """Called for every request."""
     Match.perform_housekeeping()
 
 
 @Command("freeze", "Freezes all match timers.")
-def freeze():
+def freeze() -> None:
     """Freezes all matches."""
     Match.frozen = True
     print("All matchs are now frozen.")
 
 
 @Command("unfreeze", "Unfreezes all match timers.")
-def unfreeze():
+def unfreeze() -> None:
     """Unfreezes all matches."""
     Match.frozen = False
     print("All matches are no longer frozen.")

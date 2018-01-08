@@ -136,7 +136,7 @@ class Parser:
         return Parser._parse_command(syntree, symtab)
 
     @staticmethod
-    def _modify_dataset(dataset: DataSet):
+    def _modify_dataset(dataset: DataSet) -> None:
         """Removes empty sub-datasets at any depth recursively.
 
         Args:

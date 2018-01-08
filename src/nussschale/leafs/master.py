@@ -22,11 +22,12 @@ SOFTWARE.
 """
 
 from functools import wraps
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from nussschale.leafs.controller import Controller
 from nussschale.leafs.endpoint import EndpointNotApplicableException, \
-    _ComplexEndpoint, _POSTParam
+    _ComplexEndpoint, _HTTPResponse, _POSTParam
+from nussschale.session import SessionData
 
 
 class MasterController(Controller):
@@ -36,7 +37,7 @@ class MasterController(Controller):
     _LEAF_INJECT = "___leaf___"
 
     @staticmethod
-    def decorate_params(leaf: str, params: Dict[str, _POSTParam]):
+    def decorate_params(leaf: str, params: Dict[str, _POSTParam]) -> None:
         """Includes the leaf parameter in the POST parameters.
 
         The parameter is constructed in a way to make name collisions less
@@ -49,7 +50,7 @@ class MasterController(Controller):
         magic = "%s:%s" % (MasterController._LEAF_INJECT, leaf)
         params[magic] = ""
 
-    def add_leaf(self, leaf: str, ctrl: Controller):
+    def add_leaf(self, leaf: str, ctrl: Controller) -> None:
         """Adds a leaf controller to the master controller.
 
         Args:
@@ -76,7 +77,10 @@ class MasterController(Controller):
             The wrapped endpoint call.
         """
         @wraps(call)
-        def _decorated_call(session, path, params, headers):
+        def _decorated_call(session: SessionData, path: List[str],
+                            params: Dict[str, _POSTParam],
+                            headers: Dict[str, str]
+                            ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
             if magic not in params:
                 raise EndpointNotApplicableException()
             del params[magic]

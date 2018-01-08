@@ -35,11 +35,11 @@ from nussschale.nussschale import nconfig
 class Webserver(Thread):
     """The HTTP web server."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         super().__init__()
         # The internal http server which runs in the background
-        self._httpd = None
+        self._httpd = None  # type: MultithreadedHTTPServer
         # The port the server runs on
         self._port = nconfig().get("port", 8091)
         # The certificate used for SSL (if enabled)
@@ -49,7 +49,7 @@ class Webserver(Thread):
         # Whether SSL shall be used for connections
         self._use_ssl = nconfig().get("use_ssl", True)
 
-    def run(self):
+    def run(self) -> None:
         """Starts the HTTP server in the background."""
         # Initialize the server
         socket_pair = ('', self._port)
@@ -64,7 +64,7 @@ class Webserver(Thread):
         # Let the HTTP server run in the background serving requests
         self._httpd.serve_forever()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stops the HTTP server if it is running."""
         ServerHandler.stop_connections = True
         if self._httpd is not None:
@@ -87,7 +87,7 @@ class Webserver(Thread):
 class MultithreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """A HTTP server which handles each request in a seperate thread."""
 
-    def handle_error(self, request: Any, client_addr: Any):
+    def handle_error(self, request: Any, client_addr: Any) -> None:
         """Handles an error.
 
         Args:

@@ -28,7 +28,7 @@ Module Deadlock Guarantees:
 from json import dump, load
 from os.path import exists
 from threading import RLock
-from typing import Dict, TypeVar, cast
+from typing import Dict, TypeVar, Union, cast
 
 from nussschale.util.locks import mutex
 
@@ -43,13 +43,13 @@ class Config:
     # The configuration file where keys and values will be stored
     _CONFIG_FILE = "./data/nussschale.json"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # MutEx for configuration access.
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
         # The configuration cache which keeps the configuration in memory
-        self._configuration = {}  # type: Dict[str, T]
+        self._configuration = {}  # type: Dict[str, Union[str, int, bool]]
 
         # Create file, if not exists
         if not exists(Config._CONFIG_FILE):
@@ -58,7 +58,8 @@ class Config:
 
         # Get configuration
         with open(Config._CONFIG_FILE, "r") as f:
-            self._configuration = cast(Dict[str, T], load(f))
+            self._configuration = cast(Dict[str, Union[str, int, bool]],
+                                       load(f))
 
     @mutex
     def get(self, key: str, default: T) -> T:
@@ -83,5 +84,5 @@ class Config:
             with open(Config._CONFIG_FILE, "w") as f:
                 dump(self._configuration, f, indent=4, sort_keys=True)
 
-        val = self._configuration[key]  # type: T
+        val = cast(T, self._configuration[key])  # type: T
         return val

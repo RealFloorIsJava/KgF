@@ -77,7 +77,7 @@ def require_in_match(ctx: EndpointContext) -> bool:
 
 
 @PermissionFailHandler(MatchLeaf)
-def access_denied(_: EndpointContext):
+def access_denied(_: EndpointContext) -> None:
     """Redirects the client to the dashboard when access is denied.
 
     Args:
@@ -92,7 +92,7 @@ def access_denied(_: EndpointContext):
 @Endpoint(MatchLeaf)
 @RequirePath("create")
 @RequireParameters("deckupload")
-def create_match(ctx: EndpointContext):
+def create_match(ctx: EndpointContext) -> None:
     """Handles the request to create a match.
 
     Redirects either to the match view (on success) or to the dashboard
@@ -147,7 +147,7 @@ def create_match(ctx: EndpointContext):
 
 @Endpoint(MatchLeaf)
 @RequirePath("create")
-def insufficient_match_create(_: EndpointContext):
+def insufficient_match_create(_: EndpointContext) -> None:
     """Redirects to the dashboard when a match creation lacks information.
 
     Args:
@@ -161,7 +161,7 @@ def insufficient_match_create(_: EndpointContext):
 
 @Endpoint(MatchLeaf)
 @RequirePath("abandon")
-def abandon_match(ctx: EndpointContext):
+def abandon_match(ctx: EndpointContext) -> None:
     """Handles the request to abandon a match.
 
     Redirects the client to the dashboard.
@@ -176,7 +176,7 @@ def abandon_match(ctx: EndpointContext):
 
 
 @Endpoint(MatchLeaf)
-def match_view(ctx: EndpointContext):
+def match_view(ctx: EndpointContext) -> None:
     """Handles a request for the match view.
 
     Serves the match template.

@@ -52,7 +52,7 @@ def check_login(ctx: EndpointContext) -> bool:
 
 
 @PermissionFailHandler(APILeaf)
-def access_denied(_: EndpointContext):
+def access_denied(_: EndpointContext) -> None:
     """Handles unauthorized clients.
 
     Args:
@@ -67,7 +67,7 @@ def access_denied(_: EndpointContext):
 @Endpoint(APILeaf)
 @RequirePath("join")
 @RequireParameters("spectator", "id")
-def api_join(ctx: EndpointContext):
+def api_join(ctx: EndpointContext) -> None:
     """Handles joining a match.
 
     Args:
@@ -108,7 +108,7 @@ def api_join(ctx: EndpointContext):
 @Endpoint(APILeaf)
 @RequirePath("pick")
 @RequireParameters("playedId")
-def api_pick(ctx: EndpointContext):
+def api_pick(ctx: EndpointContext) -> None:
     """Handles picking a round winner.
 
     Args:
@@ -143,7 +143,7 @@ def api_pick(ctx: EndpointContext):
 @Endpoint(APILeaf)
 @RequirePath("choose")
 @RequireParameters("handId")
-def api_choose(ctx: EndpointContext):
+def api_choose(ctx: EndpointContext) -> None:
     """Handles (un)choosing a hand card.
 
     Args:
@@ -175,7 +175,7 @@ def api_choose(ctx: EndpointContext):
 
 @Endpoint(APILeaf)
 @RequirePath("cards")
-def api_cards(ctx: EndpointContext):
+def api_cards(ctx: EndpointContext) -> None:
     """Retrieves the list of cards (hand, played) in the current match.
 
     Returns a JSON response containing the hand cards and played cards.
@@ -226,7 +226,7 @@ def api_cards(ctx: EndpointContext):
 
 @Endpoint(APILeaf)
 @RequirePath("participants")
-def api_participants(ctx: EndpointContext):
+def api_participants(ctx: EndpointContext) -> None:
     """Retrieves the list of participants of the client's match.
 
     Returns a JSON response containing the participants of the match.
@@ -256,7 +256,7 @@ def api_participants(ctx: EndpointContext):
 @Endpoint(APILeaf)
 @RequirePath("chat", "send")
 @RequireParameters("message")
-def api_chat_send(ctx: EndpointContext):
+def api_chat_send(ctx: EndpointContext) -> None:
     """Handles sending a chat message.
 
     Args:
@@ -298,7 +298,7 @@ def api_chat_send(ctx: EndpointContext):
 
 @Endpoint(APILeaf)
 @RequirePath("chat")
-def api_chat(ctx: EndpointContext):
+def api_chat(ctx: EndpointContext) -> None:
     """Retrieves the chat history, optionally starting at the given offset.
 
     Returns a JSON response containing the requested chat messages.
@@ -329,7 +329,7 @@ def api_chat(ctx: EndpointContext):
 
 @Endpoint(APILeaf)
 @RequirePath("status")
-def api_status(ctx: EndpointContext):
+def api_status(ctx: EndpointContext) -> None:
     """Retrieves the status of the client's match.
 
     Returns a JSON response containing the status.
@@ -374,7 +374,7 @@ def api_status(ctx: EndpointContext):
 
 @Endpoint(APILeaf)
 @RequirePath("list")
-def api_list(ctx: EndpointContext):
+def api_list(ctx: EndpointContext) -> None:
     """Retrieves the list of all existing matches.
 
     Returns a JSON response containing all matches.

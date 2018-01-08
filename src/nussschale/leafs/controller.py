@@ -46,16 +46,16 @@ def default_access_denied(*_) -> Tuple[int, Dict[str, str], _HTTPResponse]:
 class Controller:
     """A base page controller, managing access restrictions and endpoints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # Access restrictions
         self._restrictions = []  # type: List[_ComplexAccessRestriction]
         # Endpoints
         self._endpoints = []  # type: List[_ComplexEndpoint]
         # The default access denied handler
-        self._access_denied = default_access_denied
+        self._access_denied = default_access_denied  # type: _ComplexEndpoint
 
-    def add_access_restriction(self, chk: _ComplexAccessRestriction):
+    def add_access_restriction(self, chk: _ComplexAccessRestriction) -> None:
         """Adds an access restriction for this controller.
 
         The restriction is a function
@@ -70,7 +70,7 @@ class Controller:
         """
         self._restrictions.append(chk)
 
-    def set_permission_fail_handler(self, point: _ComplexEndpoint):
+    def set_permission_fail_handler(self, point: _ComplexEndpoint) -> None:
         """Sets the handler for when access is denied.
 
         This will be called as an endpoint if any access check fails.
@@ -83,7 +83,7 @@ class Controller:
         """
         self._access_denied = point
 
-    def add_endpoint(self, point: _ComplexEndpoint):
+    def add_endpoint(self, point: _ComplexEndpoint) -> None:
         """Adds an endpoint to this controller.
 
         The given callback function will be called if and only if the following

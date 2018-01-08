@@ -49,9 +49,9 @@ class Nussschale:
     nlog = None  # type: Log
 
     # The configuration
-    nconfig = None
+    nconfig = None  # type: Config
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # The web server of the application
         self._webserver = None
@@ -87,7 +87,7 @@ class Nussschale:
             exit(0)
             return
 
-    def start_server(self):
+    def start_server(self) -> None:
         """Starts the internal web server."""
         from nussschale.handler import ServerHandler
 
@@ -97,7 +97,7 @@ class Nussschale:
         self._webserver.start()
         nlog().log("Up and running!")
 
-    def add_leafs(self, leafs: List[Tuple["Controller", str]]):
+    def add_leafs(self, leafs: List[Tuple["Controller", str]]) -> None:
         """Adds the given leafs to the server.
 
         Args:
@@ -106,7 +106,7 @@ class Nussschale:
         for controller, leaf in leafs:
             self._master.add_leaf(leaf, controller)
 
-    def run(self):
+    def run(self) -> None:
         """Runs the minimal console."""
         try:
             print("Type `quit` to stop.")
@@ -140,13 +140,13 @@ class Nussschale:
 
 
 @Command("quit", "Stops the application.")
-def quit():
+def quit() -> None:
     """Dummy command, just for the help entry."""
     pass
 
 
 @Command("help", "Shows this help.")
-def help():
+def help() -> None:
     """Provides the command help."""
     print("-- Available commands")
     max_len = max([len(x) for x in Command.commands])

@@ -45,7 +45,7 @@ class Heartbeat:
         self._function = f
         update_wrapper(self, f)
 
-    def __call__(self):
+    def __call__(self) -> None:
         """Implements calling the decorated function.
 
         Note: This is only used if a heartbeat function is called by hand.

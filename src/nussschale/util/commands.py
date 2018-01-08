@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 from traceback import extract_tb
-from typing import Callable, Dict
+from typing import Callable, Dict, Tuple, cast
 
 
 class Command:
@@ -50,7 +50,7 @@ class Command:
         self.desc = desc
         self._function = None  # type: Callable[[], None]
 
-    def invoke(self):
+    def invoke(self) -> None:
         """Invokes the command."""
         try:
             self._function()
@@ -59,8 +59,9 @@ class Command:
             nlog().log("An error occurred while executing"
                        " command '%s'" % self.name)
             for entry in extract_tb(e.__traceback__):
-                entry = tuple(entry[:4])
-                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
+                data = cast(Tuple[str, int, str, str],
+                            tuple([entry[i] for i in range(4)]))
+                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % data)
             nlog().log(str(e))
             print("An error occurred - check the log for details.")
 

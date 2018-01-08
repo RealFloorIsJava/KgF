@@ -55,7 +55,7 @@ class Session:
 
     @classmethod
     @named_mutex("_pool_lock")
-    def add_session(cls, sid: str, session: "Session"):
+    def add_session(cls, sid: str, session: "Session") -> None:
         """Adds a session to the session pool.
 
         Args:
@@ -153,7 +153,7 @@ class Session:
         # Locking is not needed here as access is atomic.
         return self._ip == ip
 
-    def refresh(self):
+    def refresh(self) -> None:
         """Refreshes the session by resetting the expiration timer."""
         # Locking is not needed here as access is atomic.
         expire_time = nconfig().get("expire_time", 15)
@@ -163,7 +163,7 @@ class Session:
 class SessionData:
     """Represents session data as a thread-safe dictionary."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # The MutEx for the session data
         # Locking this MutEx can't cause any other MutExes to be locked.
@@ -173,7 +173,7 @@ class SessionData:
         self._internal = {}  # type: Dict[Any, Any]
 
     @mutex
-    def remove(self, key: Any):
+    def remove(self, key: Any) -> None:
         """Removes the entry with the given key from the session data.
 
         Args:
@@ -229,7 +229,7 @@ class SessionData:
         return self._internal[key]
 
     @mutex
-    def __setitem__(self, key: Any, value: Any):
+    def __setitem__(self, key: Any, value: Any) -> None:
         """Sets the entry for the given key in the session data.
 
         Args:

@@ -77,7 +77,7 @@ class EndpointContext:
         self.response_headers = {"Content-Type": "text/plain; charset=utf-8"}
         self.response = "Endpoint set no response"  # type: _HTTPResponse
 
-    def ok(self, content_type: str, response: _HTTPResponse):
+    def ok(self, content_type: str, response: _HTTPResponse) -> None:
         """Sets the status to 200 OK.
 
         Args:
@@ -88,7 +88,7 @@ class EndpointContext:
         self.response_headers["Content-Type"] = content_type
         self.response = response
 
-    def json_ok(self):
+    def json_ok(self) -> None:
         """Sets the status to 200 OK and responds with a JSON error object."""
         self.code = 200  # 200 OK
         self.response_headers["Content-Type"] = ("application/json;"
@@ -137,7 +137,7 @@ class _HTTPExceptionGen(type):
         if key in self._http_status:
             tup = self._http_status[key]
 
-            def create(json=False):
+            def create(json: bool=False) -> "HTTPException":
                 if json:
                     return self._json(tup[0], {"error": tup[1]})
                 else:
@@ -210,7 +210,7 @@ class HTTPException(Exception, metaclass=_HTTPExceptionGen):
         self.headers["Location"] = location
         return self
 
-    def apply(self, ctx: EndpointContext):
+    def apply(self, ctx: EndpointContext) -> None:
         """Applies the exception to the endpoint context.
 
         Args:
@@ -322,7 +322,7 @@ class AccessRestriction:
                                                             access_chk))
 
         @wraps(access_chk)
-        def disabled_function(*_, **__):
+        def disabled_function(*_, **__) -> None:
             """A function which may not be called.
 
             Args:
@@ -391,7 +391,7 @@ class RequirePath:
             The modified endpoint.
         """
         @wraps(endpoint)
-        def wrapper(ctx: EndpointContext):
+        def wrapper(ctx: EndpointContext) -> None:
             """Checks whether all required path elements are present.
 
             Args:
@@ -433,7 +433,7 @@ class OnlyIf:
             The modified endpoint.
         """
         @wraps(endpoint)
-        def wrapper(ctx: EndpointContext):
+        def wrapper(ctx: EndpointContext) -> None:
             """Potentially disables an endpoint.
 
             Args:
@@ -475,7 +475,7 @@ class RequireParameters:
             The modified endpoint.
         """
         @wraps(endpoint)
-        def wrapper(ctx: EndpointContext):
+        def wrapper(ctx: EndpointContext) -> None:
             """Checks whether all required parameters are present.
 
             Args:

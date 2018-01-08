@@ -33,7 +33,7 @@ from nussschale.session import SessionData
 from nussschale.util.template import Parser
 
 
-def _create_user(session: SessionData):
+def _create_user(session: SessionData) -> None:
     """Initializes a temporary user account.
 
     Args:
@@ -65,7 +65,7 @@ IndexLeaf = IndexController()
 
 @Endpoint(IndexLeaf)
 @OnlyIf(not IndexController.login_required)
-def no_login_required(ctx: EndpointContext):
+def no_login_required(ctx: EndpointContext) -> None:
     """Handles creating a user when login is disabled.
 
     Will redirect to the dashboard.
@@ -83,7 +83,7 @@ def no_login_required(ctx: EndpointContext):
 
 @Endpoint(IndexLeaf)
 @RequireParameters("pw")
-def login(ctx: EndpointContext):
+def login(ctx: EndpointContext) -> None:
     """Handles requests made with the login form.
 
     Will redirect to the dashboard on success.
@@ -103,7 +103,7 @@ def login(ctx: EndpointContext):
 
 @Endpoint(IndexLeaf)
 @RequirePath("logout")
-def logout(ctx: EndpointContext):
+def logout(ctx: EndpointContext) -> None:
     """Handles logout requests.
 
     Will show the index page (via the index endpoint).
@@ -117,7 +117,7 @@ def logout(ctx: EndpointContext):
 
 
 @Endpoint(IndexLeaf)
-def index(ctx: EndpointContext):
+def index(ctx: EndpointContext) -> None:
     """Handles requests for the index page.
 
     Redirects to the dashboard if the client is logged in. Serves the

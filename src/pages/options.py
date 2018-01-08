@@ -46,7 +46,7 @@ def login_required(ctx: EndpointContext) -> bool:
 
 
 @PermissionFailHandler(OptionsLeaf)
-def not_logged_in(_: EndpointContext):
+def not_logged_in(_: EndpointContext) -> None:
     """Informs the client that access was denied.
 
     Args:
@@ -60,7 +60,7 @@ def not_logged_in(_: EndpointContext):
 
 @Endpoint(OptionsLeaf)
 @RequireParameters("theme")
-def theme(ctx: EndpointContext):
+def theme(ctx: EndpointContext) -> None:
     """Handles changing the theme of the application for a client.
 
     The theme is set to either 'light' or 'dark', depending on the request
@@ -79,7 +79,7 @@ def theme(ctx: EndpointContext):
 
 @Endpoint(OptionsLeaf)
 @RequireParameters("name")
-def name(ctx: EndpointContext):
+def name(ctx: EndpointContext) -> None:
     """Handles changing the name of the client.
 
     If the name is longer than 31 characters it will be cut off after
