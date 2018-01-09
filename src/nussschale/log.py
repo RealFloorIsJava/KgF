@@ -29,7 +29,6 @@ from logging import ERROR, FileHandler, Formatter, INFO, Logger, getLogger
 from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
-from typing import Optional
 
 from nussschale.util.locks import mutex
 
@@ -37,13 +36,14 @@ from nussschale.util.locks import mutex
 class Log:
     """Provides logging utilities and log rotation."""
 
+    # The logger itself
+    _logger = None  # type: Logger
+
     def __init__(self) -> None:
         """Constructor."""
         # MutEx to enable multiple connections logging at the same time
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
-        # The logger itself
-        self._logger = None  # type: Optional[Logger]
         # The number of logs that are kept
         self._storage = 3
 

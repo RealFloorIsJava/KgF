@@ -96,7 +96,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         if ServerHandler.stop_connections:
             self._abort(503, "Unavailable")  # 503 Service Unavailable
-            self.close_connection = True
+            self.close_connection = True  # noqa  # belongs to base class
             return
 
         # Handle all heartbeats
@@ -200,12 +200,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Send the reply to the client
         self._reply(code, head, response)
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP GET request."""
         # Handle a GET request as a POST request with no parameters
         self.do_request({})
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP POST request."""
         try:
             self.do_request(self._get_post_params())
