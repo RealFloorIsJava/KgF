@@ -35,11 +35,12 @@ from nussschale.nussschale import nconfig
 class Webserver(Thread):
     """The HTTP web server."""
 
+    # The internal http server which runs in the background
+    _httpd = None  # type: MultithreadedHTTPServer
+
     def __init__(self) -> None:
         """Constructor."""
         super().__init__()
-        # The internal http server which runs in the background
-        self._httpd = None  # type: MultithreadedHTTPServer
         # The port the server runs on
         self._port = nconfig().get("port", 8091)
         # The certificate used for SSL (if enabled)

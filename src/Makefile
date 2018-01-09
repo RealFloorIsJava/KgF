@@ -5,10 +5,10 @@ all: check test
 check: checkstyle analyse
 
 checkstyle:
-	flake8 --ignore=F401,W503 .
+	python3 -m flake8 --ignore=F401,W503 .
 
 analyse:
-	mypy app.py
+	python3 -m mypy app.py
 
 test:
-	py.test -v
+	python3 -m pytest -v

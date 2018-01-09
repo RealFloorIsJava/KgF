@@ -6,3 +6,4 @@ logs
 .idea
 todo.md
 style.md
+*.pyc

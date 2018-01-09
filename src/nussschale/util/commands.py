@@ -48,7 +48,7 @@ class Command:
         """
         self.name = name
         self.desc = desc
-        self._function = None  # type: Callable[[], None]
+        self._function = cast(Callable[[], None], None)
 
     def invoke(self) -> None:
         """Invokes the command."""

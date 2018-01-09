@@ -26,20 +26,77 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 
 # A symbol table / data set.
-# Note: Due to the recursive nature, an exact type is not possible to create
-# for it. 'Any' is used for dictionary keys of nested datasets. However, only
-# valid data set entries (i.e. Union[str, None, DataSet]) should be used!
-DataSet = List[Dict[str, Union[str, None, List[Dict[str, Any]]]]]
-SymbolTable = Dict[str, Union[str, None, DataSet]]
+# Note: Due to the recursive nature, it is impossible to create an exact type
+# for datasets. Instead use the cast function provided below to retrieve nested
+# datasets.
+_DataSetCompatible = List[Dict[str, Union[str, None, Any]]]
+_DataSet = List[Dict[str, Union[str, None, _DataSetCompatible]]]
+_SymbolTable = Dict[str, Union[str, None, _DataSet]]
+
+
+def _cast_dataset(x: Union[_DataSet, _DataSetCompatible]) -> _DataSet:
+    """Provides a semi-typesafe cast for data sets.
+
+    As the check for validity is not perfect, users should take care to not
+    cast anything other than actual datasets.
+
+    Args:
+        x: The data set or data set compatible structure. Note: The name
+            'data set compatible structure' is misleading, as it should be an
+            actual data set even if the type says otherwise.
+
+    Returns:
+        The argument cast to a data set.
+    """
+    return cast(_DataSet, x)
 
 
 # An abstract syntax tree.
-# Note: Due to the recursive nature, an exact type is not possible to create
-# for it. 'Any' is used for nested trees. However, only valid AST nodes should
-# be used!
-Token = Tuple[str, str]
-ASTNode = Union[Token, List[Union[Token, List[Any]]]]
-AST = List[ASTNode]
+# Note: Due to the recursive nature, it is impossible to create an exact type
+# for AST nodes. Instead use the cast function provided below to retrieve
+# nested AST nodes.
+_Token = Tuple[str, str]
+_ASTNodeCompatible = Union[_Token, List[Any]]
+_ASTNode = Union[_Token, List[_ASTNodeCompatible]]
+_AST = List[_ASTNode]
+# Same as for AST nodes goes for _ASTPointer
+_ASTPointerCompatible = Optional[Tuple[_AST, Any]]
+_ASTPointer = Optional[Tuple[_AST, _ASTPointerCompatible]]
+
+
+def _cast_ast_node(x: Union[_ASTNode, _ASTNodeCompatible]) -> _ASTNode:
+    """Provides a semi-typesafe cast for AST nodes.
+
+    As the check for validity is not perfect, users should take care to not
+    cast anything other than actual AST nodes.
+
+    Args:
+        x: The AST node or AST node compatible structure. Note: The name 'AST
+            node compatible structure' is misleading, as it should be an actual
+            AST node even if the type says otherwise.
+
+    Returns:
+        The argument cast to an AST node.
+    """
+    return cast(_ASTNode, x)
+
+
+def _cast_ast_pointer(x: Union[_ASTPointer, _ASTPointerCompatible]
+                      ) -> _ASTPointer:
+    """Provides a semi-typesafe cast for AST pointers.
+
+    As the check for validity is not perfect, users should take care to not
+    cast anything other than actual AST pointers.
+
+    Args:
+        x: The AST pointer or AST pointer compatible structure. Note: The name
+            'AST pointer compatible structure' is misleading, as it should be
+            an actual AST pointer even if the type says otherwise.
+
+    Returns:
+        The argument cast to an AST pointer.
+    """
+    return cast(_ASTPointer, x)
 
 
 class Parser:
@@ -89,7 +146,7 @@ class Parser:
                 "/isnot"]
 
     @staticmethod
-    def get_template(path: str, symtab: SymbolTable) -> str:
+    def get_template(path: str, symtab: _SymbolTable) -> str:
         """Fetches and parses the template using the given symbol table.
 
         Args:
@@ -109,7 +166,7 @@ class Parser:
         return Parser.parse_template(data, symtab)
 
     @staticmethod
-    def parse_template(raw: str, symtab: SymbolTable) -> str:
+    def parse_template(raw: str, symtab: _SymbolTable) -> str:
         """Parses the given template source using the given symbol table.
 
         Args:
@@ -136,7 +193,7 @@ class Parser:
         return Parser._parse_command(syntree, symtab)
 
     @staticmethod
-    def _modify_dataset(dataset: DataSet) -> None:
+    def _modify_dataset(dataset: _DataSet) -> None:
         """Removes empty sub-datasets at any depth recursively.
 
         Args:
@@ -148,13 +205,14 @@ class Parser:
             for key in entry.copy():
                 val = entry[key]
                 if isinstance(val, list):
+                    val = _cast_dataset(cast(_DataSetCompatible, val))
                     if len(val) < 1:
                         del entry[key]
                     else:
                         Parser._modify_dataset(val)
 
     @staticmethod
-    def _fetch_tokens(raw: str) -> List[Token]:
+    def _fetch_tokens(raw: str) -> List[_Token]:
         """Fetches the tokens from the given source.
 
         There are two types of tokens, text tokens (tuples with first element
@@ -177,7 +235,7 @@ class Parser:
         tmp = ""
 
         # The tokens that have been read already
-        tokens = []  # type: List[Token]
+        tokens = []  # type: List[_Token]
 
         # The cursor into the raw data
         ptr = 0
@@ -213,7 +271,7 @@ class Parser:
         return tokens
 
     @staticmethod
-    def _create_tree(toks: List[Token]) -> AST:
+    def _create_tree(toks: List[_Token]) -> _AST:
         """Creates the token AST which is used to interpret the template.
 
         Scope tokens (Parser._opening) create new child trees.
@@ -228,8 +286,8 @@ class Parser:
         """
 
         # Create tree and node pointer
-        syntree = []  # type: AST
-        synptr = (syntree, None)  # type: Optional[Tuple[AST, Optional[Tuple]]]
+        syntree = []  # type: _AST
+        synptr = (syntree, None)  # type: _ASTPointer
 
         # Add all tokens to the tree
         for token in toks:
@@ -241,8 +299,8 @@ class Parser:
             token_type = token[0]
             val = token[1]
 
-            # Text tokens are simply appended to the current node
             if token_type == "txt":
+                # Text token: Append to current tree
                 synptr[0].append(token)
             else:
                 # Get command and arguments
@@ -251,10 +309,10 @@ class Parser:
 
                 if cmd in Parser._closing:
                     # Step back to the parent node
-                    synptr = synptr[1]
+                    synptr = _cast_ast_pointer(synptr[1])
                 elif cmd in Parser._opening:
                     # Create a new child tree
-                    child = [token]  # type: AST
+                    child = [token]  # type: _AST
                     # Add the child tree and enter it
                     synptr[0].append(child)
                     synptr = (child, synptr)
@@ -268,7 +326,7 @@ class Parser:
         return syntree
 
     @staticmethod
-    def _parse_command(tree: ASTNode, symtab: SymbolTable) -> str:
+    def _parse_command(tree: _ASTNode, symtab: _SymbolTable) -> str:
         """Parses the given AST to generate the template output.
 
         Args:
@@ -282,7 +340,12 @@ class Parser:
 
         if isinstance(tree, list):
             # This child is a subtree
-            init = tree[0][1]  # Sub-Tree initializers are always commands
+            tree = cast(_AST, tree)
+
+            # Sub-Tree initializers are always commands
+            assert isinstance(tree[0], tuple)
+            init_node = tree[0]  # type: Tuple[str, str]
+            init = init_node[1]
 
             # Get command and arguments
             q = init.split(" ", 1)
@@ -295,16 +358,16 @@ class Parser:
             # Handle beginning token
             if cmd == "__BEGIN":
                 pass  # Template begin
-                for elem in tree[1:]:
+                for elem in tree[1:]:  # type: _ASTNode
                     val += Parser._parse_command(elem, symtab)
 
             # Iteration
             elif cmd == "iterate":
                 dataset_name = args
-                dataset = symtab.get(dataset_name, [])
-                if not isinstance(val, list):
+                dataset_raw = symtab.get(dataset_name, [])
+                if not isinstance(dataset_raw, list):
                     raise TypeError("can't iterate over non-dataset")
-                dataset = cast(DataSet, dataset)
+                dataset = dataset_raw  # type: _DataSet
 
                 # Execute this nodes contents for every entry in the dataset
                 for entry in dataset:
@@ -340,6 +403,7 @@ class Parser:
                         val += Parser._parse_command(elem, symtab)
         else:
             # This child is a leaf of the tree
+            tree = cast(_Token, tree)
 
             # Text node: Just add contents to result
             if tree[0] == "txt":

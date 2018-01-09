@@ -21,6 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Set
+
 from model.match import Match
 from model.participant import Participant
 
@@ -108,7 +110,7 @@ def test_remove_match() -> None:
 
 def test_get_next_id() -> None:
     """Tests retrieving new match IDs."""
-    ids = set()
+    ids = set()  # type: Set[int]
     for i in range(100):
         new_id = Match.get_next_id()
         assert new_id not in ids

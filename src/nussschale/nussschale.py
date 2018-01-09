@@ -26,7 +26,7 @@ import readline  # noqa: Replaces default 'input' function
 from os import mkdir
 from os.path import isdir
 from sys import exit
-from typing import List, TYPE_CHECKING, Tuple
+from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from nussschale.config import Config
 from nussschale.log import Log
@@ -53,9 +53,6 @@ class Nussschale:
 
     def __init__(self) -> None:
         """Constructor."""
-        # The web server of the application
-        self._webserver = None
-
         # Late import to prevent circular dependencies
         from nussschale.webserver import Webserver
         from nussschale.leafs.master import MasterController
@@ -134,7 +131,7 @@ class Nussschale:
         finally:
             # Clean up
             print("Shutting down...")
-            print("Please be patient, while clients"
+            print("Please be patient while clients"
                   " are gracefully disconnected.")
             self._webserver.stop()
 

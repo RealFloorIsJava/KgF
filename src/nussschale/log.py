@@ -29,6 +29,7 @@ from logging import ERROR, FileHandler, Formatter, INFO, Logger, getLogger
 from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
+from typing import Optional
 
 from nussschale.util.locks import mutex
 
@@ -42,7 +43,7 @@ class Log:
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
         # The logger itself
-        self._logger = None  # type: Logger
+        self._logger = None  # type: Optional[Logger]
         # The number of logs that are kept
         self._storage = 3
 

@@ -21,6 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import List, Set
+
 from model.multideck import MultiDeck
 
 
@@ -57,7 +59,7 @@ def test_multideck_period() -> None:
 def test_multideck_deplete() -> None:
     """Tests depleting the multideck by making restrictions more strict."""
     md = MultiDeck(deck)
-    ids = set()
+    ids = set()  # type: Set[int]
     for i in range(deck_n):
         obj = md.request(ids)
         assert obj is not None
@@ -69,7 +71,7 @@ def test_multideck_draw() -> None:
     """Tests drawing objects from the multideck."""
     # Draw 5 times hands of deck_n/4 cards (must lead to duplicates)
     md = MultiDeck(deck)
-    hands = []
+    hands = []  # type: List[Set[int]]
     for i in range(5):
         hands.append(set())
         for j in range(deck_n // 4):
