@@ -29,6 +29,7 @@ from logging import ERROR, FileHandler, Formatter, INFO, Logger, getLogger
 from os import mkdir, remove, rename
 from os.path import isfile
 from threading import RLock
+from traceback import extract_tb
 
 from nussschale.util.locks import mutex
 
@@ -70,6 +71,24 @@ class Log:
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
         self._logger.setLevel(INFO)
+
+    @mutex
+    def log_error(self, e: Exception, ctx: str) -> None:
+        """Logs an error.
+
+        Args:
+            e: The error that occurred.
+            ctx: The context where the error occurred.
+        """
+        self.log("Error in code for %s:" % ctx)
+        self.log("===[ERROR REPORT]===")
+        for entry in extract_tb(e.__traceback__):
+            self.log("In file %s:%i in %s: %s" % (entry.filename,
+                                                  entry.lineno,
+                                                  entry.name,
+                                                  entry.line))
+        self.log("%s was raised: %r" % (str(e), e.args))
+        self.log("====[END REPORT]====")
 
     @mutex
     def log(self, msg: str) -> None:

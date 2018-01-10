@@ -28,6 +28,7 @@ from nussschale.leafs.controller import Controller
 from nussschale.leafs.endpoint import EndpointNotApplicableException, \
     _ComplexEndpoint, _HTTPResponse, _POSTParam
 from nussschale.session import SessionData
+from nussschale.util.lcdict import LowerCaseDict
 
 
 class MasterController(Controller):
@@ -79,7 +80,7 @@ class MasterController(Controller):
         @wraps(call)
         def _decorated_call(session: SessionData, path: List[str],
                             params: Dict[str, _POSTParam],
-                            headers: Dict[str, str]
+                            headers: LowerCaseDict[str]
                             ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
             if magic not in params:
                 raise EndpointNotApplicableException()

@@ -27,18 +27,19 @@ from http.server import BaseHTTPRequestHandler
 from io import BytesIO
 from sys import exit
 from traceback import extract_tb
-from typing import Dict, List, Tuple, no_type_check
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib.parse import parse_qs
 
 from nussschale.leafs.endpoint import _POSTParam
 from nussschale.leafs.master import MasterController
 from nussschale.nussschale import nlog
 from nussschale.session import Session
+from nussschale.util.fileupload import IOWrapper
 from nussschale.util.heartbeat import Heartbeat
+from nussschale.util.lcdict import LowerCaseDict
 
 
-# Set the maximum request length, in bytes: 8 MiB
-cgi.maxlen = 8 * 1024 * 1024  # type: ignore
+_RawPOSTParam = Union[List[Any], cgi.FieldStorage, cgi.MiniFieldStorage]
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -46,21 +47,36 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     Class Attributes:
         stop_connections: Whether to stop connections due to shutdown.
+        max_content_length: The maximum content length.
     """
 
-    # Set some metrics
+    # Some attributes for changing the base class behavior
     server_version = "Nussschale/2.0"
     sys_version = "Python"
     protocol_version = "HTTP/1.1"
-
-    # Set the default timeout
-    timeout = 10
+    timeout = 10  # Set the default timeout
 
     # Whether to stop connections due to a shutdown
     stop_connections = False
 
+    # The maximum content length, 8MiB
+    max_content_length = 8 * 1024 * 1024
+
     # The master controller which dispatches requests to leaves
-    _master = None
+    _master = None  # type: MasterController
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Constructor.
+
+        Args:
+            *args: Forwarded to base constructor.
+            **kwargs: Forwarded to base constructor.
+        """
+        # The stringified headers. All header names are lowercase!
+        self._str_headers = LowerCaseDict()  # type: LowerCaseDict[str]
+
+        # Called last because this handles the request!
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def set_master(mctrl: MasterController) -> None:
@@ -84,7 +100,61 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         pass  # No logging is wanted!
 
-    @no_type_check
+    @staticmethod
+    def do_heartbeat() -> None:
+        """Runs all heartbeat routines."""
+        for fun in Heartbeat.heartbeats:
+            try:
+                fun()
+            except Exception as e:
+                nlog().log("An error occurred while executing"
+                           " a request heartbeat.")
+                for entry in extract_tb(e.__traceback__):
+                    data = cast(Tuple[str, int, str, str],
+                                tuple([entry[i] for i in range(4)]))
+                    nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % data)
+                nlog().log(str(e))
+
+                # Typically, faulty request heartbeats are a reason
+                # to havoc... -- at least to save some log space!
+                nlog().log("Heartbeat crash!")
+                print("Heartbeat crash: See log for info.")
+                exit(1)
+
+    def fetch_session(self) -> Tuple[Session, bool]:
+        # Find the session cookie (if any)
+        cookie_hdr = ""
+        try:
+            cookie_hdr = self._str_headers["cookie"]
+        except KeyError:
+            pass
+        cookie = SimpleCookie(cookie_hdr)  # type: ignore
+
+        # Extract the session ID
+        sid = None  # type: Optional[str]
+        try:
+            sid = cookie["session"].value
+        except KeyError:
+            pass
+
+        # Fetch (or create) the session
+        session = Session.get_session(self.client_address[0], sid)
+
+        # Refresh the session timer to keep the user logged in
+        session[0].refresh()
+
+        return session
+
+    def convert_headers(self) -> None:
+        """Loads the headers into the lower case header dictionary."""
+        for key in self.headers.keys():
+            assert isinstance(key, str), "header key is no str"
+            val = self.headers[key]
+            if not isinstance(val, str):
+                nlog().log("Warning: %s header is no string" % key)
+                continue
+            self._str_headers[key.lower()] = val
+
     def do_request(self, params: Dict[str, _POSTParam]) -> None:
         """Performs the necessary actions to serve an HTTP request.
 
@@ -100,49 +170,18 @@ class ServerHandler(BaseHTTPRequestHandler):
             return
 
         # Handle all heartbeats
-        for fun in Heartbeat.heartbeats:
-            try:
-                fun()
-            except Exception as e:
-                nlog().log("An error occurred while executing"
-                           " a request heartbeat.")
-                for entry in extract_tb(e.__traceback__):
-                    entry = tuple(entry[:4])
-                    nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
-                nlog().log(str(e))
+        ServerHandler.do_heartbeat()
 
-                # Typically, faulty request heartbeats are a reason
-                # to havoc... -- at least to save some log space!
-                nlog().log("Heartbeat crash!")
-                print("Heartbeat crash: See log for info.")
-                exit(1)
+        # Setup result header dictionary
+        headers_out = {}
 
-        # Setup header dictionary
-        head = {}
-
-        # Find the session cookie (if any)
-        cookie_hdr = ""
-        for key in self.headers:
-            if key == "Cookie":
-                cookie_hdr = self.headers[key]
-        cookie = SimpleCookie(cookie_hdr)
-
-        # Extract the session ID
-        if "session" in cookie:
-            sid = cookie["session"].value
-        else:
-            sid = None
-
-        # Fetch (or create) the session
-        session = Session.get_session(self.client_address[0], sid)
-        if session[1]:
+        # Fetch the session
+        session_qry = self.fetch_session()
+        if session_qry[1]:
             # The session is newly created, set the session ID cookie
-            cookie = "session=%s;Path=/;HttpOnly" % session[0].sid
-            head["Set-Cookie"] = cookie
-        session = session[0]
-
-        # Refresh the session timer to keep the user logged in
-        session.refresh()
+            cookie = "session=%s;Path=/;HttpOnly" % session_qry[0].sid
+            headers_out["set-cookie"] = cookie
+        session = session_qry[0]
 
         # Get path and leaf, the leaf is the first value in the path,
         # see _get_path for more info
@@ -159,63 +198,54 @@ class ServerHandler(BaseHTTPRequestHandler):
             x = ServerHandler._master.call_endpoint(session.data,
                                                     path,
                                                     params,
-                                                    self.headers)
+                                                    self._str_headers)
         except Exception as e:
             # Endpoint call failed. Log the error
-            nlog().log("=====[ERROR REPORT]=====")
-
-            # Walk through the backtrace
-            for entry in extract_tb(e.__traceback__):
-                entry = tuple(entry[:4])
-                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
-
-            # Log the string representation of the exception as a summary
-            nlog().log(str(e))
-            nlog().log("========================")
+            nlog().log_error(e, "endpoint call %s" % path)
 
             # Notify the user that the request failed
-            self._reply(500,  # 500 Internal Server Error
-                        {"Content-Type": "text/plain; charset=utf-8"},
-                        ("The server encountered an unexpected condition and"
-                         " is unable to continue.").encode())
+            self._abort(500,  # 500 Internal Server Error
+                        "The server encountered an unexpected condition"
+                        " and is unable to continue.")
             return
         finally:
             # For file uploads: Close all uploaded file handles that have been
             # opened
-            for val in params.values():
-                if hasattr(val, "filename"):
-                    val.file.close()
+            for param in params.values():
+                if isinstance(param, IOWrapper):
+                    param.file.close()
         assert x is not None
 
         # Update request results
         code = x[0]
-        head.update(x[1])
+        headers_out.update(x[1])
         response = x[2]
 
         # The response might not be properly encoded (it is not required to be
-        # encoded). In this case we encode it here
+        # encoded). In this case we encode it here.
         if isinstance(response, str):
             response = response.encode()
 
         # Send the reply to the client
-        self._reply(code, head, response)
+        self._reply(code, headers_out, response)
 
     def do_GET(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP GET request."""
         # Handle a GET request as a POST request with no parameters
+        self.convert_headers()
         self.do_request({})
 
     def do_POST(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP POST request."""
+        self.convert_headers()
         try:
             self.do_request(self._get_post_params())
-        except RequestError as e:
-            if e.length:
-                # 411 Length Required
-                self._abort(411, "Content-Length required")
-            else:
-                # 400 Bad Request
-                self._abort(400, "Media type not supplied/supported")
+        except LengthMissingException:
+            # 411 Length Required
+            self._abort(411, "Content-Length required")
+        except MediaTypeInvalidException:
+            # 415 Unsupported Media Type
+            self._abort(415, "Unsupported Media Type")
 
     def handle_expect_100(self) -> bool:
         """Handles HTTP continuation requests.
@@ -269,93 +299,109 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         return path
 
-    @no_type_check
+    def _unwrap_param(self, allow_list: bool, param: _RawPOSTParam
+                      ) -> _POSTParam:
+        """Unwraps a raw parameter.
+
+        Args:
+            allow_list: Whether lists of parameters are allowed.
+            param: The parameter, as received from the FieldStorage.
+
+        Returns:
+            An unwrapped POST parameter.
+
+        Raises:
+            ValueError: For unsupported parameter types.
+        """
+        if isinstance(param, list):
+            if allow_list:
+                res = []  # type: List[Union[str, IOWrapper]]
+                for x in param:
+                    val = self._unwrap_param(False, x)
+                    assert not isinstance(val, list)
+                    res.append(val)
+                return res
+            else:
+                return self._unwrap_param(False, param[0])
+        elif isinstance(param, cgi.MiniFieldStorage):
+            return param.value
+        elif isinstance(param, cgi.FieldStorage):
+            if param.file is None:
+                assert isinstance(param.value, str)
+                return param.value
+            else:
+                fp = param.file
+                fp.seek(0, 2)
+                size = fp.tell()
+                fp.seek(0)
+                nlog().log("File upload: '%s', %i bytes" % (param.filename,
+                                                            size))
+                return IOWrapper(param.file, param)
+        else:
+            raise ValueError("Unsupported parameter type")
+
     def _get_post_params(self) -> Dict[str, _POSTParam]:
         """Retrieves the POST parameters. Also handles file uploads.
 
         Returns:
-            The POST parameters. File uploads are returned as open file-like
-            objects in the dictionary.
+            The POST parameters. Consist of strings, lists and IO wrappers.
 
         Raises:
             RequestError: When length or content type is not supplied by the
                 client.
         """
-        if "content-length" not in self.headers:
+        if "content-length" not in self._str_headers:
             # This server requires a content length to be supplied
-            raise RequestError(True)
+            raise LengthMissingException()
 
-        if "content-type" not in self.headers:
+        if "content-type" not in self._str_headers:
             # This server also requires a valid content type
-            raise RequestError(False)
+            raise MediaTypeInvalidException()
 
         # Get parameter metadata
-        type = self.headers["content-type"]
-        length = int(self.headers["content-length"])
+        content_type = self._str_headers["Content-Type"]
+        content_length = int(self._str_headers["Content-Length"])
+        if content_length > ServerHandler.max_content_length:
+            nlog().log("Request was too big!")
+            return {}
 
         # Parse the content type and read the POST data
-        type, args = self._parse_type(type)
-        data = self.rfile.read(length)
+        content_type, type_args = self._parse_type(content_type)
+        raw_data = self.rfile.read(content_length)
 
         # Parse data
-        if (type == "application/x-www-form-urlencoded"
-                or type == "text/plain"):
+        result = {}  # type: Dict[str, _POSTParam]
+        if (content_type == "application/x-www-form-urlencoded"
+                or content_type == "text/plain"):
             # The regular key=value&key2=value2... format
-            d = parse_qs(data.decode(), keep_blank_values=True)
+            qs_data = parse_qs(raw_data.decode(), keep_blank_values=True)
 
             # Keep lists only for array arguments.
             # According to the documentation of urllib, parse_qs might return
             # multiple values even for non-array arguments
-            for key in d:
+            for key in qs_data:
                 if not key.endswith("[]"):
                     # Just use the first element, even if multiple are supplied
-                    d[key] = d[key][0]
-            return d
-        elif type == "application/json":
-            # POST data is JSON data
-            return {"data": data.decode()}
-        elif type == "multipart/form-data" and "boundary" in args:
-            # POST data is a HTTP file upload
-            try:
-                fs = cgi.FieldStorage(BytesIO(data),
-                                      headers=self.headers,
-                                      environ={'REQUEST_METHOD': 'POST'},
-                                      keep_blank_values=True)
-            except ValueError:
-                nlog().log("File upload was too big!")
-                return {}
-            d = {}
-            for key in fs:
-                x = fs[key]
-                if not x.filename:
-                    if isinstance(x, (cgi.FieldStorage, cgi.MiniFieldStorage)):
-                        # MiniFieldStorage can result from an additional
-                        # query string
-                        d[x.name] = x.value
-                    elif isinstance(x, list):
-                        # Regular POST variable
-                        if key.endswith("[]"):
-                            # Array argument
-                            d[key] = x
-                        elif len(x) > 0:
-                            # Non-array argument. However, empty non-array
-                            # arguments are ignored
-                            d[key] = x[0]
+                    result[key] = qs_data[key][0]
                 else:
-                    # In the case of the key having a file just use the
-                    # result of the field storage parsing
-                    fp = x.file
-                    fp.seek(0, 2)
-                    size = fp.tell()
-                    fp.seek(0)
-                    nlog().log("File upload: '%s', %i bytes" % (x.filename,
-                                                                size))
-                    d[x.name] = x
-            return d
+                    result[key] = cast(List[Union[str, IOWrapper]],
+                                       qs_data[key])
+            return result
+        elif content_type == "multipart/form-data" and "boundary" in type_args:
+            # POST data is a HTTP file upload
+            fs = cgi.FieldStorage(BytesIO(raw_data),
+                                  headers=self._str_headers,
+                                  environ={'REQUEST_METHOD': 'POST'},
+                                  keep_blank_values=True)
+            for key in fs.keys():
+                raw_val = fs[key]
+                val = self._unwrap_param(True, raw_val)
+                result[key] = val
+            return result
         else:
-            # Unsupported content type!
-            nlog().log("Currently unsupported %r %r %r" % (type, args, length))
-            raise RequestError(False)
+            nlog().log("Currently unsupported type '%r' (with args '%r'),"
+                       " %r bytes" % (content_type, type_args, content_length))
+            raise MediaTypeInvalidException()
 
     @staticmethod
     def _parse_type(type: str) -> Tuple[str, Dict[str, str]]:
@@ -403,7 +449,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             msg: The response string that will be sent.
         """
         self._reply(code,
-                    {"Content-Type": "text/plain; charset=utf-8"},
+                    {"content-type": "text/plain; charset=utf-8"},
                     msg.encode())
 
     def _reply(self, code: int, headers: Dict[str, str], data: bytes) -> None:
@@ -421,11 +467,11 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             # Send headers
             for key in headers:
-                if key != "Content-Length":
+                if key != "content-length":
                     self.send_header(key, headers[key])
 
             # Send content length header
-            self.send_header("Content-Length", str(max(1, len(data))))
+            self.send_header("content-length", str(max(1, len(data))))
 
             self.end_headers()
 
@@ -438,14 +484,11 @@ class ServerHandler(BaseHTTPRequestHandler):
             pass  # These happen from time to time. Bad client.
 
 
-class RequestError(Exception):
-    """Raised if either content type or length is missing in the request."""
+class MediaTypeInvalidException(Exception):
+    """Raised when the media type is either missing or invalid."""
+    pass
 
-    def __init__(self, length: bool) -> None:
-        """Constructor.
 
-        Args:
-            length: Whether the error was caused by the content length being
-                not present.
-        """
-        self.length = length
+class LengthMissingException(Exception):
+    """Raised when the content length is missing."""
+    pass

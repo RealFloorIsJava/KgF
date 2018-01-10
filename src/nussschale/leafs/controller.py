@@ -26,6 +26,7 @@ from typing import Dict, List, Tuple
 from nussschale.leafs.endpoint import EndpointNotApplicableException, \
     _ComplexAccessRestriction, _ComplexEndpoint, _HTTPResponse, _POSTParam
 from nussschale.session import SessionData
+from nussschale.util.lcdict import LowerCaseDict
 
 
 def default_access_denied(*_) -> Tuple[int, Dict[str, str], _HTTPResponse]:
@@ -111,7 +112,8 @@ class Controller:
         self._endpoints.append(point)
 
     def call_endpoint(self, session_data: SessionData, path: List[str],
-                      params: Dict[str, _POSTParam], headers: Dict[str, str]
+                      params: Dict[str, _POSTParam],
+                      headers: LowerCaseDict[str]
                       ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
         """Calls an endpoint and returns the results.
 

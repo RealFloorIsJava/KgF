@@ -21,8 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Any, cast
-
 from model.match import Match
 from model.participant import Participant
 from nussschale.leafs.controller import Controller
@@ -30,6 +28,7 @@ from nussschale.leafs.endpoint import AccessRestriction, Endpoint, \
     EndpointContext, HTTPException, PermissionFailHandler, RequireParameters, \
     RequirePath
 from nussschale.nussschale import nconfig
+from nussschale.util.fileupload import IOWrapper
 from nussschale.util.template import Parser
 
 
@@ -110,8 +109,9 @@ def create_match(ctx: EndpointContext) -> None:
         raise HTTPException.see_other().redirect("/match")
 
     # Make sure the uploaded thing is a file
-    deckupload = cast(Any, ctx.params["deckupload"])
-    if not deckupload.filename:
+    try:
+        deckupload = ctx.get_param_as("deckupload", IOWrapper)
+    except ValueError:
         raise HTTPException.unsupported_media_type()
 
     # Check the size of the upload

@@ -56,13 +56,7 @@ class Command:
             self._function()
         except Exception as e:
             from nussschale.nussschale import nlog
-            nlog().log("An error occurred while executing"
-                       " command '%s'" % self.name)
-            for entry in extract_tb(e.__traceback__):
-                data = cast(Tuple[str, int, str, str],
-                            tuple([entry[i] for i in range(4)]))
-                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % data)
-            nlog().log(str(e))
+            nlog().log_error(e, "command '%s'" % self.name)
             print("An error occurred - check the log for details.")
 
     def __call__(self, fn: Callable[[], None]) -> Callable[[], None]:

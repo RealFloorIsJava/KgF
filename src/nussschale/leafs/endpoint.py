@@ -22,12 +22,13 @@ SOFTWARE.
 """
 
 from functools import wraps
-from io import BytesIO
 from json import dumps
-from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Type, \
+from typing import Any, Callable, Dict, IO, List, TYPE_CHECKING, Tuple, Type, \
     TypeVar, Union, cast
 
 from nussschale.session import SessionData
+from nussschale.util.fileupload import IOWrapper
+from nussschale.util.lcdict import LowerCaseDict
 
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ T = TypeVar("T")
 
 # Represents a POST parameter: Either a string, or a file or a list of strings
 # and files.
-_POSTParam = Union[str, List[Union[str, BytesIO]], BytesIO]
+_POSTParam = Union[str, List[Union[str, IOWrapper]], IOWrapper]
 
 
 # Represents a possibly encoded HTTP response
@@ -62,7 +63,7 @@ class EndpointContext:
 
     def __init__(self, ctrl: "Controller", session: SessionData,
                  path: List[str], params: Dict[str, _POSTParam],
-                 headers: Dict[str, str]) -> None:
+                 headers: LowerCaseDict[str]) -> None:
         """Constructor.
 
         Args:
@@ -99,12 +100,15 @@ class EndpointContext:
         if type == int:
             if not isinstance(val, str):
                 raise ValueError()
-            return cast(T, int(val))
         elif type == str:
             if not isinstance(val, str):
                 raise ValueError()
-            return cast(T, val)
-        raise ValueError("unsupported type")
+        elif type == IOWrapper:
+            if not isinstance(val, IOWrapper):
+                raise ValueError()
+        else:
+            raise ValueError("unsupported type")
+        return cast(T, val)
 
     def ok(self, content_type: str, response: _HTTPResponse) -> None:
         """Sets the status to 200 OK.
@@ -128,14 +132,14 @@ class EndpointContext:
 # Endpoint signatures
 _Endpoint = Callable[[EndpointContext], None]
 _ComplexEndpoint = Callable[
-    [SessionData, List[str], Dict[str, _POSTParam], Dict[str, str]],
+    [SessionData, List[str], Dict[str, _POSTParam], LowerCaseDict[str]],
     Tuple[int, Dict[str, str], _HTTPResponse]
 ]
 
 # Access Restriction signatures
 _AccessRestriction = Callable[[EndpointContext], bool]
 _ComplexAccessRestriction = Callable[
-    [SessionData, List[str], Dict[str, _POSTParam], Dict[str, str]],
+    [SessionData, List[str], Dict[str, _POSTParam], LowerCaseDict[str]],
     bool
 ]
 
@@ -281,7 +285,7 @@ def _wrap_access_check(ctrl: "Controller", access_chk: _AccessRestriction
     """
     def complex_access_check(session: SessionData, path: List[str],
                              params: Dict[str, _POSTParam],
-                             headers: Dict[str, str]) -> bool:
+                             headers: LowerCaseDict[str]) -> bool:
         """A more complex access check, acting as an adapter for a simple one.
 
         Args:
@@ -310,7 +314,8 @@ def _wrap_endpoint(ctrl: "Controller", endpoint: _Endpoint
         The wrapped endpoint.
     """
     def complex_endpoint(session: SessionData, path: List[str],
-                         params: Dict[str, _POSTParam], headers: Dict[str, str]
+                         params: Dict[str, _POSTParam],
+                         headers: LowerCaseDict[str]
                          ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
         """A more complex endpoint, acting as an adapter for a simple endpoint.
 
