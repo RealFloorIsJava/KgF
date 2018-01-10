@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -21,22 +21,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Dict, List, Tuple
+
+from nussschale.leafs.endpoint import EndpointNotApplicableException, \
+    _ComplexAccessRestriction, _ComplexEndpoint, _HTTPResponse, _POSTParam
+from nussschale.session import SessionData
+
+
+def default_access_denied(*_) -> Tuple[int, Dict[str, str], _HTTPResponse]:
+    """The default access denied handler.
+
+    Args:
+        *_: Ignored.
+
+    Returns:
+        Returns 1) the HTTP status code 2) the HTTP headers to be
+        sent and 3) the response to be sent to the client.
+    """
+    return (403,  # 403 Forbidden
+            {"Content-Type": "text/plain; charset=utf-8"},
+            "Access denied")
+
 
 class Controller:
     """A base page controller, managing access restrictions and endpoints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # Access restrictions
-        self._restrictions = []
+        self._restrictions = []  # type: List[_ComplexAccessRestriction]
         # Endpoints
-        self._endpoints = []
+        self._endpoints = []  # type: List[_ComplexEndpoint]
         # The default access denied handler
-        self._access_denied = lambda *a: (403,  # 403 Forbidden
-                                          {"Content-Type": "text/plain"},
-                                          "Access denied")
+        self._access_denied = default_access_denied  # type: _ComplexEndpoint
 
-    def add_access_restriction(self, chk):
+    def add_access_restriction(self, chk: _ComplexAccessRestriction) -> None:
         """Adds an access restriction for this controller.
 
         The restriction is a function
@@ -47,11 +66,11 @@ class Controller:
         Restrictions will be checked before any endpoint is called.
 
         Args:
-            chk (function): The restriction as described above.
+            chk: The restriction as described above.
         """
         self._restrictions.append(chk)
 
-    def set_permission_fail_handler(self, point):
+    def set_permission_fail_handler(self, point: _ComplexEndpoint) -> None:
         """Sets the handler for when access is denied.
 
         This will be called as an endpoint if any access check fails.
@@ -60,21 +79,18 @@ class Controller:
         See add_endpoint() for a more detailed description of the signature.
 
         Args:
-            point (function): The handler as described above.
+            point: The handler as described above.
         """
         self._access_denied = point
 
-    def add_endpoint(self, point, path_restrict=None, params_restrict=None):
+    def add_endpoint(self, point: _ComplexEndpoint) -> None:
         """Adds an endpoint to this controller.
 
         The given callback function will be called if and only if the following
         conditions hold:
-            - Every element in path_restrict has to be present in the path.
-            - Every key in params_restrict has to be present in the
-                parameters.
             - The access checks must not fail.
-            - Any other endpoint that was added before this endpoint is either
-                not called or returns None.
+            - Any other endpoint that was added before this endpoint is not
+                called or raises an EndpointNotApplicableException.
 
         The callback function has the following signature:
             (session, path, params, headers) -> (status, headers, response)
@@ -89,41 +105,28 @@ class Controller:
         response is a string that will be sent as the body of the response.
 
         Args:
-            point (function): The endpoint callback function as described
+            point: The endpoint callback function as described
                 above.
-            path_restrict (set, optional): The path restrictions as described
-                above.
-            params_restrict (set, optional): The params restrictions as
-                described above.
         """
-        # Default path restriction is no restriction
-        if path_restrict is None:
-            path_restrict = set()
+        self._endpoints.append(point)
 
-        # Default parameter restriction is no restriction
-        if params_restrict is None:
-            params_restrict = set()
-
-        # Structure: [(path,param) -> (endpoint)]
-        self._endpoints.append(((path_restrict, params_restrict), point))
-
-    def call_endpoint(self, session_data, path, params, headers):
+    def call_endpoint(self, session_data: SessionData, path: List[str],
+                      params: Dict[str, _POSTParam], headers: Dict[str, str]
+                      ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
         """Calls an endpoint and returns the results.
 
         For details on which endpoint(s) will be called, check the
         documentation of add_endpoint or set_permission_fail_handler.
 
         Args:
-            session_data (obj): The session data of the client.
-            path (list): The path of the request.
-            params (dict): The POST parameters of the request.
-            headers (dict): The HTTP headers of the request.
+            session_data: The session data of the client.
+            path: The path of the request.
+            params: The POST parameters of the request.
+            headers: The HTTP headers of the request.
 
         Returns:
-            tuple: Returns a tuple of three values. The first value is the
-                status code that should be sent in response. The second value
-                is a dictionary of HTTP headers for the response. The third
-                value is a string containing the response for the client.
+            Returns 1) the HTTP status code 2) the HTTP headers to be
+            sent and 3) the response to be sent to the client.
         """
         # Access check
         passed = True
@@ -138,39 +141,12 @@ class Controller:
 
         # Find endpoint
         for point in self._endpoints:
-            path_restrict = point[0][0]
-            params_restrict = point[0][1]
-            callback = point[1]
-            fail = False
-
-            # Check path
-            for request in path_restrict:
-                if request not in path:
-                    fail = True
-                    break
-
-            # Early bailout
-            if fail:
-                continue
-
-            # Check params
-            for request in params_restrict:
-                if request not in params:
-                    fail = True
-                    break
-
-            # Late bail out
-            if fail:
-                continue
-
-            # Endpoint matches, call endpoint callback
-            res = callback(session_data, path, params, headers)
-            if res is None:
-                # Fall through, the next endpoint should be considered
-                continue
-            return res
+            try:
+                return point(session_data, path, params, headers)
+            except EndpointNotApplicableException:
+                pass  # Check next endpoint
 
         # Last resort if there is no matching endpoint
-        return (404,  # 404 Not Found
-                {"Content-Type": "text/plain"},
+        return (500,  # 500 Internal Server Error
+                {"Content-Type": "text/plain; charset=utf-8"},
                 "No applicable endpoint found")

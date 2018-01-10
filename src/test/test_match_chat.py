@@ -34,14 +34,14 @@ card_set = ("_-0\tSTATEMENT\n_-1\tSTATEMENT\n_-2\tSTATEMENT\n_-3\tSTATEMENT\n"
             "V-5\tVERB\nV-6\tVERB\nV-7\tVERB\nV-8\tVERB\nV-9\tVERB\n")
 
 
-def teardown_function(f):
+def teardown_function(_) -> None:
     """Resets the match pool."""
     for k in [x for x in Match._registry]:
         del Match._registry[k]
     Match._id_counter = 0
 
 
-def test_create_message():
+def test_create_message() -> None:
     """Tests whether the match creation message is sent."""
     match = Match()
     match.create_deck(card_set)
@@ -50,7 +50,7 @@ def test_create_message():
     assert match._chat[0][1] == "<b>Match was created.</b>"
 
 
-def test_join_message():
+def test_join_message() -> None:
     """Tests whether the participant join message is sent."""
     match = Match()
     match.create_deck(card_set)
@@ -61,7 +61,7 @@ def test_join_message():
     assert match._chat[-1][1] == "<b>NICK joined.</b>"
 
 
-def test_spectate_message():
+def test_spectate_message() -> None:
     """Tests whether the spectator join message is sent."""
     match = Match()
     match.create_deck(card_set)
@@ -73,7 +73,7 @@ def test_spectate_message():
     assert match._chat[-1][1] == "<b>NICK is now spectating.</b>"
 
 
-def test_leave_message():
+def test_leave_message() -> None:
     """Tests whether the participant leave message is sent."""
     match = Match()
     match.create_deck(card_set)
@@ -85,7 +85,7 @@ def test_leave_message():
     assert match._chat[-1][1] == "<b>NICK left.</b>"
 
 
-def test_timeout_message():
+def test_timeout_message() -> None:
     """Tests the participant timeout message."""
     match = Match()
     match.create_deck(card_set)

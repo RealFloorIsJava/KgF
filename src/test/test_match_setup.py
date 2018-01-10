@@ -34,14 +34,14 @@ card_set = ("_-0\tSTATEMENT\n_-1\tSTATEMENT\n_-2\tSTATEMENT\n_-3\tSTATEMENT\n"
             "V-5\tVERB\nV-6\tVERB\nV-7\tVERB\nV-8\tVERB\nV-9\tVERB\n")
 
 
-def teardown_function(f):
+def teardown_function(_) -> None:
     """Resets the match pool."""
     for k in [x for x in Match._registry]:
         del Match._registry[k]
     Match._id_counter = 0
 
 
-def test_match_empty_expire():
+def test_match_empty_expire() -> None:
     """Tests whether empty matches expire."""
     match = Match()
     match.create_deck(card_set)
@@ -51,7 +51,7 @@ def test_match_empty_expire():
     assert Match.get_by_id(match.id) is None
 
 
-def test_match_nonempty_notexpire():
+def test_match_nonempty_notexpire() -> None:
     """Tests whether empty matches expire."""
     match = Match()
     match.create_deck(card_set)
@@ -63,7 +63,7 @@ def test_match_nonempty_notexpire():
     assert Match.get_by_id(match.id) is not None
 
 
-def test_match_join_leave():
+def test_match_join_leave() -> None:
     """Tests joining/leaving of matches."""
     match = Match()
     match.create_deck(card_set)

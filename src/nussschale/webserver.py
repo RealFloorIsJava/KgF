@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -24,41 +24,33 @@ SOFTWARE.
 import ssl
 from http.server import HTTPServer
 from socketserver import ThreadingMixIn
+from sys import exc_info
 from threading import Thread
+from typing import Any
 
-from kgf import kconfig
-from pages.leaf import Leafs
-from pages.master import MasterController
-from web.handler import ServerHandler
+from nussschale.handler import ServerHandler
+from nussschale.nussschale import nconfig
 
 
 class Webserver(Thread):
     """The HTTP web server."""
 
-    def __init__(self):
+    # The internal http server which runs in the background
+    _httpd = None  # type: MultithreadedHTTPServer
+
+    def __init__(self) -> None:
         """Constructor."""
         super().__init__()
-        # The internal http server which runs in the background
-        self._httpd = None
         # The port the server runs on
-        self._port = kconfig().get("port", 8091)
+        self._port = nconfig().get("port", 8091)
         # The certificate used for SSL (if enabled)
-        self._certificate = kconfig().get("certificate", "cert.pem")
+        self._certificate = nconfig().get("certificate", "cert.pem")
         # The private key for above certificate
-        self._private_key = kconfig().get("privatekey", "priv.pem")
+        self._private_key = nconfig().get("privatekey", "priv.pem")
         # Whether SSL shall be used for connections
-        self._use_ssl = kconfig().get("use_ssl", True)
+        self._use_ssl = nconfig().get("use_ssl", True)
 
-        # Set up the controller for routing
-        m = MasterController()
-
-        # Add all leafs to the controller
-        Leafs.add_leafs(m)
-
-        # Set the master for the server handler
-        ServerHandler.set_master(m)
-
-    def run(self):
+    def run(self) -> None:
         """Starts the HTTP server in the background."""
         # Initialize the server
         socket_pair = ('', self._port)
@@ -73,14 +65,18 @@ class Webserver(Thread):
         # Let the HTTP server run in the background serving requests
         self._httpd.serve_forever()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stops the HTTP server if it is running."""
         ServerHandler.stop_connections = True
         if self._httpd is not None:
             self._httpd.shutdown()
 
-    def _create_ssl_context(self):
-        """Creates a SSL context for HTTPS."""
+    def _create_ssl_context(self) -> ssl.SSLContext:
+        """Creates a SSL context for HTTPS.
+
+        Returns:
+            A SSL context for application to the server's socket.
+        """
         tls = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
         tls.load_cert_chain(certfile=self._certificate,
                             keyfile=self._private_key)
@@ -91,4 +87,19 @@ class Webserver(Thread):
 
 class MultithreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """A HTTP server which handles each request in a seperate thread."""
-    pass
+
+    def handle_error(self, request: Any, client_addr: Any) -> None:
+        """Handles an error.
+
+        Args:
+            request: The request.
+            client_addr: The client's address.
+        """
+        if exc_info()[0] == SystemExit:
+            # Do not 'exit', but rather kill the server...
+            print("NOTICE: The web server has been stopped due to an error.")
+            print("NOTICE: Use `quit` to fully exit the application.")
+            ServerHandler.stop_connections = True
+            if self is not None:
+                self.shutdown()
+        super().handle_error(request, client_addr)

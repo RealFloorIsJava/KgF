@@ -28,6 +28,7 @@ Module Deadlock Guarantees:
     can not be part of any deadlock.
 """
 
+
 import re
 from collections import OrderedDict
 from html import escape
@@ -36,7 +37,7 @@ from threading import RLock
 from time import time
 
 from model.multideck import MultiDeck
-from util.locks import mutex, named_mutex
+from nussschale.util.locks import mutex, named_mutex
 
 import re
 
@@ -84,7 +85,7 @@ class Match:
     _THRESHOLD_CHOOSING_FINISH = 10
 
     # The match id -> match registry and the ID counter
-    _registry = OrderedDict()
+    _registry = OrderedDict()  # type: OrderedDict
     _id_counter = 0
 
     # MutEx for the match registry
@@ -121,10 +122,7 @@ class Match:
         Contract:
             This method locks the match pool lock.
         """
-        res = []
-        for k in Match._registry:
-            res.append(Match._registry[k])
-        return res
+        return [match for match in Match._registry.values()]
 
     @classmethod
     def get_match_of_player(cls, pid):
@@ -246,10 +244,9 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        for id in self._participants:
-            if self._participants[id].spectator:
-                continue  # Spectators can't be owner.
-            return self._participants[id].nickname
+        for part in self.get_participants(False):
+            return part.nickname
+        return "<unknown>"
 
     @mutex
     def get_num_participants(self, include_specs=True):
@@ -265,11 +262,7 @@ class Match:
             This method locks the match's instance lock.
         """
         if not include_specs:
-            n = 0
-            for id in self._participants:
-                if not self._participants[id].spectator:
-                    n += 1
-            return n
+            return len(list(self.get_participants(False)))
 
         # Default case: including spectators
         return len(self._participants)
@@ -337,10 +330,8 @@ class Match:
         """
         if self._state == "COOLDOWN":
             # Delete all chosen cards from the hands
-            for pid in self._participants:
-                part = self._participants[pid]
-                if not part.spectator:
-                    part.delete_chosen()
+            for part in self.get_participants(False):
+                part.delete_chosen()
 
     def _enter_state(self):
         """Handles a transition into the current state.
@@ -374,10 +365,8 @@ class Match:
                                    "<b>Too few valid choices!</b>"))
                 # If the round is skipped only unchoose the cards without
                 # deleting them
-                for pid in self._participants:
-                    part = self._participants[pid]
-                    if not part.spectator:
-                        part.unchoose_all()
+                for part in self.get_participants(False):
+                    part.unchoose_all()
                 self._set_state("COOLDOWN")
                 return
 
@@ -454,15 +443,15 @@ class Match:
             This method locks the match's instance lock and the participant's
             lock.
         """
-        for id in self._participants.copy():
-            part = self._participants[id]
+        parts = [x for x in self._participants.items()]
+        for pid, part in parts:
             if part.has_timed_out():
                 self._chat.append((
                     "SYSTEM",
                     "<b>%s timed out.</b>" % part.nickname))
-                if self._participants[id].picking:
-                    self.notify_picker_leave(id)
-                del self._participants[id]
+                if part.picking:
+                    self.notify_picker_leave(pid)
+                del self._participants[pid]
 
     @mutex
     def abandon_participant(self, pid):
@@ -497,17 +486,14 @@ class Match:
         """
         # Find the first participant as the default fallback
         fallback = None
-        for ppid in self._participants:
-            part = self._participants[ppid]
-            if not part.spectator:
-                fallback = part
-                break
+        for part in self.get_participants(False):
+            fallback = part
+            break
         assert fallback is not None
 
         next = False
         found = False
-        for ppid in self._participants:
-            part = self._participants[ppid]
+        for ppid, part in self._participants.items():
             if part.spectator:
                 continue
             if next:
@@ -540,8 +526,11 @@ class Match:
         return self._participants.get(pid, None)
 
     @mutex
-    def get_participants(self):
+    def get_participants(self, include_specs=True):
         """Retrieves all participants in the match.
+
+        Args:
+            include_specs (bool): Whether to include spectators.
 
         Returns:
             list: All participants in the match.
@@ -549,10 +538,10 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
-        res = []
-        for id in self._participants:
-            res.append(self._participants[id])
-        return res
+        parts = self._participants.values()
+        if not include_specs:
+            return filter(lambda x: not x.spectator, parts)
+        return parts
 
     @mutex
     def add_participant(self, part):
@@ -654,8 +643,8 @@ class Match:
                 break
 
         # Ensure that all limits are met
-        for type in limits:
-            if limits[type] > 0:
+        for num in limits.values():
+            if num > 0:
                 return False, "deck_too_small"
 
         # Create multidecks
@@ -689,8 +678,7 @@ class Match:
         # The current state has to be PICKING
         # Get the picking player
         picker = "<unknown>"
-        for id in self._participants:
-            part = self._participants[id]
+        for part in self._participants.values():
             if part.picking:
                 picker = part.nickname
                 break
@@ -809,13 +797,8 @@ class Match:
         """
         gc = self.count_gaps()
         winner = None
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
-            if part.picking:
-                continue
-            if part.choose_count() < gc:
+        for part in self.get_participants(False):
+            if part.picking or part.choose_count() < gc:
                 continue
             if part.order == order:
                 winner = part
@@ -823,11 +806,7 @@ class Match:
         if winner is None:
             return
 
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
-
+        for part in self.get_participants(False):
             if part is winner:
                 part.increase_score()
                 nick = part.nickname
@@ -854,10 +833,7 @@ class Match:
             This method locks the match's instance lock and participant locks.
         """
         gc = self.count_gaps()
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
+        for part in self.get_participants(False):
             if not part.picking and gc != part.choose_count():
                 return
 
@@ -877,10 +853,7 @@ class Match:
             method.
         """
         n = 0
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
+        for part in self.get_participants(False):
             if part.choose_count() > 0:
                 n += 1
                 if n == 2:
@@ -898,9 +871,8 @@ class Match:
             method.
         """
         gc = self.count_gaps()
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator or part.picking:
+        for part in self.get_participants(False):
+            if part.picking:
                 continue
             if part.choose_count() < gc:
                 part.unchoose_all()
@@ -915,10 +887,7 @@ class Match:
             The caller ensures that the match's lock is held when calling this
             method.
         """
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
+        for part in self.get_participants(False):
             part.replenish_hand(self._multidecks)
 
     def _select_match_card(self):
@@ -948,10 +917,7 @@ class Match:
 
         # Assign the order
         k = 0
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
+        for part in self.get_participants(False):
             part.order = order[k] + 1
             k += 1
 
@@ -967,19 +933,14 @@ class Match:
         """
         # Find the first participant as the default fallback
         fallback = None
-        for pid in self._participants:
-            part = self._participants[pid]
-            if not part.spectator:
-                fallback = self._participants[pid]
-                break
+        for part in self.get_participants(False):
+            fallback = part
+            break
         assert fallback is not None
 
         # Try to make the participant after the current one the new picker
         next = False
-        for pid in self._participants:
-            part = self._participants[pid]
-            if part.spectator:
-                continue
+        for part in self.get_participants(False):
             if next:
                 part.picking = True
                 return

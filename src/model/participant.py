@@ -30,7 +30,7 @@ from copy import deepcopy
 from threading import RLock
 from time import time
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
 
 
 class Participant:
@@ -124,8 +124,8 @@ class Participant:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to unchoose for spectator"
-        for hid in self._hand:
-            self._hand[hid].chosen = None
+        for hcard in self._hand.values():
+            hcard.chosen = None
 
     @mutex
     def delete_chosen(self):
@@ -136,8 +136,8 @@ class Participant:
         """
         assert not self.spectator, "Trying to delete for spectator"
         del_list = []
-        for hid in self._hand:
-            if self._hand[hid].chosen is not None:
+        for hid, hcard in self._hand.items():
+            if hcard.chosen is not None:
                 del_list.append(hid)
         for hid in del_list:
             del self._hand[hid]
@@ -169,8 +169,8 @@ class Participant:
         assert not self.spectator, "Trying to get count for spectator"
 
         n = 0
-        for hid in self._hand:
-            if self._hand[hid].chosen is not None:
+        for hcard in self._hand.values():
+            if hcard.chosen is not None:
                 n += 1
         return n
 
@@ -186,19 +186,12 @@ class Participant:
         """
         assert not self.spectator, "Trying to replenish spectator"
 
-        # Fetch types for replenishing
-        types = []
-        for key in mdecks:
-            if key != "STATEMENT":
-                types.append(key)
-
         # Replenish for every type
-        for type in types:
+        for type in filter(lambda x: x != "STATEMENT", mdecks):
             # Count cards of that type and fetch IDs
             k_in_hand = 0
             ids_banned = set()
-            for hid in self._hand:
-                hcard = self._hand[hid]
+            for hcard in self._hand.values():
                 if hcard.card.type == type:
                     ids_banned.add(hcard.card.id)
                     k_in_hand += 1
@@ -230,8 +223,7 @@ class Participant:
         k = 0
         # The number of chosen hand cards
         n = 0
-        for hid in self._hand:
-            hcard = self._hand[hid]
+        for hcard in self._hand.values():
             if hcard.chosen is not None:
                 n += 1
                 k = max(k, hcard.chosen + 1)
@@ -245,8 +237,7 @@ class Participant:
             else:
                 k = hcard.chosen
                 # Unselect the hand card and all with higher choice indexes
-                for hid in self._hand:
-                    other_hcard = self._hand[hid]
+                for other_hcard in self._hand.values():
                     if (other_hcard.chosen is not None
                             and other_hcard.chosen >= k):
                         other_hcard.chosen = None
@@ -267,8 +258,7 @@ class Participant:
         assert not self.spectator, "Trying to get data for spectator"
 
         data = []
-        for hid in self._hand:
-            hcard = self._hand[hid]
+        for hcard in self._hand.values():
             type = hcard.card.type
             text = hcard.card.text
             chosen = hcard.chosen

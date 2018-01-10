@@ -33,14 +33,14 @@ card_set = ("_-0\tSTATEMENT\n_-1\tSTATEMENT\n_-2\tSTATEMENT\n_-3\tSTATEMENT\n"
             "V-5\tVERB\nV-6\tVERB\nV-7\tVERB\nV-8\tVERB\nV-9\tVERB\n")
 
 
-def teardown_function(f):
+def teardown_function(_) -> None:
     """Resets the match pool."""
     for k in [x for x in Match._registry]:
         del Match._registry[k]
     Match._id_counter = 0
 
 
-def test_match_spec_notexpire():
+def test_match_spec_notexpire() -> None:
     """Tests whether matches with only spectators expire."""
     match = Match()
     match.create_deck(card_set)
@@ -53,7 +53,7 @@ def test_match_spec_notexpire():
     assert Match.get_by_id(match.id) is not None
 
 
-def test_match_join_leave_spec():
+def test_match_join_leave_spec() -> None:
     """Tests joining/leaving of spectators."""
     match = Match()
     match.create_deck(card_set)
@@ -76,7 +76,7 @@ def test_match_join_leave_spec():
     assert match.get_num_participants(False) == 0
 
 
-def test_get_match_of_spec():
+def test_get_match_of_spec() -> None:
     """Tests retrieving the match of a spectator."""
     match = Match()
     part = Participant("ID", "NICK")

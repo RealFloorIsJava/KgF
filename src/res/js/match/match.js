@@ -66,7 +66,7 @@
     isSpectator = data.isSpectator
 
     if (isSpectator) {
-      $(".match-hand").css("display", "none")
+      $(".match-hand").addClass("invisible")
     }
 
     updateMatchStatement(data.hasCard, data.cardText || "Waiting...")

@@ -21,17 +21,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import List, Set
+
 from model.multideck import MultiDeck
 
 
 class MockCard:
     """A mock card."""
 
-    def __init__(self, id):
+    def __init__(self, id: int) -> None:
         """Constructor.
 
         Args:
-            id (int): The ID of the mock card.
+            id: The ID of the mock card.
         """
         self.id = id
 
@@ -43,7 +45,7 @@ for i in range(deck_n):
     deck.append(MockCard(i))
 
 
-def test_multideck_period():
+def test_multideck_period() -> None:
     """Tests the multideck's period with no restrictions placed on it."""
     md = MultiDeck(deck)
     ids = set()
@@ -54,10 +56,10 @@ def test_multideck_period():
     assert len(ids) == deck_n
 
 
-def test_multideck_deplete():
+def test_multideck_deplete() -> None:
     """Tests depleting the multideck by making restrictions more strict."""
     md = MultiDeck(deck)
-    ids = set()
+    ids = set()  # type: Set[int]
     for i in range(deck_n):
         obj = md.request(ids)
         assert obj is not None
@@ -65,11 +67,11 @@ def test_multideck_deplete():
     assert md.request(ids) is None
 
 
-def test_multideck_draw():
+def test_multideck_draw() -> None:
     """Tests drawing objects from the multideck."""
     # Draw 5 times hands of deck_n/4 cards (must lead to duplicates)
     md = MultiDeck(deck)
-    hands = []
+    hands = []  # type: List[Set[int]]
     for i in range(5):
         hands.append(set())
         for j in range(deck_n // 4):
@@ -85,7 +87,7 @@ def test_multideck_draw():
     assert len(all_ids) == deck_n
 
 
-def test_multideck_no_duplicate():
+def test_multideck_no_duplicate() -> None:
     """Tests the drawing for duplicates."""
     md = MultiDeck(deck)
     x = md.request(set())

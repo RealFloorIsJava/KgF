@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -25,27 +25,31 @@ import cgi
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
+from sys import exit
 from traceback import extract_tb
+from typing import Dict, List, Tuple, no_type_check
 from urllib.parse import parse_qs
 
-from kgf import print
-from model.match import Match
-from web.session import Session
+from nussschale.leafs.endpoint import _POSTParam
+from nussschale.leafs.master import MasterController
+from nussschale.nussschale import nlog
+from nussschale.session import Session
+from nussschale.util.heartbeat import Heartbeat
 
 
 # Set the maximum request length, in bytes: 8 MiB
-cgi.maxlen = 8 * 1024 * 1024
+cgi.maxlen = 8 * 1024 * 1024  # type: ignore
 
 
 class ServerHandler(BaseHTTPRequestHandler):
     """Handles incoming requests to the web server.
 
-    Attributes:
-        stop_connections (bool): Whether to stop connections due to shutdown.
+    Class Attributes:
+        stop_connections: Whether to stop connections due to shutdown.
     """
 
     # Set some metrics
-    server_version = "Teapot/2.0"
+    server_version = "Nussschale/2.0"
     sys_version = "Python"
     protocol_version = "HTTP/1.1"
 
@@ -59,7 +63,7 @@ class ServerHandler(BaseHTTPRequestHandler):
     _master = None
 
     @staticmethod
-    def set_master(mctrl):
+    def set_master(mctrl: MasterController) -> None:
         """Sets the master controller for all handlers.
 
         Args:
@@ -68,44 +72,60 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         ServerHandler._master = mctrl
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args) -> None:
         """Overridden access log handler.
 
         This is automatically called, but we do not want to generate an access
         log so this method does nothing.
 
         Args:
-            format (str): This parameter is ignored.
+            format: This parameter is ignored.
             *args: Additional positional arguments are ignored.
         """
-        pass
+        pass  # No logging is wanted!
 
-    def do_request(self, params):
+    @no_type_check
+    def do_request(self, params: Dict[str, _POSTParam]) -> None:
         """Performs the necessary actions to serve an HTTP request.
 
         Handles GET and POST requests in the same way.
 
         Args:
-            params (dict): The parameters that were supplied by the client.
+            params: The parameters that were supplied by the client.
                 This includes POST parameters and file uploads.
         """
         if ServerHandler.stop_connections:
             self._abort(503, "Unavailable")  # 503 Service Unavailable
-            self.close_connection = True
+            self.close_connection = True  # noqa  # belongs to base class
             return
 
-        # Perform tasks for every request here
-        Match.perform_housekeeping()
+        # Handle all heartbeats
+        for fun in Heartbeat.heartbeats:
+            try:
+                fun()
+            except Exception as e:
+                nlog().log("An error occurred while executing"
+                           " a request heartbeat.")
+                for entry in extract_tb(e.__traceback__):
+                    entry = tuple(entry[:4])
+                    nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
+                nlog().log(str(e))
+
+                # Typically, faulty request heartbeats are a reason
+                # to havoc... -- at least to save some log space!
+                nlog().log("Heartbeat crash!")
+                print("Heartbeat crash: See log for info.")
+                exit(1)
 
         # Setup header dictionary
         head = {}
 
         # Find the session cookie (if any)
-        cookie = ""
+        cookie_hdr = ""
         for key in self.headers:
             if key == "Cookie":
-                cookie = self.headers[key]
-        cookie = SimpleCookie(cookie)
+                cookie_hdr = self.headers[key]
+        cookie = SimpleCookie(cookie_hdr)
 
         # Extract the session ID
         if "session" in cookie:
@@ -131,7 +151,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         path = path[1:]
 
         # Add the magic leaf parameter to the params
-        ServerHandler._master.decorate_params(leaf, params)
+        MasterController.decorate_params(leaf, params)
 
         # Call the leaf/endpoint
         x = None
@@ -142,32 +162,29 @@ class ServerHandler(BaseHTTPRequestHandler):
                                                     self.headers)
         except Exception as e:
             # Endpoint call failed. Log the error
-            print("=====[ERROR REPORT]=====")
+            nlog().log("=====[ERROR REPORT]=====")
 
             # Walk through the backtrace
             for entry in extract_tb(e.__traceback__):
-                entry = (entry[0], entry[1], entry[2], entry[3])
-                print("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
+                entry = tuple(entry[:4])
+                nlog().log("\tFile \"%s\", line %i, in %s\n\t\t%s" % entry)
 
             # Log the string representation of the exception as a summary
-            print(str(e))
-            print("========================")
+            nlog().log(str(e))
+            nlog().log("========================")
 
             # Notify the user that the request failed
             self._reply(500,  # 500 Internal Server Error
-                        {"Content-Type": "text/plain"},
+                        {"Content-Type": "text/plain; charset=utf-8"},
                         ("The server encountered an unexpected condition and"
                          " is unable to continue.").encode())
             return
         finally:
             # For file uploads: Close all uploaded file handles that have been
             # opened
-            for elem in params:
-                try:
-                    if elem.filename:
-                        elem.file.close()
-                except:
-                    pass
+            for val in params.values():
+                if hasattr(val, "filename"):
+                    val.file.close()
         assert x is not None
 
         # Update request results
@@ -175,20 +192,20 @@ class ServerHandler(BaseHTTPRequestHandler):
         head.update(x[1])
         response = x[2]
 
-        # The response might not be properly encoded. In this case we encode
-        # it here
+        # The response might not be properly encoded (it is not required to be
+        # encoded). In this case we encode it here
         if isinstance(response, str):
             response = response.encode()
 
         # Send the reply to the client
         self._reply(code, head, response)
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP GET request."""
         # Handle a GET request as a POST request with no parameters
         self.do_request({})
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self) -> None:  # noqa: N802  # required by library
         """Processes an HTTP POST request."""
         try:
             self.do_request(self._get_post_params())
@@ -200,19 +217,19 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # 400 Bad Request
                 self._abort(400, "Media type not supplied/supported")
 
-    def handle_expect_100(self):
+    def handle_expect_100(self) -> bool:
         """Handles HTTP continuation requests.
 
         The web server rejects all continuation requests using the appropriate
         HTTP status code.
 
         Returns:
-            bool: Always False according to the documentation of http.server.
+            Always False according to the documentation of http.server.
         """
         self._reply(417, {}, b"\0")  # 417 Expectation Failed
         return False
 
-    def _get_path(self):
+    def _get_path(self) -> List[str]:
         """Parses the path for this request.
 
         The path consists of all slash-seperated values after the domain in
@@ -225,18 +242,18 @@ class ServerHandler(BaseHTTPRequestHandler):
         The leaf is 'test'
 
         Returns:
-            list: The path.
+            The path.
         """
         # Get the path from the web server
-        raw = self.path
+        raw_str = self.path
 
         # Remove trailing query string
-        if "?" in raw:
-            raw = raw[:raw.find("?")]
+        if "?" in raw_str:
+            raw_str = raw_str[:raw_str.find("?")]
 
         # Split the raw path into the slash seperated parts
         path = []
-        raw = raw.split("/")
+        raw = raw_str.split("/")
 
         # Trim whitespace at beginning and end of each element and ignore empty
         # ones
@@ -252,12 +269,13 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         return path
 
-    def _get_post_params(self):
+    @no_type_check
+    def _get_post_params(self) -> Dict[str, _POSTParam]:
         """Retrieves the POST parameters. Also handles file uploads.
 
         Returns:
-            dict: The POST parameters. File uploads are returned as open file-
-                like objects in the dictionary.
+            The POST parameters. File uploads are returned as open file-like
+            objects in the dictionary.
 
         Raises:
             RequestError: When length or content type is not supplied by the
@@ -289,7 +307,6 @@ class ServerHandler(BaseHTTPRequestHandler):
             # According to the documentation of urllib, parse_qs might return
             # multiple values even for non-array arguments
             for key in d:
-                key = key
                 if not key.endswith("[]"):
                     # Just use the first element, even if multiple are supplied
                     d[key] = d[key][0]
@@ -305,7 +322,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                                       environ={'REQUEST_METHOD': 'POST'},
                                       keep_blank_values=True)
             except ValueError:
-                print("File upload was too big!")
+                nlog().log("File upload was too big!")
                 return {}
             d = {}
             for key in fs:
@@ -317,13 +334,13 @@ class ServerHandler(BaseHTTPRequestHandler):
                         d[x.name] = x.value
                     elif isinstance(x, list):
                         # Regular POST variable
-                        if x.name.endswith("[]"):
+                        if key.endswith("[]"):
                             # Array argument
-                            d[x.name] = x
+                            d[key] = x
                         elif len(x) > 0:
                             # Non-array argument. However, empty non-array
                             # arguments are ignored
-                            d[x.name] = x[0]
+                            d[key] = x[0]
                 else:
                     # In the case of the key having a file just use the
                     # result of the field storage parsing
@@ -331,15 +348,17 @@ class ServerHandler(BaseHTTPRequestHandler):
                     fp.seek(0, 2)
                     size = fp.tell()
                     fp.seek(0)
-                    print("File upload: '%s', %i bytes" % (x.filename, size))
+                    nlog().log("File upload: '%s', %i bytes" % (x.filename,
+                                                                size))
                     d[x.name] = x
             return d
         else:
             # Unsupported content type!
-            print("Currently unsupported %r %r %r" % (type, args, length))
+            nlog().log("Currently unsupported %r %r %r" % (type, args, length))
             raise RequestError(False)
 
-    def _parse_type(self, type):
+    @staticmethod
+    def _parse_type(type: str) -> Tuple[str, Dict[str, str]]:
         """Parses the content type according to RFC 2045
 
         Args:
@@ -376,23 +395,25 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         return type, param
 
-    def _abort(self, code, msg):
+    def _abort(self, code: int, msg: str) -> None:
         """Reports an error back to the client.
 
         Args:
-            code (int): The HTTP status code that will be sent.
-            msg (str): The response string that will be sent.
+            code: The HTTP status code that will be sent.
+            msg: The response string that will be sent.
         """
-        self._reply(code, {"Content-Type": "text/plain"}, msg.encode())
+        self._reply(code,
+                    {"Content-Type": "text/plain; charset=utf-8"},
+                    msg.encode())
 
-    def _reply(self, code, headers, data):
+    def _reply(self, code: int, headers: Dict[str, str], data: bytes) -> None:
         """Sends an HTTP response to the client.
 
         Args:
-            code (int): The HTTP status code that will be sent.
-            headers (dict): A dictionary containing headers that will be sent.
+            code: The HTTP status code that will be sent.
+            headers: A dictionary containing headers that will be sent.
                 Dictionary keys are header names and entries are header values.
-            data (bytes): The response that will be sent to the client.
+            data: The response that will be sent to the client.
         """
         try:
             # Send HTTP status code
@@ -420,6 +441,11 @@ class ServerHandler(BaseHTTPRequestHandler):
 class RequestError(Exception):
     """Raised if either content type or length is missing in the request."""
 
-    def __init__(self, length):
-        # Flag to indicate whether the length is missing
+    def __init__(self, length: bool) -> None:
+        """Constructor.
+
+        Args:
+            length: Whether the error was caused by the content length being
+                not present.
+        """
         self.length = length

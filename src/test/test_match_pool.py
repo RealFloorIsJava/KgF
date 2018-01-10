@@ -21,6 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Set
+
 from model.match import Match
 from model.participant import Participant
 
@@ -34,14 +36,14 @@ card_set = ("_-0\tSTATEMENT\n_-1\tSTATEMENT\n_-2\tSTATEMENT\n_-3\tSTATEMENT\n"
             "V-5\tVERB\nV-6\tVERB\nV-7\tVERB\nV-8\tVERB\nV-9\tVERB\n")
 
 
-def teardown_function(f):
+def teardown_function(_) -> None:
     """Resets the match pool."""
     for k in [x for x in Match._registry]:
         del Match._registry[k]
     Match._id_counter = 0
 
 
-def test_pool_size():
+def test_pool_size() -> None:
     """Tests whether the pool size is correct."""
     assert len(Match._registry) == 0
     match = Match()
@@ -52,7 +54,7 @@ def test_pool_size():
     assert len(Match._registry) == 0
 
 
-def test_get_by_id():
+def test_get_by_id() -> None:
     """Tests fetching a match by ID."""
     match = Match()
     assert Match.get_by_id(match.id) is None
@@ -60,7 +62,7 @@ def test_get_by_id():
     assert Match.get_by_id(match.id) is match
 
 
-def test_get_all():
+def test_get_all() -> None:
     """Tests fetching all matches."""
     match = Match()
     match2 = Match()
@@ -73,7 +75,7 @@ def test_get_all():
     assert (matches[0] is match2) != (matches[1] is match2)
 
 
-def test_get_match_of_player():
+def test_get_match_of_player() -> None:
     """Tests fetching the match of a player."""
     match1 = Match()
     match2 = Match()
@@ -97,7 +99,7 @@ def test_get_match_of_player():
     assert mp4 is match2
 
 
-def test_remove_match():
+def test_remove_match() -> None:
     """Tests removing matches."""
     match = Match()
     match.put_in_pool()
@@ -106,9 +108,9 @@ def test_remove_match():
     assert Match.get_by_id(match.id) is None
 
 
-def test_get_next_id():
+def test_get_next_id() -> None:
     """Tests retrieving new match IDs."""
-    ids = set()
+    ids = set()  # type: Set[int]
     for i in range(100):
         new_id = Match.get_next_id()
         assert new_id not in ids

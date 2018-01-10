@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -22,20 +22,24 @@ SOFTWARE.
 """
 
 from functools import wraps
+from typing import Any, Callable
 
 
-def named_mutex(lck_name="_lock"):
+_Decorator = Callable[[Callable], Callable]
+
+
+def named_mutex(lck_name: str="_lock") -> _Decorator:
     """Decorates a class method / instance method to lock the (R)Lock.
 
     Args:
-        lck_name (str): The name of the lock (class) member.
+        lck_name: The name of the lock (class) member.
 
     Returns:
-        function: The described decorator.
+        The described decorator.
     """
-    def decorator(f):
+    def decorator(f: Callable):
         @wraps(f)
-        def wrapper(ref, *args, **kwargs):
+        def wrapper(ref: Any, *args, **kwargs) -> Any:
             lck = getattr(ref, lck_name)
             with lck:
                 return f(ref, *args, **kwargs)

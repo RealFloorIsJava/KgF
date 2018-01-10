@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -21,7 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from pages.controller import Controller
+from functools import wraps
+from typing import Dict, List, Tuple
+
+from nussschale.leafs.controller import Controller
+from nussschale.leafs.endpoint import EndpointNotApplicableException, \
+    _ComplexEndpoint, _HTTPResponse, _POSTParam
+from nussschale.session import SessionData
 
 
 class MasterController(Controller):
@@ -30,48 +36,53 @@ class MasterController(Controller):
     # The key for the parameter that will be injected
     _LEAF_INJECT = "___leaf___"
 
-    def decorate_params(self, leaf, params):
+    @staticmethod
+    def decorate_params(leaf: str, params: Dict[str, _POSTParam]) -> None:
         """Includes the leaf parameter in the POST parameters.
 
         The parameter is constructed in a way to make name collisions less
         likely.
 
         Args:
-            leaf (str): The leaf that will be selected.
-            params (dict): The dictionary of POST parameters.
+            leaf: The leaf that will be selected.
+            params: The dictionary of POST parameters.
         """
         magic = "%s:%s" % (MasterController._LEAF_INJECT, leaf)
-        params[magic] = True
+        params[magic] = ""
 
-    def add_leaf(self, leaf, ctrl):
+    def add_leaf(self, leaf: str, ctrl: Controller) -> None:
         """Adds a leaf controller to the master controller.
 
         Args:
-            leaf (str): The leaf which should be handled by the controller.
-            ctrl (obj): The controller which will handle requests for the leaf.
+            leaf: The leaf which should be handled by the controller.
+            ctrl: The controller which will handle requests for the leaf.
         """
         # Restriction for the magic leaf parameter
         magic = "%s:%s" % (MasterController._LEAF_INJECT, leaf)
 
         # Add the decorated endpoint
         self.add_endpoint(
-            self.decorate_endpoint_call(ctrl.call_endpoint, magic),
-            params_restrict={magic})
+            MasterController.decorate_endpoint_call(ctrl.call_endpoint, magic))
 
-    def decorate_endpoint_call(self, call, magic):
+    @staticmethod
+    def decorate_endpoint_call(call: _ComplexEndpoint, magic: str
+                               ) -> _ComplexEndpoint:
         """Wraps an endpoint call to remove the magic leaf parameter.
 
         Args:
-            call (function): The endpoint call that should be wrapped.
-            magic (str): The parameter name that should be removed.
+            call: The endpoint call that should be wrapped.
+            magic: The parameter name that should be removed.
 
         Returns:
-            function: The wrapped endpoint call.
+            The wrapped endpoint call.
         """
-        def _decorated_call(session, path, params, headers):
-            if magic in params:
-                del params[magic]
+        @wraps(call)
+        def _decorated_call(session: SessionData, path: List[str],
+                            params: Dict[str, _POSTParam],
+                            headers: Dict[str, str]
+                            ) -> Tuple[int, Dict[str, str], _HTTPResponse]:
+            if magic not in params:
+                raise EndpointNotApplicableException()
+            del params[magic]
             return call(session, path, params, headers)
-        _decorated_call.__doc__ = call.__doc__
-        _decorated_call.__name__ = call.__name__
         return _decorated_call

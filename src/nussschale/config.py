@@ -1,4 +1,4 @@
-"""Part of KgF.
+"""Part of Nussschale.
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
@@ -28,23 +28,28 @@ Module Deadlock Guarantees:
 from json import dump, load
 from os.path import exists
 from threading import RLock
+from typing import Dict, TypeVar, Union, cast
 
-from util.locks import mutex
+from nussschale.util.locks import mutex
+
+
+# Type for configuration values
+T = TypeVar("T", str, int, bool)
 
 
 class Config:
     """Manages the JSON configuration file."""
 
     # The configuration file where keys and values will be stored
-    _CONFIG_FILE = "./data/kgf.json"
+    _CONFIG_FILE = "./data/nussschale.json"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         # MutEx for configuration access.
         # Locking this MutEx can't cause any other MutExes to be locked.
         self._lock = RLock()
         # The configuration cache which keeps the configuration in memory
-        self._configuration = {}
+        self._configuration = {}  # type: Dict[str, Union[str, int, bool]]
 
         # Create file, if not exists
         if not exists(Config._CONFIG_FILE):
@@ -53,18 +58,22 @@ class Config:
 
         # Get configuration
         with open(Config._CONFIG_FILE, "r") as f:
-            self._configuration = load(f)
+            self._configuration = cast(Dict[str, Union[str, int, bool]],
+                                       load(f))
 
     @mutex
-    def get(self, key, default):
+    def get(self, key: str, default: T) -> T:
         """Gets the value for the given configuration key.
 
         If the configuration key has no associated value then a default value
         will be set.
 
         Args:
-            key (str): The configuration key.
-            default (any): The default value for the configuration key.
+            key: The configuration key.
+            default: The default value for the configuration key.
+
+        Returns:
+            The value of the configuration key (or the default).
 
         Contract:
             This method locks the configuration lock.
@@ -75,4 +84,5 @@ class Config:
             with open(Config._CONFIG_FILE, "w") as f:
                 dump(self._configuration, f, indent=4, sort_keys=True)
 
-        return self._configuration[key]
+        val = cast(T, self._configuration[key])  # type: T
+        return val
