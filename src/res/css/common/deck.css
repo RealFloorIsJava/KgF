@@ -70,6 +70,11 @@
   box-shadow: 2px 2px 6px -3px #222;
 }
 
+.picking-card {
+  color: #FFF;
+  background-color: #FFF;
+}
+
 .card-id {
   position: absolute;
   bottom: 3px;
