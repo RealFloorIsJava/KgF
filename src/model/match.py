@@ -38,6 +38,8 @@ from time import time
 from model.multideck import MultiDeck
 from util.locks import mutex, named_mutex
 
+import re
+
 
 class Match:
     """Represents a match.
@@ -790,6 +792,7 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
+        msg = re.sub("(https?://\\S+)", "<a href=\"\\1\">\\1</a>", msg)
         self._chat.append(("USER", "<b>%s</b>: %s" % (nick, msg)))
 
     @mutex
