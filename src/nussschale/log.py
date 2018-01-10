@@ -79,6 +79,9 @@ class Log:
         Args:
             e: The error that occurred.
             ctx: The context where the error occurred.
+
+        Contract:
+            This method locks the logger's lock.
         """
         self.log("Error in code for %s:" % ctx)
         self.log("===[ERROR REPORT]===")
