@@ -65,6 +65,12 @@
     allowPick = data.allowPick
     isSpectator = data.isSpectator
 
+    if (allowChoose) {
+    	document.getElementById("match-hand").style.display = "block";
+    } else {
+    	document.getElementById("match-hand").style.display = "none";
+    }
+
     if (isSpectator) {
       $(".match-hand").addClass("invisible")
     }
