@@ -100,6 +100,7 @@ class EndpointContext:
         if type == int:
             if not isinstance(val, str):
                 raise ValueError()
+            val = int(val)
         elif type == str:
             if not isinstance(val, str):
                 raise ValueError()
