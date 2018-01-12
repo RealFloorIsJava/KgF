@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +39,8 @@ from time import time
 
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
+
+import re
 
 
 class Match:
@@ -778,6 +781,7 @@ class Match:
         Contract:
             This method locks the match's instance lock.
         """
+        msg = re.sub("(https?://\\S+)", "<a href=\"\\1\">\\1</a>", msg)
         self._chat.append(("USER", "<b>%s</b>: %s" % (nick, msg)))
 
     @mutex
