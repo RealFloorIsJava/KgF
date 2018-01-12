@@ -29,6 +29,8 @@
   let ending = false
   let numGaps = 0
   let allowChoose = false
+  var lastChooseState = false
+
   let allowPick = false
   let isSpectator = false
   let externalUpdateAllowed = true
@@ -266,6 +268,18 @@
     } else {
       container.empty().append(createSystemCard())
     }
+
+    if (lastChooseState !== allowChoose) {
+    	var objects = $(".tab-objects").find(".card-base")
+    	for (var i = 0; i < objects.length; i++) {
+    		objects[i].classList.toggle("object-card")
+    	}
+    	objects = $(".tab-actions").find(".card-base")
+    	for (var i = 0; i < objects.length; i++) {
+    		objects[i].classList.toggle("verb-card")
+    	}
+    }
+    lastChooseState = allowChoose
   }
 
   /**
