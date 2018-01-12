@@ -29,7 +29,8 @@
   let ending = false
   let numGaps = 0
   let allowChoose = false
-  var lastChooseState = false
+  var needsPickerUpdate = false
+  var lastStatus = ""
 
   let allowPick = false
   let isSpectator = false
@@ -62,6 +63,12 @@
   function updateStatus(data) {
     countDown = data.timer
     $("#matchstatus").html(data.status)
+    if (lastStatus !== data.status) {
+    	if (data.status === "Players are choosing cards...") {
+    		needsPickerUpdate = true
+    	}
+    }
+    lastStatus = data.status
     ending = data.ending
     numGaps = data.gaps
     allowChoose = data.allowChoose
@@ -269,7 +276,7 @@
       container.empty().append(createSystemCard())
     }
 
-    if (lastChooseState !== allowChoose) {
+    if (needsPickerUpdate) {
     	var objects = $(".tab-objects").find(".card-base")
     	for (var i = 0; i < objects.length; i++) {
     		if (allowChoose) {
@@ -286,8 +293,8 @@
 				objects[i].classList.remove("verb-card")
     		}
     	}
+    	needsPickerUpdate = false
     }
-    lastChooseState = allowChoose
   }
 
   /**
