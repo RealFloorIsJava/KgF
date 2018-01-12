@@ -108,6 +108,20 @@
     setTimeout(loadChat, 500)
   }
 
+  /**
+   * Lets the user confirm clicking on a link.
+   */
+  function confirmLink(e) {
+    let link = $(e.target).attr("href")
+    let msg = ("You clicked on an external link leading to\r\n\r\n"
+               + `${link}`
+               + "\r\n\r\nDo you wish to visit this page?")
+    if (!confirm(msg)) {
+      e.preventDefault()
+    }
+  }
+
   loadChat()
   $("#chatinput").keypress(sendMessage)
+  $(".match-chat").on("click", "a", {}, confirmLink)
 })()
