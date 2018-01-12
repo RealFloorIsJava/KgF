@@ -272,11 +272,19 @@
     if (lastChooseState !== allowChoose) {
     	var objects = $(".tab-objects").find(".card-base")
     	for (var i = 0; i < objects.length; i++) {
-    		objects[i].classList.toggle("object-card")
+    		if (allowChoose) {
+				objects[i].classList.add("object-card")
+    		} else {
+				objects[i].classList.remove("object-card")
+			}
     	}
     	objects = $(".tab-actions").find(".card-base")
     	for (var i = 0; i < objects.length; i++) {
-    		objects[i].classList.toggle("verb-card")
+    		if (allowChoose) {
+				objects[i].classList.add("verb-card")
+    		} else {
+				objects[i].classList.remove("verb-card")
+    		}
     	}
     }
     lastChooseState = allowChoose
