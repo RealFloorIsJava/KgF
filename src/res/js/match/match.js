@@ -3,6 +3,7 @@
  *
  * MIT License
  * Copyright (c) 2017-2018 LordKorea
+ * Copyright (c) 2018 Arc676/Alessandro Vinciguerra
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,6 +31,7 @@
   let allowChoose = false
   let allowPick = false
   let isSpectator = false
+  let isPicker = false
   let externalUpdateAllowed = true
   let handResolver = new Map([
     ["OBJECT", new Map()],
@@ -64,10 +66,10 @@
     allowChoose = data.allowChoose
     allowPick = data.allowPick
     isSpectator = data.isSpectator
-
     if (isSpectator) {
       $(".match-hand").addClass("invisible")
     }
+    isPicker = data.isPicker
 
     updateMatchStatement(data.hasCard, data.cardText || "Waiting...")
 
@@ -265,6 +267,8 @@
     } else {
       container.empty().append(createSystemCard())
     }
+
+    $(".hand-set").find(".card-base").toggleClass("grey-card", isPicker)
   }
 
   /**
