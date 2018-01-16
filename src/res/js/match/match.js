@@ -29,11 +29,9 @@
   let ending = false
   let numGaps = 0
   let allowChoose = false
-  var needsPickerUpdate = false
-  var lastStatus = ""
-
   let allowPick = false
   let isSpectator = false
+  let isPicker = false
   let externalUpdateAllowed = true
   let handResolver = new Map([
     ["OBJECT", new Map()],
@@ -63,21 +61,15 @@
   function updateStatus(data) {
     countDown = data.timer
     $("#matchstatus").html(data.status)
-    if (lastStatus !== data.status) {
-    	if (data.status === "Players are choosing cards...") {
-    		needsPickerUpdate = true
-    	}
-    }
-    lastStatus = data.status
     ending = data.ending
     numGaps = data.gaps
     allowChoose = data.allowChoose
     allowPick = data.allowPick
     isSpectator = data.isSpectator
-
     if (isSpectator) {
       $(".match-hand").addClass("invisible")
     }
+    isPicker = data.isPicker
 
     updateMatchStatement(data.hasCard, data.cardText || "Waiting...")
 
@@ -276,25 +268,7 @@
       container.empty().append(createSystemCard())
     }
 
-    if (needsPickerUpdate) {
-    	var objects = $(".tab-objects").find(".card-base")
-    	for (var i = 0; i < objects.length; i++) {
-    		if (allowChoose) {
-				objects[i].classList.add("object-card")
-    		} else {
-				objects[i].classList.remove("object-card")
-			}
-    	}
-    	objects = $(".tab-actions").find(".card-base")
-    	for (var i = 0; i < objects.length; i++) {
-    		if (allowChoose) {
-				objects[i].classList.add("verb-card")
-    		} else {
-				objects[i].classList.remove("verb-card")
-    		}
-    	}
-    	needsPickerUpdate = false
-    }
+    $(".hand-set").find(".card-base").toggleClass("grey-card", isPicker)
   }
 
   /**

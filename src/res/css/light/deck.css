@@ -42,3 +42,8 @@
 .knob-verb {
   background-color: #FB0;
 }
+
+.grey-card {
+  filter: grayscale(50%);
+  opacity: 0.5;
+}
