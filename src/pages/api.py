@@ -359,6 +359,7 @@ def api_status(ctx: EndpointContext) -> None:
             "allowChoose": allow_choose,
             "allowPick": allow_pick,
             "isSpectator": part.spectator,
+            "isPicker": part.picking,
             "gaps": match.count_gaps()}
 
     # Add the card text to the output, if possible

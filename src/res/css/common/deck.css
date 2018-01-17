@@ -91,3 +91,7 @@
   text-decoration: none !important;
   cursor: pointer;
 }
+
+.grey-card {
+  transform: unset !important;
+}

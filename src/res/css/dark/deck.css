@@ -47,3 +47,8 @@
 .knob-verb {
   background-color: #D90;
 }
+
+.grey-card {
+  filter: grayscale(50%);
+  opacity: 0.5;
+}
