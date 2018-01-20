@@ -293,6 +293,34 @@ def api_chat_send(ctx: EndpointContext) -> None:
 
 
 @Endpoint(APILeaf)
+@RequirePath("skip")
+def api_skip(ctx: EndpointContext) -> None:
+    """Skips directly to the next phase
+
+    Args:
+        ctx: The context of the request
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or invalid data is sent.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True, "not in match")
+
+    part = match.get_participant(ctx.session["id"])
+
+    # Check that the POST request was made by the owner
+    if match.get_owner_nick() != part.nickname:
+        raise HTTPException.forbidden(True, "not match owner")
+
+    # Skip remaining time
+    # once I figure out how to...
+    print("Owner tried to skip time!")
+    ctx.json_ok()
+
+
+@Endpoint(APILeaf)
 @RequirePath("chat")
 def api_chat(ctx: EndpointContext) -> None:
     """Retrieves the chat history, optionally starting at the given offset.
