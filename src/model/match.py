@@ -304,6 +304,15 @@ class Match:
         # Locking is not needed here as access is atomic.
         return int(self._timer - time())
 
+    def skip_to_next_phase(self):
+        """Skips directly to the next phase
+
+        Contract:
+            The match's instance lock has to be locked when calling this
+            method.
+        """
+        self._timer = time()
+
     def _set_state(self, state):
         """Updates the state for this match.
 

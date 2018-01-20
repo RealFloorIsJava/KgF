@@ -315,8 +315,7 @@ def api_skip(ctx: EndpointContext) -> None:
         raise HTTPException.forbidden(True, "not match owner")
 
     # Skip remaining time
-    # once I figure out how to...
-    print("Owner tried to skip time!")
+    match.skip_to_next_phase()
     ctx.json_ok()
 
 
