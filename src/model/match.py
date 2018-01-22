@@ -306,10 +306,6 @@ class Match:
 
     def skip_to_next_phase(self):
         """Skips directly to the next phase
-
-        Contract:
-            The match's instance lock has to be locked when calling this
-            method.
         """
         self._timer = time()
 
