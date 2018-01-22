@@ -122,20 +122,15 @@ class ServerHandler(BaseHTTPRequestHandler):
                 exit(1)
 
     def fetch_session(self) -> Tuple[Session, bool]:
-        # Find the session cookie (if any)
-        cookie_hdr = ""
-        try:
-            cookie_hdr = self._str_headers["cookie"]
-        except KeyError:
-            pass
-        cookie = SimpleCookie(cookie_hdr)  # type: ignore
-
-        # Extract the session ID
+        # Find the session cookie (if any) and extract the ID
         sid = None  # type: Optional[str]
-        try:
-            sid = cookie["session"].value
-        except KeyError:
-            pass
+        if "cookie" in self._str_headers:
+            cookie = SimpleCookie(self._str_headers["cookie"])  # type: ignore
+            if "session" in cookie:
+                sid = cookie["session"].value
+        if sid == "":
+            nlog().log("Empty session ID, reassigning...")
+            sid = None
 
         # Fetch (or create) the session
         session = Session.get_session(self.client_address[0], sid)

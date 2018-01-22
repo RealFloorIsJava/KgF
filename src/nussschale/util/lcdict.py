@@ -70,7 +70,7 @@ class LowerCaseDict(Mapping, Generic[T]):
             Whether the key is present.
         """
         assert isinstance(key, str), "key is no string"
-        return key in self._backing
+        return key.lower() in self._backing
 
     def __delitem__(self, key: str) -> None:
         """Deletes an item.
