@@ -169,3 +169,8 @@
 .active-tab-header {
   z-index: 500;
 }
+
+.card-counter {
+  font-variant: small-caps;
+  margin: 0 0 10px 0;
+}
