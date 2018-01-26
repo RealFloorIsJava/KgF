@@ -66,6 +66,8 @@
     allowChoose = data.allowChoose
     allowPick = data.allowPick
     isSpectator = data.isSpectator
+    $("#cardcount").html("Selected: " + numSelected + "/" + numGaps);
+
     if (isSpectator) {
       $(".match-hand").addClass("invisible")
     }
