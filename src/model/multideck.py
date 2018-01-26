@@ -27,35 +27,56 @@ Module Deadlock Guarantees:
 
 from random import shuffle
 from threading import RLock
+from typing import Generic, List, Optional, Set, TypeVar, cast
 
 from nussschale.util.locks import mutex
 
 
-class MultiDeck:
+T = TypeVar("T")
+U = TypeVar("U")
+
+
+class MultiDeck(Generic[T, U]):
     """One (refilling) deck used to make selection seem more 'random'."""
 
-    def __init__(self, deck):
+    def __init__(self, deck: List[T]) -> None:
         """Constructor.
 
         Args:
-            deck (list): A list of objects having an 'id' property. The deck
+            deck: A list of objects having an 'id' property. The deck
                 should be safe for random access at any given time.
         """
         self._lock = RLock()
-        self._backing = deck
-        self._queue = []
-        self._contained = set()
+        self._backing = deck  # type: List[T]
+        self._queue = []  # type: List[T]
+        self._contained = set()  # type: Set[U]
+
+    @staticmethod
+    def _id_of(o: T) -> U:
+        """Fetches the ID of the given object.
+
+        This method only exists to enable type checking to work while
+        structural subtyping is not supported.
+
+        Args:
+             o: The object to get the ID from.
+
+        Returns:
+            The ID of the object.
+        """
+        id = o.id  # type: ignore
+        return cast(U, id)
 
     @mutex
-    def request(self, banned_ids):
+    def request(self, banned_ids: Set[U]) -> Optional[T]:
         """Requests a card from the multideck.
 
         Args:
-            banned_ids (set): A set of IDs that may not be chosen.
+            banned_ids: A set of IDs that may not be chosen.
 
         Returns:
-            obj: The object that was selected. This might be None if the
-                request can't be fulfilled.
+            The object that was selected. This might be None if the
+            request can't be fulfilled.
 
         Contract:
             This method locks the deck's lock.
@@ -65,8 +86,8 @@ class MultiDeck:
         # Try to find a viable object
         while ptr < len(self._queue):
             obj = self._queue[ptr]
-            if obj.id not in banned_ids:
-                self._contained.remove(obj.id)
+            if MultiDeck._id_of(obj) not in banned_ids:
+                self._contained.remove(MultiDeck._id_of(obj))
                 del self._queue[ptr]
                 return obj
             ptr += 1
@@ -78,18 +99,18 @@ class MultiDeck:
         # by at least factor 2.
         pool = []
         for obj in self._backing:
-            if obj.id not in self._contained:
+            if MultiDeck._id_of(obj) not in self._contained:
                 pool.append(obj)
         shuffle(pool)
         for obj in pool:
-            self._contained.add(obj.id)
+            self._contained.add(MultiDeck._id_of(obj))
             self._queue.append(obj)
 
         # Try to find a viable object again
         while ptr < len(self._queue):
             obj = self._queue[ptr]
-            if obj.id not in banned_ids:
-                self._contained.remove(obj.id)
+            if MultiDeck._id_of(obj) not in banned_ids:
+                self._contained.remove(MultiDeck._id_of(obj))
                 del self._queue[ptr]
                 return obj
             ptr += 1
