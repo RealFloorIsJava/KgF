@@ -308,6 +308,8 @@ class Match:
         """Skips directly to the next phase
         """
         self._timer = time()
+        self._chat.append(("SYSTEM",
+                           "<b>" + self.get_owner_nick() + " skipped to next phase</b>"))
 
     def _set_state(self, state):
         """Updates the state for this match.
