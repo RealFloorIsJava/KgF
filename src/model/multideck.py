@@ -37,7 +37,7 @@ U = TypeVar("U")
 
 
 class MultiDeck(Generic[T, U]):
-    """One (refilling) deck used to make selection seem more 'random'."""
+    """A (refilling) deck used to make selection seem more 'random'."""
 
     def __init__(self, deck: List[T]) -> None:
         """Constructor.
