@@ -37,14 +37,14 @@ def housekeeping() -> None:
 def freeze() -> None:
     """Freezes all matches."""
     Match.frozen = True
-    print("All matchs are now frozen.")
+    print("All matches are now frozen.")
 
 
 @Command("unfreeze", "Unfreezes all match timers.")
 def unfreeze() -> None:
     """Unfreezes all matches."""
     Match.frozen = False
-    print("All matches are no longer frozen.")
+    print("Matches are no longer frozen.")
 
 
 # Entry point
