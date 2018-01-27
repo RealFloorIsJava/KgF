@@ -431,6 +431,7 @@
    */
    function toggleHand() {
      $("#hand-container").toggle()
+     $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
    }
 
    /**
@@ -438,6 +439,7 @@
     */
   function toggleChat() {
     $("#chat-container").toggle()
+    $("#toggle-chat-button").html(($("#chat-container").is(":visible") ? "Hide" : "Show") + "  Chat")
   }
 
   setInterval(loadStatus, 1000)
