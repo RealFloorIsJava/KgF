@@ -426,6 +426,13 @@
     })
   }
 
+  /**
+   * Toggle hand visibility
+   */
+   function toggleHand() {
+     $("#hand-container").hide()
+   }
+
   setInterval(loadStatus, 1000)
   loadStatus()
   setInterval(loadCards, 1000)
@@ -434,4 +441,5 @@
   $("#tab-actions").click(chooseActionsTab)
   $("#tab-objects").click(chooseObjectsTab)
   $("#skip-button").click(skipTime)
+  $("#toggle-hand-button").click(toggleHand)
 })()
