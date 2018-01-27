@@ -433,6 +433,13 @@
      $("#hand-container").toggle()
    }
 
+   /**
+    * Toggle chat visibility
+    */
+  function toggleChat() {
+    $("#chat-container").toggle()
+  }
+
   setInterval(loadStatus, 1000)
   loadStatus()
   setInterval(loadCards, 1000)
@@ -442,4 +449,5 @@
   $("#tab-objects").click(chooseObjectsTab)
   $("#skip-button").click(skipTime)
   $("#toggle-hand-button").click(toggleHand)
+  $("#toggle-chat-button").click(toggleChat)
 })()
