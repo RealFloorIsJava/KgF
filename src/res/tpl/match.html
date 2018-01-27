@@ -18,6 +18,14 @@
         <a href="/match/abandon">Abandon match</a>
       </div>
       <div>
+        <a href="#" id="toggle-hand-button">
+          Hide Hand
+        </a>
+        &mdash;
+        <a href="#" id="toggle-chat-button">
+          Hide Chat
+        </a>
+        &mdash;
         <a href="#" id="lightLabel">
           Lights are being checked...
         </a>
@@ -46,13 +54,13 @@
           <div class="match-played-cards"></div>
         </div>
       </div>
-      <div class="match-chat">
+      <div id="chat-container" class="match-chat">
         <input type="text" class="chat-line" id="chatinput" placeholder="Type a message..." spellcheck="false" maxlength="120" autocomplete="off">
         <div class="chat-messages" id="chatlist"></div>
       </div>
     </div>
     <div class="match-hand">
-      <div class="match-hand-container">
+      <div id="hand-container" class="match-hand-container">
         <div class="match-hand-tabs">
           <div class="hand-tab-header" id="tab-actions">
             Actions
