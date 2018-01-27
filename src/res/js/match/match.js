@@ -417,16 +417,16 @@
   }
 
   /**
-   * Toggle hand visibility
+   * Toggle hand visibility.
    */
-   function toggleHand() {
-     $("#hand-container").toggle()
-     $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
-   }
+  function toggleHand() {
+    $("#hand-container").toggle()
+    $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
+  }
 
-   /**
-    * Toggle chat visibility
-    */
+  /**
+   * Toggle chat visibility.
+   */
   function toggleChat() {
     $("#chat-container").toggle()
     $("#toggle-chat-button").html(($("#chat-container").is(":visible") ? "Hide" : "Show") + "  Chat")
