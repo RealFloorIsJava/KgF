@@ -429,7 +429,13 @@
    */
   function toggleChat() {
     $("#chat-container").toggle()
-    $("#toggle-chat-button").html(($("#chat-container").is(":visible") ? "Hide" : "Show") + "  Chat")
+    let chatVisible = $("#chat-container").is(":visible")
+    $("#toggle-chat-button").html((chatVisible ? "Hide" : "Show") + "  Chat")
+
+    // The match hand has the width of the chat hardcoded in its container
+    // size. When the chat is invisible, the hand should be centered in the
+    // new view.
+    $(".match-hand").css("width", chatVisible ? "" : "100vw")
   }
 
   setInterval(loadStatus, 1000)
