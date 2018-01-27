@@ -655,7 +655,7 @@ class Match:
 
         # Create multidecks
         for type in self._deck:
-            self._multidecks[type] = MultiDeck(self._deck[type])
+            self._multidecks[type] = MultiDeck[Card, int](self._deck[type])
 
         return True, "OK"
 

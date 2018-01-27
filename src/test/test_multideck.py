@@ -47,7 +47,7 @@ for i in range(deck_n):
 
 def test_multideck_period() -> None:
     """Tests the multideck's period with no restrictions placed on it."""
-    md = MultiDeck(deck)
+    md = MultiDeck[MockCard, int](deck)
     ids = set()
     for i in range(deck_n):
         obj = md.request(set())
@@ -58,7 +58,7 @@ def test_multideck_period() -> None:
 
 def test_multideck_deplete() -> None:
     """Tests depleting the multideck by making restrictions more strict."""
-    md = MultiDeck(deck)
+    md = MultiDeck[MockCard, int](deck)
     ids = set()  # type: Set[int]
     for i in range(deck_n):
         obj = md.request(ids)
@@ -70,7 +70,7 @@ def test_multideck_deplete() -> None:
 def test_multideck_draw() -> None:
     """Tests drawing objects from the multideck."""
     # Draw 5 times hands of deck_n/4 cards (must lead to duplicates)
-    md = MultiDeck(deck)
+    md = MultiDeck[MockCard, int](deck)
     hands = []  # type: List[Set[int]]
     for i in range(5):
         hands.append(set())
@@ -89,7 +89,7 @@ def test_multideck_draw() -> None:
 
 def test_multideck_no_duplicate() -> None:
     """Tests the drawing for duplicates."""
-    md = MultiDeck(deck)
+    md = MultiDeck[MockCard, int](deck)
     x = md.request(set())
     for i in range(deck_n - 1):
         obj = md.request(set())

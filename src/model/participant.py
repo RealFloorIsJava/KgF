@@ -29,23 +29,29 @@ from collections import OrderedDict
 from copy import deepcopy
 from threading import RLock
 from time import time
+from typing import Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Union
 
 from nussschale.util.locks import mutex
+
+
+if TYPE_CHECKING:
+    from model.match import Card
+    from model.multideck import MultiDeck
 
 
 class Participant:
     """Represents a participant in a match.
 
     Attributes:
-        id (str): The ID of the participant. Should not be changed once the
+        id: The ID of the participant. Should not be changed once the
             participant is created.
-        nickname (str): The nickname of the participant. Should not be changed.
-        picking (bool): Whether the participant is picking.
-        score (int): The score of the player. It is recommended to use the
+        nickname: The nickname of the participant. Should not be changed.
+        picking: Whether the participant is picking.
+        score: The score of the player. It is recommended to use the
             provided modification method to prevent race conditions from
             occurring.
-        order (int): The order key of the particpant, used for shuffling.
-        spectator (bool): Whether the participant is a spectator.
+        order: The order key of the particpant, used for shuffling.
+        spectator: Whether the participant is a spectator.
     """
 
     # The number of hand cards per type
@@ -54,12 +60,12 @@ class Participant:
     # The timeout timer after refreshing a participant, in seconds
     _PARTICIPANT_REFRESH_TIMER = 15
 
-    def __init__(self, id, nickname):
+    def __init__(self, id: str, nickname: str) -> None:
         """Constructor.
 
         Args:
-            id (str): The player's ID.
-            nickname (str): The nickname that will be used for the player.
+            id: The player's ID.
+            nickname: The nickname that will be used for the player.
         """
 
         # MutEx for this participant
@@ -89,20 +95,20 @@ class Participant:
         self.spectator = False
 
         # The hand of this participant
-        self._hand = OrderedDict()
+        self._hand = OrderedDict()  # type: Dict[int, HandCard]
         self._hand_counter = 1
 
-    def has_timed_out(self):
+    def has_timed_out(self) -> bool:
         """Checks whether this participant has timed out.
 
         Returns:
-            bool: Whether this client has timed out.
+            Whether this client has timed out.
         """
         # Locking is not needed here as access is atomic.
         return time() >= self._timeout
 
     @mutex
-    def increase_score(self):
+    def increase_score(self) -> None:
         """Increases the score of this participant by one.
 
         Contract:
@@ -111,13 +117,13 @@ class Participant:
         assert not self.spectator, "Trying to increase score for spectator"
         self.score += 1
 
-    def refresh(self):
+    def refresh(self) -> None:
         """Refreshes the timeout timer of this participant."""
         # Locking is not needed here as access is atomic.
         self._timeout = time() + Participant._PARTICIPANT_REFRESH_TIMER
 
     @mutex
-    def unchoose_all(self):
+    def unchoose_all(self) -> None:
         """Unchooses all cards on the hand of this participant.
 
         Contract:
@@ -128,14 +134,14 @@ class Participant:
             hcard.chosen = None
 
     @mutex
-    def delete_chosen(self):
+    def delete_chosen(self) -> None:
         """Deletes all chosen hand cards from this participant.
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to delete for spectator"
-        del_list = []
+        del_list = []  # type: List[int]
         for hid, hcard in self._hand.items():
             if hcard.chosen is not None:
                 del_list.append(hid)
@@ -143,31 +149,29 @@ class Participant:
             del self._hand[hid]
 
     @mutex
-    def get_hand(self):
+    def get_hand(self) -> Dict[int, "HandCard"]:
         """Retrieves a snapshot of the hand of this participant.
 
         Returns:
-            dict: A copy of the hand of the player.
+            A copy of the hand of the player.
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to get hand for spectator"
-
         return deepcopy(self._hand)
 
     @mutex
-    def choose_count(self):
+    def choose_count(self) -> int:
         """Retrieves the number of chosen cards in the hand of this player.
 
         Returns:
-            int: The number of cards in the hand.
+            The number of cards in the hand.
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to get count for spectator"
-
         n = 0
         for hcard in self._hand.values():
             if hcard.chosen is not None:
@@ -175,11 +179,12 @@ class Participant:
         return n
 
     @mutex
-    def replenish_hand(self, mdecks):
+    def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"]
+                       ) -> None:
         """Replenishes the hand of this participant from the given decks.
 
         Args:
-            mdecks (dict): Maps card type to a multideck of the card type.
+            mdecks: Maps card type to a multideck of the card type.
 
         Contract:
             This method locks the participant's lock.
@@ -190,7 +195,7 @@ class Participant:
         for type in filter(lambda x: x != "STATEMENT", mdecks):
             # Count cards of that type and fetch IDs
             k_in_hand = 0
-            ids_banned = set()
+            ids_banned = set()  # type: Set[int]
             for hcard in self._hand.values():
                 if hcard.card.type == type:
                     ids_banned.add(hcard.card.id)
@@ -206,12 +211,12 @@ class Participant:
                 self._hand_counter += 1
 
     @mutex
-    def toggle_chosen(self, handid, allowance):
+    def toggle_chosen(self, handid: int, allowance: int) -> None:
         """Toggles whether the hand card with the given ID is chosen.
 
         Args:
-            handid (int): The ID of the hand card.
-            allowance (int): The maximum number of cards that are allowed in
+            handid: The ID of the hand card.
+            allowance: The maximum number of cards that are allowed in
                 the hand.
 
         Contract:
@@ -243,21 +248,22 @@ class Participant:
                         other_hcard.chosen = None
 
     @mutex
-    def get_choose_data(self, redacted):
+    def get_choose_data(self, redacted: bool
+                        ) -> List[Optional[Dict[str, Union[bool, str]]]]:
         """Fetches the choose data for this participant.
 
         Args:
-            redacted (bool): Whether the information should be redacted.
+            redacted: Whether the information should be redacted.
 
         Returns:
-            list: The choose data for this participant.
+            The choose data for this participant.
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to get data for spectator"
 
-        data = []
+        data = []  # type: List[Optional[Dict[str, Union[bool, str]]]]
         for hcard in self._hand.values():
             type = hcard.card.type
             text = hcard.card.text
@@ -276,17 +282,17 @@ class HandCard:
     """Represents a card on hand.
 
     Attributes:
-        card (obj): The card that this hand card represents. Should not be
+        card: The card that this hand card represents. Should not be
             changed. Create a new HandCard if another card is required.
-        chosen (int, optional): The choice index of this hand card. If the card
+        chosen: The choice index of this hand card. If the card
             is not chosen it will be set to None.
     """
 
-    def __init__(self, card):
+    def __init__(self, card: "Card") -> None:
         """Constructor.
 
         Args:
             card (obj): The card that this hand card represents.
         """
         self.card = card
-        self.chosen = None
+        self.chosen = None  # type: Optional[int]
