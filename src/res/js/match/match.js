@@ -430,7 +430,7 @@
    * Toggle hand visibility
    */
    function toggleHand() {
-     $("#hand-container").hide()
+     $("#hand-container").toggle()
    }
 
   setInterval(loadStatus, 1000)
