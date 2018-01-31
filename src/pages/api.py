@@ -303,7 +303,7 @@ def api_skip(ctx: EndpointContext) -> None:
 
     Raises:
         HTTPException: (403) When the user is not in a match,
-                             or invalid data is sent.
+                             or user is not authorized to skip phases.
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
@@ -311,9 +311,9 @@ def api_skip(ctx: EndpointContext) -> None:
 
     part = match.get_participant(ctx.session["id"])
 
-    # Check that the POST request was made by the owner
-    if match.get_owner_nick() != part.nickname:
-        raise HTTPException.forbidden(True, "not match owner")
+    # Check that the POST request was made by a user that can skip phases
+    if not match.user_can_skip_phase(part.nickname):
+        raise HTTPException.forbidden(True, "not authorized to skip phase")
 
     # Skip remaining time
     match.skip_to_next_phase()
