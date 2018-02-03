@@ -366,10 +366,10 @@ class Match:
             can_pick = self._pick_possible()
 
             # Kick AFK players
-            for (player, afkRounds) in self.afk_players.items():
+            for (pid, afkRounds) in self.afk_players.items():
                 if afkRounds >= 2:
                     # Kick player for doing nothing for two rounds
-                    self._chat.append(("SYSTEM", player + " has been AFK for two rounds!"))
+                    self.abandon_participant(pid)
 
             # If no pick is possible (too few valid hands) then skip the round
             if not can_pick:
@@ -576,7 +576,7 @@ class Match:
         self._participants[id] = part
         if not part.spectator:
             self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
-            self.afk_players[nick] = 0
+            self.afk_players[id] = 0
         else:
             self._chat.append(("SYSTEM",
                                "<b>%s is now spectating.</b>" % nick))
@@ -872,9 +872,9 @@ class Match:
             # Find players who haven't played
             if part.choose_count() > 0:
                 n += 1
-                self.afk_players[part.nickname] = 0
+                self.afk_players[part.id] = 0
             else:
-                self.afk_players[part.nickname] += 1
+                self.afk_players[part.id] += 1
         return n >= 2
 
     def _unchoose_incomplete(self):
