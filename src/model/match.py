@@ -37,6 +37,7 @@ from random import shuffle
 from threading import RLock
 from time import time
 
+from nussschale.nussschale import nconfig
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
 
@@ -51,6 +52,7 @@ class Match:
     Class Attributes:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
+        skip_role (str): Which users are allowed to skip the current phase.
     """
 
     # The minimum amount of players for a match
@@ -93,6 +95,9 @@ class Match:
 
     # Whether matches are currently frozen
     frozen = False
+
+    # Which users are allowed to skip the phase
+    skip_role = "owner"
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -228,6 +233,9 @@ class Match:
         # The chat of this match, tuples with type/message
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
 
+        # Which users are allowed to skip the phase
+        self.skip_role = nconfig().get("skip-role", "owner")
+
     def put_in_pool(self):
         """Puts this match into the match pool."""
         Match.add_match(self.id, self)
@@ -314,6 +322,7 @@ class Match:
         Returns:
             bool: Whether the given participant can skip to the next phase
         """
+
         # The match must not be ending
         if self._state == "ENDING":
             return False
@@ -322,23 +331,29 @@ class Match:
         if len(self._participants) < Match._MINIMUM_PLAYERS:
             return False
 
-        # Currently, only the owner can skip to the next phase
-        return self.get_owner_nick() == part.nickname
+        if self.skip_role == "picker":
+            for part in self.get_participants(False):
+                if part.picking and part.nickname == nickname:
+                    return True
+            return False
+        elif self.skip_role == "anyone":
+            return True
+        else:
+            return self.get_owner_nick() == nickname
 
     @mutex
-    def skip_to_next_phase(self):
-        """Skips directly to the next phase.
+    def skip_to_next_phase(self, nick):
+        """Skips directly to the next phase
 
-        Contract:
-            This method locks the match's instance lock.
+        Args:
+            nick (str): The nickname of the user who is skipping the phase.
         """
         # One second difference to prevent edge cases of timer change close to
         # game state transitions.
         if self._timer - time() > 1:
             self._timer = time()
             self._chat.append(("SYSTEM",
-                               "<b>" + self.get_owner_nick()
-                               + " skipped to the next phase.</b>"))
+                               "<b>" + nick + " skipped to next phase</b>"))
 
     def _set_state(self, state):
         """Updates the state for this match.
