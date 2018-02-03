@@ -94,6 +94,10 @@ class Match:
     # Whether matches are currently frozen
     frozen = False
 
+    # Records which players appear to be AFK
+    # Counts the number of rounds in which each player did nothing
+    afk_players = {}
+
     @classmethod
     @named_mutex("_pool_lock")
     def get_by_id(cls, id):
@@ -358,8 +362,17 @@ class Match:
             # Remove all hands that are not completed for picking
             self._unchoose_incomplete()
 
+            # Determine if pick is possible
+            can_pick = self._pick_possible()
+
+            # Kick AFK players
+            for (player, afkRounds) in self.afk_players.items():
+                if afkRounds >= 2:
+                    # Kick player for doing nothing for two rounds
+                    self._chat.append(("SYSTEM", player + " has been AFK for two rounds!"))
+
             # If no pick is possible (too few valid hands) then skip the round
-            if not self._pick_possible():
+            if not can_pick:
                 self._chat.append(("SYSTEM",
                                    "<b>Too few valid choices!</b>"))
                 # If the round is skipped only unchoose the cards without
@@ -563,6 +576,7 @@ class Match:
         self._participants[id] = part
         if not part.spectator:
             self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
+            self.afk_players[nick] = 0
         else:
             self._chat.append(("SYSTEM",
                                "<b>%s is now spectating.</b>" % nick))
@@ -855,11 +869,13 @@ class Match:
         """
         n = 0
         for part in self.get_participants(False):
+            # Find players who haven't played
             if part.choose_count() > 0:
                 n += 1
-                if n == 2:
-                    return True
-        return False
+                self.afk_players[part.nickname] = 0
+            else:
+                self.afk_players[part.nickname] += 1
+        return n >= 2
 
     def _unchoose_incomplete(self):
         """Unchooses incomplete hands.
