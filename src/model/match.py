@@ -94,10 +94,6 @@ class Match:
     # Whether matches are currently frozen
     frozen = False
 
-    # Records which players appear to be AFK
-    # Counts the number of rounds in which each player did nothing
-    afk_players = {}
-
     @classmethod
     @named_mutex("_pool_lock")
     def get_by_id(cls, id):
@@ -381,9 +377,11 @@ class Match:
         elif self._state == "COOLDOWN":
             self._timer = time() + Match._TIMER_COOLDOWN
             # Kick AFK players for doing nothing for two rounds
-            for (pid, afkRounds) in self.afk_players.items():
-                if afkRounds >= 2:
-                    self.abandon_participant(pid, "was kicked for being AFK for two rounds.")
+            participants = list(self.get_participants(False))[:]
+            for part in participants:
+                if part.afkCount >= 2:
+                    self.abandon_participant(part.id,
+                        "was kicked for being AFK for two rounds.")
         elif self._state == "ENDING":
             self._timer = time() + Match._TIMER_ENDING
 
@@ -436,7 +434,7 @@ class Match:
                             picker = part
                             break
                     assert picker is not None
-                    self.afk_players[picker.id] += 1
+                    picker.increase_AFK()
                     self._chat.append(("SYSTEM",
                                        "<b>No winner was picked!</b>"))
                     self._set_state("COOLDOWN")
@@ -467,7 +465,6 @@ class Match:
                 if part.picking:
                     self.notify_picker_leave(pid)
                 del self._participants[pid]
-                del self.afk_players[pid]
 
     @mutex
     def abandon_participant(self, pid, message="left."):
@@ -475,6 +472,8 @@ class Match:
 
         Args:
             pid (str): The ID of the participant.
+            message (str): The message to send when the user leaves without
+                the nickname. Defaults to "left."
 
         Contract:
             This method locks the match's instance lock and the participant's
@@ -580,7 +579,6 @@ class Match:
         self._participants[id] = part
         if not part.spectator:
             self._chat.append(("SYSTEM", "<b>%s joined.</b>" % nick))
-            self.afk_players[id] = 0
         else:
             self._chat.append(("SYSTEM",
                                "<b>%s is now spectating.</b>" % nick))
@@ -801,7 +799,7 @@ class Match:
                      "<a href=\"\\1\" target=\"_blank\">\\1</a>",
                      msg)
         self._chat.append(("USER", "<b>%s</b>: %s" % (part.nickname, msg)))
-        self.afk_players[part.id] = 0
+        part.reset_AFK()
 
     @mutex
     def declare_round_winner(self, order):
@@ -820,7 +818,7 @@ class Match:
         for part in self.get_participants(False):
             if part.picking or part.choose_count() < gc:
                 if part.picking:
-                    self.afk_players[part.id] = 0
+                    part.reset_AFK()
                 continue
             if part.order == order:
                 winner = part
@@ -879,9 +877,9 @@ class Match:
             # Find players who haven't played
             if part.choose_count() > 0:
                 n += 1
-                self.afk_players[part.id] = 0
+                part.reset_AFK()
             elif not part.picking:
-                self.afk_players[part.id] += 1
+                part.increase_AFK()
         return n >= 2
 
     def _unchoose_incomplete(self):
