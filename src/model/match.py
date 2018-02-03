@@ -362,17 +362,8 @@ class Match:
             # Remove all hands that are not completed for picking
             self._unchoose_incomplete()
 
-            # Determine if pick is possible
-            can_pick = self._pick_possible()
-
-            # Kick AFK players
-            for (pid, afkRounds) in self.afk_players.items():
-                if afkRounds >= 2:
-                    # Kick player for doing nothing for two rounds
-                    self.abandon_participant(pid, "was kicked for being AFK for two rounds.")
-
             # If no pick is possible (too few valid hands) then skip the round
-            if not can_pick:
+            if not self._pick_possible():
                 self._chat.append(("SYSTEM",
                                    "<b>Too few valid choices!</b>"))
                 # If the round is skipped only unchoose the cards without
@@ -389,6 +380,10 @@ class Match:
             self._timer = time() + pick_time
         elif self._state == "COOLDOWN":
             self._timer = time() + Match._TIMER_COOLDOWN
+            # Kick AFK players for doing nothing for two rounds
+            for (pid, afkRounds) in self.afk_players.items():
+                if afkRounds >= 2:
+                    self.abandon_participant(pid, "was kicked for being AFK for two rounds.")
         elif self._state == "ENDING":
             self._timer = time() + Match._TIMER_ENDING
 
@@ -434,6 +429,14 @@ class Match:
                 elif self._state == "CHOOSING":
                     self._set_state("PICKING")
                 elif self._state == "PICKING":
+                    # If no winner was picked, mark picker as AFK
+                    picker = None
+                    for part in self.get_participants(False):
+                        if part.picking:
+                            picker = part
+                            break
+                    assert picker is not None
+                    self.afk_players[picker.id] += 1
                     self._chat.append(("SYSTEM",
                                        "<b>No winner was picked!</b>"))
                     self._set_state("COOLDOWN")
@@ -464,6 +467,7 @@ class Match:
                 if part.picking:
                     self.notify_picker_leave(pid)
                 del self._participants[pid]
+                del self.afk_players[pid]
 
     @mutex
     def abandon_participant(self, pid, message="left."):
