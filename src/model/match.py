@@ -369,7 +369,7 @@ class Match:
             for (pid, afkRounds) in self.afk_players.items():
                 if afkRounds >= 2:
                     # Kick player for doing nothing for two rounds
-                    self.abandon_participant(pid)
+                    self.abandon_participant(pid, "was kicked for being AFK for two rounds.")
 
             # If no pick is possible (too few valid hands) then skip the round
             if not can_pick:
@@ -466,7 +466,7 @@ class Match:
                 del self._participants[pid]
 
     @mutex
-    def abandon_participant(self, pid):
+    def abandon_participant(self, pid, message="left."):
         """Removes the given participant from the match.
 
         Args:
@@ -480,7 +480,7 @@ class Match:
             return
         nick = self._participants[pid].nickname
         self._chat.append(("SYSTEM",
-                           "<b>%s left.</b>" % nick))
+                           "<b>%s %s</b>" % (nick, message)))
         if self._participants[pid].picking:
             self.notify_picker_leave(pid)
         del self._participants[pid]
@@ -873,7 +873,7 @@ class Match:
             if part.choose_count() > 0:
                 n += 1
                 self.afk_players[part.id] = 0
-            else:
+            elif not part.picking:
                 self.afk_players[part.id] += 1
         return n >= 2
 
