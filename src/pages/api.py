@@ -296,14 +296,14 @@ def api_chat_send(ctx: EndpointContext) -> None:
 @Endpoint(APILeaf)
 @RequirePath("skip")
 def api_skip(ctx: EndpointContext) -> None:
-    """Skips directly to the next phase
+    """Skips directly to the next phase.
 
     Args:
-        ctx: The context of the request
+        ctx: The context of the request.
 
     Raises:
         HTTPException: (403) When the user is not in a match,
-                             or user is not authorized to skip phases.
+                             or the user is not authorized to skip phases.
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
@@ -311,7 +311,7 @@ def api_skip(ctx: EndpointContext) -> None:
 
     part = match.get_participant(ctx.session["id"])
 
-    # Check that the POST request was made by a user that can skip phases
+    # Check that the GET request was made by a user that can skip phases
     if not match.user_can_skip_phase(part.nickname):
         raise HTTPException.forbidden(True, "not authorized to skip phase")
 

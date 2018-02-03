@@ -143,7 +143,7 @@ Returns a JSON object of the following format:
 
 |Requirements|Request Type|
 |---|---|
-|Logged in, in match, and owns match|POST|
+|Logged in, in match, and owns match|GET|
 
 Skips directly to the next phase.
 
