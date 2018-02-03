@@ -787,11 +787,11 @@ class Match:
         return res
 
     @mutex
-    def send_message(self, nick, msg):
+    def send_message(self, part, msg):
         """Sends a user message to the chat of this match.
 
         Args:
-            nick (str): The nickname of the user.
+            part (Participant): The user who sent the message.
             msg (str): The message that is sent to the chat.
 
         Contract:
@@ -800,7 +800,8 @@ class Match:
         msg = re.sub("(https?://\\S+)",
                      "<a href=\"\\1\" target=\"_blank\">\\1</a>",
                      msg)
-        self._chat.append(("USER", "<b>%s</b>: %s" % (nick, msg)))
+        self._chat.append(("USER", "<b>%s</b>: %s" % (part.nickname, msg)))
+        self.afk_players[part.id] = 0
 
     @mutex
     def declare_round_winner(self, order):
