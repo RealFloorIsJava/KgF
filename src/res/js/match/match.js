@@ -421,7 +421,7 @@
    */
   function skipTime() {
     $.ajax({
-      method: "POST",
+      method: "GET",
       url: "/api/skip"
     })
 

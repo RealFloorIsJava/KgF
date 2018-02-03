@@ -304,15 +304,17 @@ class Match:
         # Locking is not needed here as access is atomic.
         return int(self._timer - time())
 
-    def user_can_skip_phase(self, nickname):
+    def user_can_skip_phase(self, part):
         """Determine whether a user can skip to the next phase.
 
+        Args:
+            obj: The participant in question.
+
         Returns:
-            bool: Whether the given nickname belongs to a user that
-            can skip to the next phase.
+            bool: Whether the given participant can skip to the next phase
         """
         # Currently, only the owner can skip to the next phase
-        return self.get_owner_nick() == nickname
+        return self.get_owner_nick() == part.nickname
 
     @mutex
     def skip_to_next_phase(self):
