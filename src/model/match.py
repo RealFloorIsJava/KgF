@@ -305,24 +305,29 @@ class Match:
         return int(self._timer - time())
 
     def user_can_skip_phase(self, nickname):
-        """Determine whether a user can skip to the next phase
+        """Determine whether a user can skip to the next phase.
 
         Returns:
             bool: Whether the given nickname belongs to a user that
-            can skip to the next phase
+            can skip to the next phase.
         """
         # Currently, only the owner can skip to the next phase
         return self.get_owner_nick() == nickname
 
+    @mutex
     def skip_to_next_phase(self):
-        """Skips directly to the next phase
+        """Skips directly to the next phase.
+
+        Contract:
+            This method locks the match's instance lock.
         """
-        if int(self._timer - time()) > 1:
+        # One second difference to prevent edge cases of timer change close to
+        # game state transitions.
+        if self._timer - time() > 1:
             self._timer = time()
             self._chat.append(("SYSTEM",
-                               "<b>" + self.get_owner_nick() + " skipped to next phase</b>"))
-        else:
-            self._chat.append(("SYSTEM", "<b>Can't skip phase with less than 1 second remaining</b>"))
+                               "<b>" + self.get_owner_nick()
+                               + " skipped to the next phase.</b>"))
 
     def _set_state(self, state):
         """Updates the state for this match.

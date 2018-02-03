@@ -430,7 +430,8 @@
    */
   function toggleHand() {
     $("#hand-container").toggle()
-    $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
+    $("#toggle-hand-button").html(
+      ($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
   }
 
   /**
