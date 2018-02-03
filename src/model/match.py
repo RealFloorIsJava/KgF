@@ -53,6 +53,7 @@ class Match:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
         skip_role (str): Which users are allowed to skip the current phase.
+        skip_count (int): Number of people who want to skip the phase.
     """
 
     # The minimum amount of players for a match
@@ -98,6 +99,7 @@ class Match:
 
     # Which users are allowed to skip the phase
     skip_role = "owner"
+    skip_count = 0
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -326,6 +328,14 @@ class Match:
             return False
         elif self.skip_role == "anyone":
             return True
+        elif self.skip_role == "majority":
+            self.skip_count += 1
+            majority = int(len(list(self.get_participants(False))) / 2)
+            if self.skip_count > majority:
+                self.skip_count = 0
+                return True
+            else:
+                return False
         else:
             return self.get_owner_nick() == nickname
 
