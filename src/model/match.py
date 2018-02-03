@@ -334,10 +334,13 @@ class Match:
             return False
 
         if self.skip_role == "picker":
-            for part in self.get_participants(False):
-                if part.picking and part.nickname == nickname:
-                    return True
-            return False
+            if self._state == "CHOOSING":
+                for part in self.get_participants(False):
+                    if part.picking and part.nickname == nickname:
+                        return True
+                return False
+            else:
+                return True
         elif self.skip_role == "anyone":
             return True
         elif self.skip_role == "majority":
