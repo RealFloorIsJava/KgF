@@ -818,6 +818,8 @@ class Match:
         winner = None
         for part in self.get_participants(False):
             if part.picking or part.choose_count() < gc:
+                if part.picking:
+                    self.afk_players[part.id] = 0
                 continue
             if part.order == order:
                 winner = part
