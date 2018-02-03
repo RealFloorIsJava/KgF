@@ -36,6 +36,7 @@ from html import escape
 from random import shuffle
 from threading import RLock
 from time import time
+from nussschale.nussschale import nconfig
 
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
@@ -51,6 +52,8 @@ class Match:
     Class Attributes:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
+        afk_limit (int): Maximum number of rounds a participant can spend AFK
+            before they are kicked from the game.
     """
 
     # The minimum amount of players for a match
@@ -93,6 +96,9 @@ class Match:
 
     # Whether matches are currently frozen
     frozen = False
+
+    # Limit on number of AFK rounds before kicking players
+    afk_limit = 2
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -227,6 +233,9 @@ class Match:
 
         # The chat of this match, tuples with type/message
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
+
+        # The limit on the number of AFK rounds before kicking players
+        self.afk_limit = nconfig().get("afk-limit", 2)
 
     def put_in_pool(self):
         """Puts this match into the match pool."""
@@ -379,7 +388,7 @@ class Match:
             # Kick AFK players for doing nothing for two rounds
             participants = list(self.get_participants(False))[:]
             for part in participants:
-                if part.afkCount >= 2:
+                if part.afkCount >= self.afk_limit:
                     self.abandon_participant(part.id,
                         "was kicked for being AFK for two rounds.")
         elif self._state == "ENDING":
