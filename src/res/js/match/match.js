@@ -424,7 +424,6 @@
       method: "POST",
       url: "/api/skip"
     })
-  }
 
   /*
    * Toggle hand visibility.

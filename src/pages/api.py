@@ -316,7 +316,7 @@ def api_skip(ctx: EndpointContext) -> None:
         raise HTTPException.forbidden(True, "not authorized to skip phase")
 
     # Skip remaining time
-    match.skip_to_next_phase(part.nickname)
+    match.skip_to_next_phase()
     ctx.json_ok()
 
 
