@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -290,6 +291,33 @@ def api_chat_send(ctx: EndpointContext) -> None:
         ctx.json_ok()
     else:
         raise HTTPException.forbidden(True, "invalid size")
+
+
+@Endpoint(APILeaf)
+@RequirePath("skip")
+def api_skip(ctx: EndpointContext) -> None:
+    """Skips directly to the next phase
+
+    Args:
+        ctx: The context of the request
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or user is not authorized to skip phases.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True, "not in match")
+
+    part = match.get_participant(ctx.session["id"])
+
+    # Check that the POST request was made by a user that can skip phases
+    if not match.user_can_skip_phase(part.nickname):
+        raise HTTPException.forbidden(True, "not authorized to skip phase")
+
+    # Skip remaining time
+    match.skip_to_next_phase()
+    ctx.json_ok()
 
 
 @Endpoint(APILeaf)

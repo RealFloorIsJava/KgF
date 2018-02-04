@@ -139,6 +139,36 @@ Returns a JSON object of the following format:
 ```
 
 
+## /api/skip
+
+|Requirements|Request Type|
+|---|---|
+|Logged in, in match, and owns match|POST|
+
+Skips directly to the next phase.
+
+### Parameters
+
+None.
+
+### Response format
+
+A JSON object is returned.
+
+|Key|Type|Description|
+|---|---|---|
+|error|string|A short message indicating the result of the operation. `OK` on success.|
+
+### Example
+
+```
+> POST /api/skip
+{
+  "error": "OK"
+}
+```
+
+
 ## /api/chat
 
 |Requirements|Request Type|
