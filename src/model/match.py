@@ -350,6 +350,11 @@ class Match:
                 self.skip_count = 0
                 return True
             else:
+                self._chat.append(("SYSTEM",
+                                   "<b>" + nickname +
+                                   " wants to skip the phase. " +
+                                   str(majority - self.skip_count + 1) +
+                                   " request(s) left to reach majority.</b>"))
                 return False
         else:
             return self.get_owner_nick() == nickname
