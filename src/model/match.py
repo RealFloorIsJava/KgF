@@ -53,7 +53,6 @@ class Match:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
         skip_role (str): Which users are allowed to skip the current phase.
-        skip_count (int): Number of people who want to skip the phase.
     """
 
     # The minimum amount of players for a match
@@ -99,7 +98,6 @@ class Match:
 
     # Which users are allowed to skip the phase
     skip_role = "owner"
-    skip_count = 0
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -315,11 +313,8 @@ class Match:
         return int(self._timer - time())
 
     @mutex
-    def user_can_skip_phase(self, part):
-        """Determine whether a user can skip to the next phase.
-
-        Args:
-            obj: The participant in question.
+    def user_can_skip_phase(self, participant):
+        """Determine whether a user can skip to the next phase
 
         Returns:
             bool: Whether the given participant can skip to the next phase
@@ -344,20 +339,25 @@ class Match:
         elif self.skip_role == "anyone":
             return True
         elif self.skip_role == "majority":
-            self.skip_count += 1
+            particpant.wants_skip = True
+            skip_count = 0
+            for part in self.get_participants(False):
+                if part.wants_skip:
+                    skip_count += 1
             majority = int(len(list(self.get_participants(False))) / 2)
-            if self.skip_count > majority:
-                self.skip_count = 0
+            if skip_count > majority:
+                for part in self.get_participants(False):
+                    part.wants_skip = False
                 return True
             else:
                 self._chat.append(("SYSTEM",
-                                   "<b>" + nickname +
+                                   "<b>" + participant.nickname +
                                    " wants to skip the phase. " +
-                                   str(majority - self.skip_count + 1) +
+                                   str(majority - skip_count + 1) +
                                    " request(s) left to reach majority.</b>"))
                 return False
         else:
-            return self.get_owner_nick() == nickname
+            return self.get_owner_nick() == participant.nickname
 
     @mutex
     def skip_to_next_phase(self, nick):
