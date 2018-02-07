@@ -339,7 +339,7 @@ class Match:
         elif self.skip_role == "anyone":
             return True
         elif self.skip_role == "majority":
-            particpant.wants_skip = True
+            participant.wants_skip = True
             skip_count = 0
             for part in self.get_participants(False):
                 if part.wants_skip:
