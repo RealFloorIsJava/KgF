@@ -52,6 +52,7 @@ class Participant:
             occurring.
         order: The order key of the particpant, used for shuffling.
         spectator: Whether the participant is a spectator.
+        wants_skip: Whether the participant wants to skip the phase.
     """
 
     # The number of hand cards per type
@@ -93,6 +94,9 @@ class Participant:
         # Whether this participant is a spectator. Should not change after the
         # participant is part of a match.
         self.spectator = False
+
+        # Whether the particpant wants to skip the phase.
+        self.wants_skip = False
 
         # The hand of this participant
         self._hand = OrderedDict()  # type: Dict[int, HandCard]
