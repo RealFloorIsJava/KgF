@@ -316,6 +316,10 @@ class Match:
     def user_can_skip_phase(self, participant):
         """Determine whether a user can skip to the next phase
 
+        Args:
+            participant: The participant that made the request
+            to skip the phase
+
         Returns:
             bool: Whether the given participant can skip to the next phase
         """
@@ -330,10 +334,7 @@ class Match:
 
         if self.skip_role == "picker":
             if self._state == "CHOOSING":
-                for part in self.get_participants(False):
-                    if part.picking and part.nickname == nickname:
-                        return True
-                return False
+                return participant.picking
             else:
                 return True
         elif self.skip_role == "anyone":
