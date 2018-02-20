@@ -417,11 +417,22 @@
   }
 
   /**
+   * Sends POST request to skip the remaining time
+   */
+  function skipTime() {
+    $.ajax({
+      method: "GET",
+      url: "/api/skip"
+    })
+  }
+
+  /*
    * Toggle hand visibility.
    */
   function toggleHand() {
     $("#hand-container").toggle()
-    $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
+    $("#toggle-hand-button").html(
+      ($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
   }
 
   /**
@@ -445,6 +456,7 @@
   pickTab("tab-actions")
   $("#tab-actions").click(chooseActionsTab)
   $("#tab-objects").click(chooseObjectsTab)
+  $("#skip-button").click(skipTime)
   $("#toggle-hand-button").click(toggleHand)
   $("#toggle-chat-button").click(toggleChat)
 })()
