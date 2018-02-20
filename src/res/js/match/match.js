@@ -65,6 +65,7 @@
     numGaps = data.gaps
     allowChoose = data.allowChoose
     allowPick = data.allowPick
+    $("#skip-button").prop("disabled", !data.allowSkip)
     isSpectator = data.isSpectator
 
     $("#cardcount").html("Selected: " + numSelected + " of " + numGaps);

@@ -304,6 +304,7 @@ class Match:
         # Locking is not needed here as access is atomic.
         return int(self._timer - time())
 
+    @mutex
     def user_can_skip_phase(self, part):
         """Determine whether a user can skip to the next phase.
 
@@ -313,6 +314,14 @@ class Match:
         Returns:
             bool: Whether the given participant can skip to the next phase
         """
+        # The match must not be ending
+        if self._state == "ENDING":
+            return False
+
+        # The minimum amount of players has to be present
+        if len(self._participants) < Match._MINIMUM_PLAYERS:
+            return False
+
         # Currently, only the owner can skip to the next phase
         return self.get_owner_nick() == part.nickname
 

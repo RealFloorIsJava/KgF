@@ -380,12 +380,14 @@ def api_status(ctx: EndpointContext) -> None:
     allow_pick = (match.is_picking()
                   and part.picking
                   and not part.spectator)
+    allow_skip = match.user_can_skip_phase(part)
     data = {"timer": int(match.get_seconds_to_next_phase()),
             "status": match.get_status(),
             "ending": match.is_ending(),
             "hasCard": match.has_card(),
             "allowChoose": allow_choose,
             "allowPick": allow_pick,
+            "allowSkip": allow_skip,
             "isSpectator": part.spectator,
             "isPicker": part.picking,
             "gaps": match.count_gaps()}
