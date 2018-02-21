@@ -65,6 +65,7 @@
     numGaps = data.gaps
     allowChoose = data.allowChoose
     allowPick = data.allowPick
+    $("#skip-button").prop("disabled", !data.allowSkip)
     isSpectator = data.isSpectator
 
     $("#cardcount").html("Selected: " + numSelected + " of " + numGaps);
@@ -421,7 +422,7 @@
    */
   function skipTime() {
     $.ajax({
-      method: "POST",
+      method: "GET",
       url: "/api/skip"
     })
   }
@@ -431,7 +432,8 @@
    */
   function toggleHand() {
     $("#hand-container").toggle()
-    $("#toggle-hand-button").html(($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
+    $("#toggle-hand-button").html(
+      ($("#hand-container").is(":visible") ? "Hide" : "Show") + " Hand")
   }
 
   /**

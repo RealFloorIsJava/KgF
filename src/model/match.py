@@ -320,9 +320,16 @@ class Match:
             to skip the phase
 
         Returns:
-            bool: Whether the given nickname belongs to a user that
-            can skip to the next phase
+            bool: Whether the given participant can skip to the next phase
         """
+        # The match must not be ending
+        if self._state == "ENDING":
+            return False
+
+        # The minimum amount of players has to be present
+        if len(self._participants) < Match._MINIMUM_PLAYERS:
+            return False
+          
         if self.skip_role == "picker":
             if self._state == "CHOOSING":
                 return participant.picking
@@ -357,7 +364,9 @@ class Match:
         Args:
             nick (str): The nickname of the user who is skipping the phase.
         """
-        if int(self._timer - time()) > 1:
+        # One second difference to prevent edge cases of timer change close to
+        # game state transitions.
+        if self._timer - time() > 1:
             self._timer = time()
             self._chat.append(("SYSTEM",
                                "<b>" + nick + " skipped to next phase</b>"))

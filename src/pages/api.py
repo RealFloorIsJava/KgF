@@ -296,14 +296,14 @@ def api_chat_send(ctx: EndpointContext) -> None:
 @Endpoint(APILeaf)
 @RequirePath("skip")
 def api_skip(ctx: EndpointContext) -> None:
-    """Skips directly to the next phase
+    """Skips directly to the next phase.
 
     Args:
-        ctx: The context of the request
+        ctx: The context of the request.
 
     Raises:
         HTTPException: (403) When the user is not in a match,
-                             or user is not authorized to skip phases.
+                             or the user is not authorized to skip phases.
     """
     match = Match.get_match_of_player(ctx.session["id"])
     if match is None:
@@ -380,12 +380,14 @@ def api_status(ctx: EndpointContext) -> None:
     allow_pick = (match.is_picking()
                   and part.picking
                   and not part.spectator)
+    allow_skip = match.user_can_skip_phase(part)
     data = {"timer": int(match.get_seconds_to_next_phase()),
             "status": match.get_status(),
             "ending": match.is_ending(),
             "hasCard": match.has_card(),
             "allowChoose": allow_choose,
             "allowPick": allow_pick,
+            "allowSkip": allow_skip,
             "isSpectator": part.spectator,
             "isPicker": part.picking,
             "gaps": match.count_gaps()}
