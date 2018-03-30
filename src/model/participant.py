@@ -183,17 +183,24 @@ class Participant:
         return n
 
     @mutex
-    def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"]
-                       ) -> None:
+    def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"],
+                       wilds_in_play, cards_left) -> None:
         """Replenishes the hand of this participant from the given decks.
 
         Args:
             mdecks: Maps card type to a multideck of the card type.
+            wilds_in_play: Number of wild cards currently in players' hands
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to replenish spectator"
+
+        # Find any wild cards already held
+        banned_wilds = set()
+        for hcard in self._hand.values():
+            if hcard.card.type == "WILD":
+                banned_wilds.add(hcard.card.id)
 
         # Replenish for every type
         for type in filter(lambda x: x != "STATEMENT", mdecks):
@@ -207,7 +214,8 @@ class Participant:
 
             # Fill hand to limit
             for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
-                pick = mdecks[type].request(ids_banned)
+                pick = mdecks[type].request(ids_banned, mdecks["WILD"],
+                                            wilds_in_play, cards_left)
                 if pick is None:
                     break  # Can't fulfill the requirement...
                 ids_banned.add(pick.id)
