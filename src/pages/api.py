@@ -170,6 +170,10 @@ def api_choose(ctx: EndpointContext) -> None:
     except ValueError:
         raise HTTPException.forbidden(True, "invalid id")
 
+    text = ctx.get_param_as("text", str)
+    if text != "":
+        part.set_card_text(handid, text)
+
     part.toggle_chosen(handid, match.count_gaps())  # todo: check for wrong id
     match.check_choosing_done()
     ctx.json_ok()

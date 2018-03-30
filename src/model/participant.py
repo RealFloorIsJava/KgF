@@ -261,6 +261,19 @@ class Participant:
                         other_hcard.chosen = None
 
     @mutex
+    def set_card_text(self, handid, text):
+        """Changes the text on a given card. To be used for wild cards.
+
+        Args:
+            handid: The ID of the hand card.
+            text: The new text for the card.
+
+        Contract:
+            This method locks the participant's lock.
+        """
+        self._hand[handid].card.text = text
+
+    @mutex
     def get_choose_data(self, redacted: bool
                         ) -> List[Optional[Dict[str, Union[bool, str]]]]:
         """Fetches the choose data for this participant.

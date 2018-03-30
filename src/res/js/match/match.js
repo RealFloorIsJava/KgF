@@ -352,10 +352,17 @@
     if (!allowChoose) {
       return
     }
+    var data = {
+      "handId": id,
+      "text": ""
+    }
+    if (id in handResolver.get("WILD")) {
+      data["text"] = prompt("Enter card text:")
+    }
     $.ajax({
       method: "POST",
       url: "/api/choose",
-      data: {"handId": id},
+      data: data,
       success: () => updateSelection(id),
       error: (x, e, f) => console.log(`/api/choose error: ${e} ${f}`)
     })
