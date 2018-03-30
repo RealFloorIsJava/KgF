@@ -325,13 +325,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                 assert isinstance(param.value, str)
                 return param.value
             else:
-                fp = param.file
-                fp.seek(0, 2)
-                size = fp.tell()
-                fp.seek(0)
-                nlog().log("File upload: '%s', %i bytes" % (param.filename,
-                                                            size))
-                return IOWrapper(param.file, param)
+                if param.filename == None:
+                    return param.value
+                else :
+                    fp = param.file
+                    fp.seek(0, 2)
+                    size = fp.tell()
+                    fp.seek(0)
+                    nlog().log("File upload: '%s', %i bytes" % (param.filename,
+                                                                size))
+                    return IOWrapper(param.file, param)
         else:
             raise ValueError("Unsupported parameter type")
 
