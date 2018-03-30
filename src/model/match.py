@@ -99,6 +99,10 @@ class Match:
     # Which users are allowed to skip the phase
     skip_role = "owner"
 
+    # Number of wild cards in the match
+    wild_card_count = 0
+    wild_cards_played = 0
+
     @classmethod
     @named_mutex("_pool_lock")
     def get_by_id(cls, id):
