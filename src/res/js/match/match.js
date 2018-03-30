@@ -356,7 +356,10 @@
       "handId": id,
       "text": ""
     }
-    if (id in handResolver.get("WILD")) {
+    // Ask user for custom card text if the card isn't already selected and
+    // it's a wild card.
+    if (id in handResolver.get("WILD") &&
+        !handResolver.get("WILD").get(id).hasClass("card-selected")) {
       data["text"] = prompt("Enter card text:")
     }
     $.ajax({
