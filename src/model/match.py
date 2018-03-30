@@ -99,9 +99,10 @@ class Match:
     # Which users are allowed to skip the phase
     skip_role = "owner"
 
-    # Number of wild cards in the match
+    # Wild card data
     wild_card_count = 0
-    wild_cards_played = 0
+    wilds_in_play = 0
+    total_cards = 0
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -714,6 +715,12 @@ class Match:
         # Create multidecks
         for type in self._deck:
             self._multidecks[type] = MultiDeck[Card, int](self._deck[type])
+            self.total_cards += len(self._deck[type])
+
+        wilds = [Card(card_id_counter + 1 + i, "WILD", "")
+                for i in range(self.wild_card_count)]
+        self._multidecks["WILD"] = MultiDeck[Card, int](wilds)
+        self.total_cards += self.wild_card_count
 
         return True, "OK"
 
@@ -954,7 +961,8 @@ class Match:
             method.
         """
         for part in self.get_participants(False):
-            part.replenish_hand(self._multidecks)
+            part.replenish_hand(self._multidecks, self.wilds_in_play,
+                                self.total_cards)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.

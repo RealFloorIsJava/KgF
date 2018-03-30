@@ -25,7 +25,7 @@ Module Deadlock Guarantees:
     requested. Thus the multideck lock can not be part of any deadlock.
 """
 
-from random import shuffle
+from random import shuffle, randint
 from threading import RLock
 from typing import Generic, List, Optional, Set, TypeVar, cast
 
@@ -68,11 +68,14 @@ class MultiDeck(Generic[T, U]):
         return cast(U, id)
 
     @mutex
-    def request(self, banned_ids: Set[U]) -> Optional[T]:
+    def request(self, banned_ids: Set[U], wilds = None, wilds_in_play = 0,
+                cards_left = 0, banned_wilds: Set[U] = None) -> Optional[T]:
         """Requests a card from the multideck.
 
         Args:
             banned_ids: A set of IDs that may not be chosen.
+            wilds: The multideck with the wild cards. Defaults to None
+            wilds_in_play: The number of wild cards currently in players' hands
 
         Returns:
             The object that was selected. This might be None if the
@@ -81,6 +84,9 @@ class MultiDeck(Generic[T, U]):
         Contract:
             This method locks the deck's lock.
         """
+        if wilds != None:
+            if randint(1, cards_left) <= len(wilds._backing) - wilds_in_play:
+                return wilds.request(banned_wilds)
         ptr = 0
 
         # Try to find a viable object
