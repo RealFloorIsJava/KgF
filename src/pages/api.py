@@ -200,7 +200,8 @@ def api_cards(ctx: EndpointContext) -> None:
     if not part.spectator:
         hand_cards = {
             "OBJECT": {},
-            "VERB": {}
+            "VERB": {},
+            "WILD": {}
         }  # type: Dict[str, Dict]
         hand = part.get_hand()
         for id, hcard in hand.items():

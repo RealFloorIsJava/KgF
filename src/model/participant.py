@@ -215,7 +215,8 @@ class Participant:
             # Fill hand to limit
             for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
                 pick = mdecks[type].request(ids_banned, mdecks["WILD"],
-                                            wilds_in_play, cards_left)
+                                            wilds_in_play, cards_left,
+                                            banned_wilds)
                 if pick is None:
                     break  # Can't fulfill the requirement...
                 ids_banned.add(pick.id)
