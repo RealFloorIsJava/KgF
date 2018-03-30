@@ -84,7 +84,7 @@ class MultiDeck(Generic[T, U]):
         Contract:
             This method locks the deck's lock.
         """
-        if wilds != None:
+        if wilds is not None:
             if randint(1, cards_left) <= len(wilds._backing) - wilds_in_play:
                 return wilds.request(banned_wilds)
         ptr = 0
