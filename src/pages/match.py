@@ -124,6 +124,7 @@ def create_match(ctx: EndpointContext) -> None:
 
     # Create a new match
     match = Match()
+    match.wild_card_count = ctx.get_param_as("wildcards", int)
 
     # Create the deck from the upload
     try:
