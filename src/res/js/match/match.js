@@ -35,7 +35,8 @@
   let externalUpdateAllowed = true
   let handResolver = new Map([
     ["OBJECT", new Map()],
-    ["VERB", new Map()]
+    ["VERB", new Map()],
+    ["WILD", new Map()]
   ])
   let numSelected = 0
   let selectedCards = new Map()
@@ -131,7 +132,8 @@
   function updateCards(data) {
     let sentHand = new Map([
       ["OBJECT", new Map()],
-      ["VERB", new Map()]
+      ["VERB", new Map()],
+      ["WILD", new Map()]
     ])
     if (data.hasOwnProperty("hand")) {
       for (let type of sentHand.keys()) {
@@ -418,6 +420,13 @@
   }
 
   /**
+   * Chooses the wild cards tab.
+   */
+  function chooseWildsTab() {
+    pickTab("tab-wilds")
+  }
+
+  /**
    * Sends POST request to skip the remaining time
    */
   function skipTime() {
@@ -457,6 +466,7 @@
   pickTab("tab-actions")
   $("#tab-actions").click(chooseActionsTab)
   $("#tab-objects").click(chooseObjectsTab)
+  $("#tab-wilds").click(chooseWildsTab)
   $("#skip-button").click(skipTime)
   $("#toggle-hand-button").click(toggleHand)
   $("#toggle-chat-button").click(toggleChat)
