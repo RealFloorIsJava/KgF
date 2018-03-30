@@ -203,7 +203,7 @@ class Participant:
                 banned_wilds.add(hcard.card.id)
 
         # Replenish for every type
-        for type in filter(lambda x: x != "STATEMENT", mdecks):
+        for type in filter(lambda x: x != "STATEMENT" and x != "WILD", mdecks):
             # Count cards of that type and fetch IDs
             k_in_hand = 0
             ids_banned = set()  # type: Set[int]
