@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -184,12 +185,12 @@ class Participant:
 
     @mutex
     def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"],
-                       wilds_in_play, cards_left) -> None:
+                       cards_left) -> None:
         """Replenishes the hand of this participant from the given decks.
 
         Args:
             mdecks: Maps card type to a multideck of the card type.
-            wilds_in_play: Number of wild cards currently in players' hands
+            cards_left: Number of cards remaining to be drawn
 
         Contract:
             This method locks the participant's lock.
@@ -215,8 +216,7 @@ class Participant:
             # Fill hand to limit
             for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
                 pick = mdecks[type].request(ids_banned, mdecks["WILD"],
-                                            wilds_in_play, cards_left,
-                                            banned_wilds)
+                                            cards_left, banned_wilds)
                 if pick is None:
                     break  # Can't fulfill the requirement...
                 ids_banned.add(pick.id)
