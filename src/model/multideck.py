@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -68,14 +69,15 @@ class MultiDeck(Generic[T, U]):
         return cast(U, id)
 
     @mutex
-    def request(self, banned_ids: Set[U], wilds = None, wilds_in_play = 0,
-                cards_left = 0, banned_wilds: Set[U] = None) -> Optional[T]:
+    def request(self, banned_ids: Set[U], wilds = None, cards_left = 0,
+                banned_wilds: Set[U] = None) -> Optional[T]:
         """Requests a card from the multideck.
 
         Args:
             banned_ids: A set of IDs that may not be chosen.
             wilds: The multideck with the wild cards. Defaults to None
-            wilds_in_play: The number of wild cards currently in players' hands
+            cards_left: The number of cards remaining to be drawn
+            banned_wilds: A set of IDs of wild cards that are aleady drawn
 
         Returns:
             The object that was selected. This might be None if the
@@ -85,7 +87,7 @@ class MultiDeck(Generic[T, U]):
             This method locks the deck's lock.
         """
         if wilds is not None:
-            if randint(1, cards_left) <= len(wilds._backing) - wilds_in_play:
+            if randint(1, cards_left) <= len(wilds._queue):
                 return wilds.request(banned_wilds)
         ptr = 0
 

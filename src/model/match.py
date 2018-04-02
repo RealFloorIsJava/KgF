@@ -101,7 +101,6 @@ class Match:
 
     # Wild card data
     wild_card_count = 0
-    wilds_in_play = 0
     total_cards = 0
 
     @classmethod
@@ -961,7 +960,7 @@ class Match:
             method.
         """
         for part in self.get_participants(False):
-            part.replenish_hand(self._multidecks, self.wilds_in_play,
+            part.replenish_hand(self._multidecks,
                                 self.total_cards)
 
     def _select_match_card(self):
