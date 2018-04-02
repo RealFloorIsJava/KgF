@@ -358,7 +358,7 @@
     }
     // Ask user for custom card text if the card isn't already selected and
     // it's a wild card.
-    if (id in handResolver.get("WILD") &&
+    if (handResolver.get("WILD").has(id) &&
         !handResolver.get("WILD").get(id).hasClass("card-selected")) {
       data["text"] = prompt("Enter card text:")
     }
@@ -383,6 +383,7 @@
     let remove = false
     let card = handResolver.get("OBJECT").get(id)
     card = card || handResolver.get("VERB").get(id)
+    card = card || handResolver.get("WILD").get(id)
 
     // Remove card choices
     for (let i = 0; i < 4; i++) {
