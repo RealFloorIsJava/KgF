@@ -51,6 +51,7 @@ class MultiDeck(Generic[T, U]):
         self._backing = deck  # type: List[T]
         self._queue = []  # type: List[T]
         self._contained = set()  # type: Set[U]
+        refillQueue()
 
     @staticmethod
     def _id_of(o: T) -> U:
@@ -71,13 +72,15 @@ class MultiDeck(Generic[T, U]):
     @mutex
     def request(self, banned_ids: Set[U], wilds = None, cards_left = 0,
                 banned_wilds: Set[U] = None) -> Optional[T]:
-        """Requests a card from the multideck.
+        """Requests a card from the multideck. The last three arguments are
+        optional and should be omitted when requesting a card from the wild
+        deck.
 
         Args:
             banned_ids: A set of IDs that may not be chosen.
-            wilds: The multideck with the wild cards. Defaults to None
-            cards_left: The number of cards remaining to be drawn
-            banned_wilds: A set of IDs of wild cards that are aleady drawn
+            wilds: The multideck with the wild cards. Defaults to None.
+            cards_left: The number of cards remaining to be drawn.
+            banned_wilds: A set of IDs of wild cards that are aleady drawn.
 
         Returns:
             The object that was selected. This might be None if the
@@ -92,19 +95,45 @@ class MultiDeck(Generic[T, U]):
         ptr = 0
 
         # Try to find a viable object
-        while ptr < len(self._queue):
-            obj = self._queue[ptr]
-            if MultiDeck._id_of(obj) not in banned_ids:
-                self._contained.remove(MultiDeck._id_of(obj))
-                del self._queue[ptr]
-                return obj
-            ptr += 1
+        card, ptr = pickFromQueue(ptr)
+        if card is not None:
+            return card
 
         # No object in the queue works... Need to refill queue!
         # Note: For backing decks that are only slightly bigger than the
         # set of banned ids this might result in less than optimal randomness.
         # However in practice, deck size does exceed the number of banned ids
         # by at least factor 2.
+        refillQueue()
+
+        # Try to find a viable object again
+        card, ptr = pickFromQueue(ptr)
+
+        # Still no object found: Failure, as the queue is already maximal.
+        return card
+
+    def pickFromQueue(ptr):
+        """Pick a card from the queue
+
+        Args:
+            ptr: The index from which to start looking for viable cards
+
+        Returns:
+            A tuple containing the selected card and the new value of ptr. The
+            card will be None if the request can't be fulfilled.
+        """
+        while ptr < len(self._queue):
+            obj = self._queue[ptr]
+            if MultiDeck._id_of(obj) not in banned_ids:
+                self._contained.remove(MultiDeck._id_of(obj))
+                del self._queue[ptr]
+                return obj, ptr
+            ptr += 1
+        return None, ptr
+
+    def refillQueue():
+        """Refill the card queue
+        """
         pool = []
         for obj in self._backing:
             if MultiDeck._id_of(obj) not in self._contained:
@@ -113,15 +142,3 @@ class MultiDeck(Generic[T, U]):
         for obj in pool:
             self._contained.add(MultiDeck._id_of(obj))
             self._queue.append(obj)
-
-        # Try to find a viable object again
-        while ptr < len(self._queue):
-            obj = self._queue[ptr]
-            if MultiDeck._id_of(obj) not in banned_ids:
-                self._contained.remove(MultiDeck._id_of(obj))
-                del self._queue[ptr]
-                return obj
-            ptr += 1
-
-        # Still no object found: Failure, as the queue is already maximal.
-        return None
