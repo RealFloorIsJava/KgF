@@ -716,7 +716,7 @@ class Match:
             self._multidecks[type] = MultiDeck[Card, int](self._deck[type])
             self.total_cards += len(self._deck[type])
 
-        wilds = [Card(card_id_counter + 1 + i, "WILD", "")
+        wilds = [Card(card_id_counter + 1 + i, "WILD", "Wild card")
                 for i in range(self.wild_card_count)]
         self._multidecks["WILD"] = MultiDeck[Card, int](wilds)
         self.total_cards += self.wild_card_count
