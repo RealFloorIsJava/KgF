@@ -167,6 +167,19 @@ class Participant:
         return deepcopy(self._hand)
 
     @mutex
+    def get_card_count(self) -> int:
+        """Determines the number of cards in the participant's hand.
+
+        Returns:
+            The number of cards in the participant's hand.
+
+        Contract:
+            This method locks the participant's lock.
+        """
+        assert not self.spectator, "Trying to get hand for spectator"
+        return len(self._hand.items())
+
+    @mutex
     def choose_count(self) -> int:
         """Retrieves the number of chosen cards in the hand of this player.
 
@@ -185,17 +198,21 @@ class Participant:
 
     @mutex
     def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"],
-                       cards_left) -> None:
+                       cards_left) -> int:
         """Replenishes the hand of this participant from the given decks.
 
         Args:
             mdecks: Maps card type to a multideck of the card type.
             cards_left: Number of cards remaining to be drawn
 
+        Returns:
+            The number of cards drawn by the participant.
+
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to replenish spectator"
+        cards_drawn = 0
 
         # Find any wild cards already held
         banned_wilds = set()
@@ -221,7 +238,10 @@ class Participant:
                     break  # Can't fulfill the requirement...
                 ids_banned.add(pick.id)
                 self._hand[self._hand_counter] = HandCard(pick)
+                cards_drawn += 1
                 self._hand_counter += 1
+
+        return cards_drawn
 
     @mutex
     def toggle_chosen(self, handid: int, allowance: int) -> None:
