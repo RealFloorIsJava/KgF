@@ -31,6 +31,7 @@ from copy import deepcopy
 from threading import RLock
 from time import time
 from typing import Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Union
+from math import floor, ceil
 
 from nussschale.util.locks import mutex
 
@@ -216,9 +217,11 @@ class Participant:
 
         # Find any wild cards already held
         banned_wilds = set()
+        wilds_in_hand = 0
         for hcard in self._hand.values():
             if hcard.card.type == "WILD":
                 banned_wilds.add(hcard.card.id)
+                wilds_in_hand += 1
 
         # Replenish for every type
         for type in filter(lambda x: x != "STATEMENT" and x != "WILD", mdecks):
@@ -229,6 +232,12 @@ class Participant:
                 if hcard.card.type == type:
                     ids_banned.add(hcard.card.id)
                     k_in_hand += 1
+
+            # Reduce number of cards to draw if wild cards are in hand
+            if type == "OBJECT":
+                k_in_hand += floor(wilds_in_hand / 2)
+            else:
+                k_in_hand += ceil(wilds_in_hand / 2)
 
             # Fill hand to limit
             for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
