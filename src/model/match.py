@@ -959,9 +959,12 @@ class Match:
             The caller ensures that the match's lock is held when calling this
             method.
         """
+        card_count = self.total_cards
         for part in self.get_participants(False):
-            part.replenish_hand(self._multidecks,
-                                self.total_cards)
+            card_count -= part.get_card_count()
+        for part in self.get_participants(False):
+            drawn = part.replenish_hand(self._multidecks, card_count)
+            card_count -= drawn
 
     def _select_match_card(self):
         """Selects a random statement card for this match.

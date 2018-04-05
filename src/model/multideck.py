@@ -142,5 +142,6 @@ class MultiDeck(Generic[T, U]):
         # Try to find a viable object again
         card, ptr = self.pickFromQueue(ptr, banned_ids)
 
-        # Still no object found: Failure, as the queue is already maximal.
+        # If no object found: Failure, as the queue is already maximal.
+        # Otherwise, return the given card
         return card
