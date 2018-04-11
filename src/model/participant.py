@@ -140,8 +140,12 @@ class Participant:
             hcard.chosen = None
 
     @mutex
-    def delete_chosen(self) -> None:
+    def delete_chosen(self) -> List["Card"]:
         """Deletes all chosen hand cards from this participant.
+
+        Returns:
+            A list of deep-copied Card objects corresponding to the cards
+            removed from the participant's hand.
 
         Contract:
             This method locks the participant's lock.
@@ -151,7 +155,9 @@ class Participant:
         for hid, hcard in self._hand.items():
             if hcard.chosen is not None:
                 del_list.append(hid)
+        cards = []
         for hid in del_list:
+            cards.append(deepcopy(self._hand[hid].card))
             del self._hand[hid]
 
     @mutex

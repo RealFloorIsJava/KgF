@@ -102,6 +102,7 @@ class Match:
     # Wild card data
     wild_card_count = 0
     total_cards = 0
+    wild_replace_mode = "no"
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -239,6 +240,9 @@ class Match:
 
         # Which users are allowed to skip the phase
         self.skip_role = nconfig().get("skip-role", "owner")
+
+        # Whether wild cards should be replaced in the queue after being played
+        self.wild_replace_mode = nconfig().get("wild-replace-mode", "no")
 
     def put_in_pool(self):
         """Puts this match into the match pool."""
@@ -395,7 +399,8 @@ class Match:
         if self._state == "COOLDOWN":
             # Delete all chosen cards from the hands
             for part in self.get_participants(False):
-                part.delete_chosen()
+                cards = part.delete_chosen()
+                self._replace_wild_cards(cards)
 
     def _enter_state(self):
         """Handles a transition into the current state.
@@ -892,7 +897,8 @@ class Match:
                 else:
                     self._set_state("COOLDOWN")
             else:
-                part.delete_chosen()
+                cards = part.delete_chosen()
+                self._replace_wild_cards(cards)
 
     @mutex
     def check_choosing_done(self):
@@ -965,6 +971,27 @@ class Match:
         for part in self.get_participants(False):
             drawn = part.replenish_hand(self._multidecks, card_count)
             card_count -= drawn
+
+    def _replace_wild_cards(self, cards):
+        """If the match is configured to do so, put any wild cards played during
+        the last round back in the MultiDeck's queue so they can be redrawn by
+        other players in future rounds.
+
+        Args:
+            cards: A list of card objects played during the last round (the ones
+            deleted at the end of the last round).
+
+        Contract:
+            The caller ensures that the match's lock is held when calling this
+            method.
+        """
+        # If the match isn't configured to replace wild cards or there are no
+        # cards to put back, do nothing
+        if self.wild_replace_mode == "no" or len(cards) == 0:
+            return
+        for card in cards:
+            if card.type == "WILD":
+                self.mdecks["WILD"].putInQueue(card)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.
