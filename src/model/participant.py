@@ -159,6 +159,7 @@ class Participant:
         for hid in del_list:
             cards.append(deepcopy(self._hand[hid].card))
             del self._hand[hid]
+        return cards
 
     @mutex
     def get_hand(self) -> Dict[int, "HandCard"]:

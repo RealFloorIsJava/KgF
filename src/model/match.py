@@ -991,7 +991,7 @@ class Match:
             return
         for card in cards:
             if card.type == "WILD":
-                self.mdecks["WILD"].putInQueue(card)
+                self._multidecks["WILD"].put_in_queue(card)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.
