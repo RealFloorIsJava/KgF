@@ -40,7 +40,7 @@ U = TypeVar("U")
 class MultiDeck(Generic[T, U]):
     """A (refilling) deck used to make selection seem more 'random'."""
 
-    def pickFromQueue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
+    def pick_from_queue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
         """Pick a card from the queue
 
         Args:
@@ -60,7 +60,7 @@ class MultiDeck(Generic[T, U]):
             ptr += 1
         return None, ptr
 
-    def refillQueue(self) -> None:
+    def refill_queue(self) -> None:
         """Refill the card queue
         """
         pool = []
@@ -84,7 +84,7 @@ class MultiDeck(Generic[T, U]):
         self._backing = deck  # type: List[T]
         self._queue = []  # type: List[T]
         self._contained = set()  # type: Set[U]
-        self.refillQueue()
+        self.refill_queue()
 
     @staticmethod
     def _id_of(o: T) -> U:
@@ -128,7 +128,7 @@ class MultiDeck(Generic[T, U]):
         ptr = 0
 
         # Try to find a viable object
-        card, ptr = self.pickFromQueue(ptr, banned_ids)
+        card, ptr = self.pick_from_queue(ptr, banned_ids)
         if card is not None:
             return card
 
@@ -137,10 +137,10 @@ class MultiDeck(Generic[T, U]):
         # set of banned ids this might result in less than optimal randomness.
         # However in practice, deck size does exceed the number of banned ids
         # by at least factor 2.
-        self.refillQueue()
+        self.refill_queue()
 
         # Try to find a viable object again
-        card, ptr = self.pickFromQueue(ptr, banned_ids)
+        card, ptr = self.pick_from_queue(ptr, banned_ids)
 
         # If no object found: Failure, as the queue is already maximal.
         # Otherwise, return the given card
