@@ -40,11 +40,11 @@ U = TypeVar("U")
 class MultiDeck(Generic[T, U]):
     """A (refilling) deck used to make selection seem more 'random'."""
 
-    def pickFromQueue(self, ptr, banned_ids: Set[U]):
+    def pickFromQueue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
         """Pick a card from the queue
 
         Args:
-            ptr: The index from which to start looking for viable cards
+            ptr: The index from which to start looking for viable cards.
             banned_ids: A set of IDs that may not be chosen.
 
         Returns:
@@ -60,7 +60,7 @@ class MultiDeck(Generic[T, U]):
             ptr += 1
         return None, ptr
 
-    def refillQueue(self):
+    def refillQueue(self) -> None:
         """Refill the card queue
         """
         pool = []
