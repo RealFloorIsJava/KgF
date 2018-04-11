@@ -41,7 +41,7 @@ class MultiDeck(Generic[T, U]):
     """A (refilling) deck used to make selection seem more 'random'."""
 
     @mutex
-    def putInQueue(self, obj):
+    def put_in_queue(self, obj):
         """Put a card in the queue (used to allow wild cards to be redrawn
         after being played for the first time, but also to build the queue)
 
@@ -54,7 +54,7 @@ class MultiDeck(Generic[T, U]):
         self._contained.add(MultiDeck._id_of(obj))
         self._queue.append(obj)
 
-    def pickFromQueue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
+    def pick_from_queue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
         """Pick a card from the queue
 
         Args:
@@ -83,7 +83,7 @@ class MultiDeck(Generic[T, U]):
                 pool.append(obj)
         shuffle(pool)
         for obj in pool:
-            self.putInQueue(obj)
+            self.put_in_queue(obj)
 
     def __init__(self, deck: List[T]) -> None:
         """Constructor.
