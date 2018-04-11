@@ -40,7 +40,21 @@ U = TypeVar("U")
 class MultiDeck(Generic[T, U]):
     """A (refilling) deck used to make selection seem more 'random'."""
 
-    def pick_from_queue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
+    @mutex
+    def putInQueue(self, obj):
+        """Put a card in the queue (used to allow wild cards to be redrawn
+        after being played for the first time, but also to build the queue)
+
+        Args:
+            obj: The card to put in the queue.
+
+        Contract:
+            This method locks the deck's lock.
+        """
+        self._contained.add(MultiDeck._id_of(obj))
+        self._queue.append(obj)
+
+    def pickFromQueue(self, ptr, banned_ids: Set[U]) -> Optional[T]:
         """Pick a card from the queue
 
         Args:
@@ -69,9 +83,7 @@ class MultiDeck(Generic[T, U]):
                 pool.append(obj)
         shuffle(pool)
         for obj in pool:
-            self._contained.add(MultiDeck._id_of(obj))
-            self._queue.append(obj)
-
+            self.putInQueue(obj)
 
     def __init__(self, deck: List[T]) -> None:
         """Constructor.
