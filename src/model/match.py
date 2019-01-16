@@ -313,6 +313,42 @@ class Match:
         # Locking is not needed here as access is atomic.
         return int(self._timer - time())
 
+    @mutex
+    def user_can_skip_phase(self, part):
+        """Determine whether a user can skip to the next phase.
+
+        Args:
+            obj: The participant in question.
+
+        Returns:
+            bool: Whether the given participant can skip to the next phase
+        """
+        # The match must not be ending
+        if self._state == "ENDING":
+            return False
+
+        # The minimum amount of players has to be present
+        if len(self._participants) < Match._MINIMUM_PLAYERS:
+            return False
+
+        # Currently, only the owner can skip to the next phase
+        return self.get_owner_nick() == part.nickname
+
+    @mutex
+    def skip_to_next_phase(self):
+        """Skips directly to the next phase.
+
+        Contract:
+            This method locks the match's instance lock.
+        """
+        # One second difference to prevent edge cases of timer change close to
+        # game state transitions.
+        if self._timer - time() > 1:
+            self._timer = time()
+            self._chat.append(("SYSTEM",
+                               "<b>" + self.get_owner_nick()
+                               + " skipped to the next phase.</b>"))
+
     def _set_state(self, state):
         """Updates the state for this match.
 

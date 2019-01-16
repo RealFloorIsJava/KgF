@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -293,6 +294,33 @@ def api_chat_send(ctx: EndpointContext) -> None:
 
 
 @Endpoint(APILeaf)
+@RequirePath("skip")
+def api_skip(ctx: EndpointContext) -> None:
+    """Skips directly to the next phase.
+
+    Args:
+        ctx: The context of the request.
+
+    Raises:
+        HTTPException: (403) When the user is not in a match,
+                             or the user is not authorized to skip phases.
+    """
+    match = Match.get_match_of_player(ctx.session["id"])
+    if match is None:
+        raise HTTPException.forbidden(True, "not in match")
+
+    part = match.get_participant(ctx.session["id"])
+
+    # Check that the GET request was made by a user that can skip phases
+    if not match.user_can_skip_phase(part):
+        raise HTTPException.forbidden(True, "not authorized to skip phase")
+
+    # Skip remaining time
+    match.skip_to_next_phase()
+    ctx.json_ok()
+
+
+@Endpoint(APILeaf)
 @RequirePath("chat")
 def api_chat(ctx: EndpointContext) -> None:
     """Retrieves the chat history, optionally starting at the given offset.
@@ -352,12 +380,14 @@ def api_status(ctx: EndpointContext) -> None:
     allow_pick = (match.is_picking()
                   and part.picking
                   and not part.spectator)
+    allow_skip = match.user_can_skip_phase(part)
     data = {"timer": int(match.get_seconds_to_next_phase()),
             "status": match.get_status(),
             "ending": match.is_ending(),
             "hasCard": match.has_card(),
             "allowChoose": allow_choose,
             "allowPick": allow_pick,
+            "allowSkip": allow_skip,
             "isSpectator": part.spectator,
             "isPicker": part.picking,
             "gaps": match.count_gaps()}

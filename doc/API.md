@@ -117,6 +117,7 @@ Returns a JSON object of the following format:
 |hasCard|`true` or `false`|Whether the match currently has a statement card selected.|
 |allowChoose|`true` or `false`|Whether choosing hand cards is currently allowed.|
 |allowPick|`true` or `false`|Whether picking a played card set is currently allowed.|
+|allowSkip|`true` or `false`|Whether the player can skip the current phase.|
 |isSpectator|`true` or `false`|Whether the client is a spectator.|
 |gaps|number|The number of gaps on the match's statement card.|
 |cardText|string|**(Only if `hasCard` is `true`)** The text of the match's statement card.|
@@ -132,9 +133,42 @@ Returns a JSON object of the following format:
   "hasCard": true,
   "allowChoose": true,
   "allowPick": false,
+  "allowSkip": true,
   "isSpectator": false,
   "gaps": 2,
   "cardText": "The _ of the state|ment _."
+}
+```
+
+
+## /api/skip
+
+|Requirements|Request Type|
+|---|---|
+|Logged in, in match, and can skip|GET|
+
+Skips directly to the next phase. Only players which are owner can skip.
+Skipping is only possible when the match is not ending and the minimum
+player requirement is fulfilled.
+
+### Parameters
+
+None.
+
+### Response format
+
+A JSON object is returned.
+
+|Key|Type|Description|
+|---|---|---|
+|error|string|A short message indicating the result of the operation. `OK` on success.|
+
+### Example
+
+```
+> POST /api/skip
+{
+  "error": "OK"
 }
 ```
 
