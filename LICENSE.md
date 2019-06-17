@@ -1,6 +1,8 @@
+# License
+
 MIT License
 
-Copyright (c) 2017-2018 LordKorea  
+Copyright (c) 2017-2018 LordKorea
 Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,3 +22,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Images
+
+### Public Domain
+
+https://publicdomainvectors.org/en/free-clipart/Simple-snail/67150.html (favicon.ico)
+
+https://github.com/davidmerfield/Public-Icons (bang.svg, message.svg)
