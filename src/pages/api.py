@@ -311,12 +311,12 @@ def api_skip(ctx: EndpointContext) -> None:
 
     part = match.get_participant(ctx.session["id"])
 
-    # Check that the GET request was made by a user that can skip phases
+    # Check that the POST request was made by a user that can skip phases
     if not match.user_can_skip_phase(part):
         raise HTTPException.forbidden(True, "not authorized to skip phase")
 
     # Skip remaining time
-    match.skip_to_next_phase()
+    match.skip_to_next_phase(part.nickname)
     ctx.json_ok()
 
 

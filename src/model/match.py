@@ -37,6 +37,7 @@ from random import shuffle
 from threading import RLock
 from time import time
 
+from nussschale.nussschale import nconfig
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
 
@@ -51,6 +52,7 @@ class Match:
     Class Attributes:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
+        skip_role (str): Which users are allowed to skip the current phase.
     """
 
     # The minimum amount of players for a match
@@ -93,6 +95,9 @@ class Match:
 
     # Whether matches are currently frozen
     frozen = False
+
+    # Which users are allowed to skip the phase
+    skip_role = "owner"
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -228,6 +233,9 @@ class Match:
         # The chat of this match, tuples with type/message
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
 
+        # Which users are allowed to skip the phase
+        self.skip_role = nconfig().get("skip-role", "owner")
+
     def put_in_pool(self):
         """Puts this match into the match pool."""
         Match.add_match(self.id, self)
@@ -304,12 +312,12 @@ class Match:
         # Locking is not needed here as access is atomic.
         return int(self._timer - time())
 
-    @mutex
-    def user_can_skip_phase(self, part):
-        """Determine whether a user can skip to the next phase.
+    def user_can_skip_phase(self, participant):
+        """Determine whether a user can skip to the next phase
 
         Args:
-            obj: The participant in question.
+            participant: The participant that made the request
+            to skip the phase
 
         Returns:
             bool: Whether the given participant can skip to the next phase
@@ -321,24 +329,50 @@ class Match:
         # The minimum amount of players has to be present
         if len(self._participants) < Match._MINIMUM_PLAYERS:
             return False
+          
+        if self.skip_role == "picker":
+            if self._state == "CHOOSING":
+                return participant.picking
+            else:
+                return True
+        elif self.skip_role == "anyone":
+            return True
+        elif self.skip_role == "majority":
+            participant.wants_skip = True
+            skip_count = 0
+            for part in self.get_participants(False):
+                if part.wants_skip:
+                    skip_count += 1
+            majority = int(len(list(self.get_participants(False))) / 2)
+            if skip_count > majority:
+                for part in self.get_participants(False):
+                    part.wants_skip = False
+                return True
+            else:
+                self._chat.append(("SYSTEM",
+                                   "<b>" + participant.nickname +
+                                   " wants to skip the phase. " +
+                                   str(majority - skip_count + 1) +
+                                   " request(s) left to reach majority.</b>"))
+                return False
+        else:
+            return self.get_owner_nick() == participant.nickname
 
-        # Currently, only the owner can skip to the next phase
-        return self.get_owner_nick() == part.nickname
+    def skip_to_next_phase(self, nick):
+        """Skips directly to the next phase
 
-    @mutex
-    def skip_to_next_phase(self):
-        """Skips directly to the next phase.
-
-        Contract:
-            This method locks the match's instance lock.
+        Args:
+            nick (str): The nickname of the user who is skipping the phase.
         """
         # One second difference to prevent edge cases of timer change close to
         # game state transitions.
         if self._timer - time() > 1:
             self._timer = time()
             self._chat.append(("SYSTEM",
-                               "<b>" + self.get_owner_nick()
-                               + " skipped to the next phase.</b>"))
+                               "<b>" + nick + " skipped to next phase</b>"))
+        else:
+            self._chat.append(("SYSTEM",
+                "<b>Can't skip phase with less than 1 second remaining</b>"))
 
     def _set_state(self, state):
         """Updates the state for this match.
