@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -124,6 +125,7 @@ def create_match(ctx: EndpointContext) -> None:
 
     # Create a new match
     match = Match()
+    match.wild_card_count = ctx.get_param_as("wildcards", int)
 
     # Create the deck from the upload
     try:

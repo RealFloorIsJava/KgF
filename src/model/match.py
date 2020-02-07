@@ -37,6 +37,7 @@ from random import shuffle
 from threading import RLock
 from time import time
 
+from nussschale.nussschale import nconfig
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
 
@@ -51,6 +52,7 @@ class Match:
     Class Attributes:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
+        skip_role (str): Which users are allowed to skip the current phase.
     """
 
     # The minimum amount of players for a match
@@ -93,6 +95,14 @@ class Match:
 
     # Whether matches are currently frozen
     frozen = False
+
+    # Which users are allowed to skip the phase
+    skip_role = "owner"
+
+    # Wild card data
+    wild_card_count = 0
+    total_cards = 0
+    wild_replace_mode = "no"
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -228,6 +238,12 @@ class Match:
         # The chat of this match, tuples with type/message
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
 
+        # Which users are allowed to skip the phase
+        self.skip_role = nconfig().get("skip-role", "owner")
+
+        # Whether wild cards should be replaced in the queue after being played
+        self.wild_replace_mode = nconfig().get("wild-replace-mode", "no")
+
     def put_in_pool(self):
         """Puts this match into the match pool."""
         Match.add_match(self.id, self)
@@ -305,15 +321,17 @@ class Match:
         return int(self._timer - time())
 
     @mutex
-    def user_can_skip_phase(self, part):
-        """Determine whether a user can skip to the next phase.
+    def user_can_skip_phase(self, participant):
+        """Determine whether a user can skip to the next phase
 
         Args:
-            obj: The participant in question.
+            participant: The participant that made the request
+            to skip the phase
 
         Returns:
             bool: Whether the given participant can skip to the next phase
         """
+
         # The match must not be ending
         if self._state == "ENDING":
             return False
@@ -322,23 +340,47 @@ class Match:
         if len(self._participants) < Match._MINIMUM_PLAYERS:
             return False
 
-        # Currently, only the owner can skip to the next phase
-        return self.get_owner_nick() == part.nickname
+        if self.skip_role == "picker":
+            if self._state == "CHOOSING":
+                return participant.picking
+            else:
+                return True
+        elif self.skip_role == "anyone":
+            return True
+        elif self.skip_role == "majority":
+            participant.wants_skip = True
+            skip_count = 0
+            for part in self.get_participants(False):
+                if part.wants_skip:
+                    skip_count += 1
+            majority = int(len(list(self.get_participants(False))) / 2)
+            if skip_count > majority:
+                for part in self.get_participants(False):
+                    part.wants_skip = False
+                return True
+            else:
+                self._chat.append(("SYSTEM",
+                                   "<b>" + participant.nickname +
+                                   " wants to skip the phase. " +
+                                   str(majority - skip_count + 1) +
+                                   " request(s) left to reach majority.</b>"))
+                return False
+        else:
+            return self.get_owner_nick() == participant.nickname
 
     @mutex
-    def skip_to_next_phase(self):
-        """Skips directly to the next phase.
+    def skip_to_next_phase(self, nick):
+        """Skips directly to the next phase
 
-        Contract:
-            This method locks the match's instance lock.
+        Args:
+            nick (str): The nickname of the user who is skipping the phase.
         """
         # One second difference to prevent edge cases of timer change close to
         # game state transitions.
         if self._timer - time() > 1:
             self._timer = time()
             self._chat.append(("SYSTEM",
-                               "<b>" + self.get_owner_nick()
-                               + " skipped to the next phase.</b>"))
+                               "<b>" + nick + " skipped to next phase</b>"))
 
     def _set_state(self, state):
         """Updates the state for this match.
@@ -366,7 +408,8 @@ class Match:
         if self._state == "COOLDOWN":
             # Delete all chosen cards from the hands
             for part in self.get_participants(False):
-                part.delete_chosen()
+                cards = part.delete_chosen()
+                self._replace_wild_cards(cards)
 
     def _enter_state(self):
         """Handles a transition into the current state.
@@ -685,6 +728,12 @@ class Match:
         # Create multidecks
         for type in self._deck:
             self._multidecks[type] = MultiDeck[Card, int](self._deck[type])
+            self.total_cards += len(self._deck[type])
+
+        wilds = [Card(card_id_counter + 1 + i, "WILD", "Wild card")
+                for i in range(self.wild_card_count)]
+        self._multidecks["WILD"] = MultiDeck[Card, int](wilds)
+        self.total_cards += self.wild_card_count
 
         return True, "OK"
 
@@ -857,7 +906,8 @@ class Match:
                 else:
                     self._set_state("COOLDOWN")
             else:
-                part.delete_chosen()
+                cards = part.delete_chosen()
+                self._replace_wild_cards(cards)
 
     @mutex
     def check_choosing_done(self):
@@ -924,8 +974,33 @@ class Match:
             The caller ensures that the match's lock is held when calling this
             method.
         """
+        card_count = self.total_cards
         for part in self.get_participants(False):
-            part.replenish_hand(self._multidecks)
+            card_count -= part.get_card_count()
+        for part in self.get_participants(False):
+            drawn = part.replenish_hand(self._multidecks, card_count)
+            card_count -= drawn
+
+    def _replace_wild_cards(self, cards):
+        """If the match is configured to do so, put any wild cards played during
+        the last round back in the MultiDeck's queue so they can be redrawn by
+        other players in future rounds.
+
+        Args:
+            cards: A list of card objects played during the last round (the ones
+            deleted at the end of the last round).
+
+        Contract:
+            The caller ensures that the match's lock is held when calling this
+            method.
+        """
+        # If the match isn't configured to replace wild cards or there are no
+        # cards to put back, do nothing
+        if self.wild_replace_mode == "no" or len(cards) == 0:
+            return
+        for card in cards:
+            if card.type == "WILD":
+                self._multidecks["WILD"].put_in_queue(card)
 
     def _select_match_card(self):
         """Selects a random statement card for this match.

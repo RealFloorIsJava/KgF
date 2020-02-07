@@ -35,7 +35,8 @@
   let externalUpdateAllowed = true
   let handResolver = new Map([
     ["OBJECT", new Map()],
-    ["VERB", new Map()]
+    ["VERB", new Map()],
+    ["WILD", new Map()]
   ])
   let numSelected = 0
   let selectedCards = new Map()
@@ -131,7 +132,8 @@
   function updateCards(data) {
     let sentHand = new Map([
       ["OBJECT", new Map()],
-      ["VERB", new Map()]
+      ["VERB", new Map()],
+      ["WILD", new Map()]
     ])
     if (data.hasOwnProperty("hand")) {
       for (let type of sentHand.keys()) {
@@ -350,10 +352,20 @@
     if (!allowChoose) {
       return
     }
+    var data = {
+      "handId": id,
+      "text": ""
+    }
+    // Ask user for custom card text if the card isn't already selected and
+    // it's a wild card.
+    if (handResolver.get("WILD").has(id) &&
+        !handResolver.get("WILD").get(id).hasClass("card-selected")) {
+      data["text"] = prompt("Enter card text:")
+    }
     $.ajax({
       method: "POST",
       url: "/api/choose",
-      data: {"handId": id},
+      data: data,
       success: () => updateSelection(id),
       error: (x, e, f) => console.log(`/api/choose error: ${e} ${f}`)
     })
@@ -371,6 +383,7 @@
     let remove = false
     let card = handResolver.get("OBJECT").get(id)
     card = card || handResolver.get("VERB").get(id)
+    card = card || handResolver.get("WILD").get(id)
 
     // Remove card choices
     for (let i = 0; i < 4; i++) {
@@ -418,6 +431,13 @@
   }
 
   /**
+   * Chooses the wild cards tab.
+   */
+  function chooseWildsTab() {
+    pickTab("tab-wilds")
+  }
+
+  /**
    * Sends POST request to skip the remaining time
    */
   function skipTime() {
@@ -457,6 +477,7 @@
   pickTab("tab-actions")
   $("#tab-actions").click(chooseActionsTab)
   $("#tab-objects").click(chooseObjectsTab)
+  $("#tab-wilds").click(chooseWildsTab)
   $("#skip-button").click(skipTime)
   $("#toggle-hand-button").click(toggleHand)
   $("#toggle-chat-button").click(toggleChat)

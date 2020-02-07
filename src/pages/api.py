@@ -170,6 +170,10 @@ def api_choose(ctx: EndpointContext) -> None:
     except ValueError:
         raise HTTPException.forbidden(True, "invalid id")
 
+    text = ctx.get_param_as("text", str)
+    if text != "":
+        part.set_card_text(handid, text)
+
     part.toggle_chosen(handid, match.count_gaps())  # todo: check for wrong id
     match.check_choosing_done()
     ctx.json_ok()
@@ -200,7 +204,8 @@ def api_cards(ctx: EndpointContext) -> None:
     if not part.spectator:
         hand_cards = {
             "OBJECT": {},
-            "VERB": {}
+            "VERB": {},
+            "WILD": {}
         }  # type: Dict[str, Dict]
         hand = part.get_hand()
         for id, hcard in hand.items():
@@ -316,7 +321,7 @@ def api_skip(ctx: EndpointContext) -> None:
         raise HTTPException.forbidden(True, "not authorized to skip phase")
 
     # Skip remaining time
-    match.skip_to_next_phase()
+    match.skip_to_next_phase(part.nickname)
     ctx.json_ok()
 
 

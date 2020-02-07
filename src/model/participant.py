@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -30,6 +31,7 @@ from copy import deepcopy
 from threading import RLock
 from time import time
 from typing import Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Union
+from math import floor, ceil
 
 from nussschale.util.locks import mutex
 
@@ -52,6 +54,7 @@ class Participant:
             occurring.
         order: The order key of the particpant, used for shuffling.
         spectator: Whether the participant is a spectator.
+        wants_skip: Whether the participant wants to skip the phase.
     """
 
     # The number of hand cards per type
@@ -94,6 +97,9 @@ class Participant:
         # participant is part of a match.
         self.spectator = False
 
+        # Whether the particpant wants to skip the phase.
+        self.wants_skip = False
+
         # The hand of this participant
         self._hand = OrderedDict()  # type: Dict[int, HandCard]
         self._hand_counter = 1
@@ -134,8 +140,12 @@ class Participant:
             hcard.chosen = None
 
     @mutex
-    def delete_chosen(self) -> None:
+    def delete_chosen(self) -> List["Card"]:
         """Deletes all chosen hand cards from this participant.
+
+        Returns:
+            A list of deep-copied Card objects corresponding to the cards
+            removed from the participant's hand.
 
         Contract:
             This method locks the participant's lock.
@@ -145,8 +155,11 @@ class Participant:
         for hid, hcard in self._hand.items():
             if hcard.chosen is not None:
                 del_list.append(hid)
+        cards = []
         for hid in del_list:
+            cards.append(deepcopy(self._hand[hid].card))
             del self._hand[hid]
+        return cards
 
     @mutex
     def get_hand(self) -> Dict[int, "HandCard"]:
@@ -160,6 +173,19 @@ class Participant:
         """
         assert not self.spectator, "Trying to get hand for spectator"
         return deepcopy(self._hand)
+
+    @mutex
+    def get_card_count(self) -> int:
+        """Determines the number of cards in the participant's hand.
+
+        Returns:
+            The number of cards in the participant's hand.
+
+        Contract:
+            This method locks the participant's lock.
+        """
+        assert not self.spectator, "Trying to get hand for spectator"
+        return len(self._hand.items())
 
     @mutex
     def choose_count(self) -> int:
@@ -179,20 +205,33 @@ class Participant:
         return n
 
     @mutex
-    def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"]
-                       ) -> None:
+    def replenish_hand(self, mdecks: Mapping[str, "MultiDeck[Card, int]"],
+                       cards_left) -> int:
         """Replenishes the hand of this participant from the given decks.
 
         Args:
             mdecks: Maps card type to a multideck of the card type.
+            cards_left: Number of cards remaining to be drawn
+
+        Returns:
+            The number of cards drawn by the participant.
 
         Contract:
             This method locks the participant's lock.
         """
         assert not self.spectator, "Trying to replenish spectator"
+        cards_drawn = 0
+
+        # Find any wild cards already held
+        banned_wilds = set()
+        wilds_in_hand = 0
+        for hcard in self._hand.values():
+            if hcard.card.type == "WILD":
+                banned_wilds.add(hcard.card.id)
+                wilds_in_hand += 1
 
         # Replenish for every type
-        for type in filter(lambda x: x != "STATEMENT", mdecks):
+        for type in filter(lambda x: x != "STATEMENT" and x != "WILD", mdecks):
             # Count cards of that type and fetch IDs
             k_in_hand = 0
             ids_banned = set()  # type: Set[int]
@@ -201,14 +240,24 @@ class Participant:
                     ids_banned.add(hcard.card.id)
                     k_in_hand += 1
 
+            # Reduce number of cards to draw if wild cards are in hand
+            if type == "OBJECT":
+                k_in_hand += floor(wilds_in_hand / 2)
+            else:
+                k_in_hand += ceil(wilds_in_hand / 2)
+
             # Fill hand to limit
             for i in range(Participant._HAND_CARDS_PER_TYPE - k_in_hand):
-                pick = mdecks[type].request(ids_banned)
+                pick = mdecks[type].request(ids_banned, mdecks["WILD"],
+                                            cards_left, banned_wilds)
                 if pick is None:
                     break  # Can't fulfill the requirement...
                 ids_banned.add(pick.id)
                 self._hand[self._hand_counter] = HandCard(pick)
+                cards_drawn += 1
                 self._hand_counter += 1
+
+        return cards_drawn
 
     @mutex
     def toggle_chosen(self, handid: int, allowance: int) -> None:
@@ -246,6 +295,19 @@ class Participant:
                     if (other_hcard.chosen is not None
                             and other_hcard.chosen >= k):
                         other_hcard.chosen = None
+
+    @mutex
+    def set_card_text(self, handid, text):
+        """Changes the text on a given card. To be used for wild cards.
+
+        Args:
+            handid: The ID of the hand card.
+            text: The new text for the card.
+
+        Contract:
+            This method locks the participant's lock.
+        """
+        self._hand[handid].card.text = text
 
     @mutex
     def get_choose_data(self, redacted: bool

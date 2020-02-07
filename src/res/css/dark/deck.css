@@ -36,6 +36,16 @@
   color: #441;
 }
 
+.wild-card {
+  color: #001;
+  background-color: #BBB;
+}
+
+.wild-card a, .wild-card a:link, .wild-card a:visited, .wild-card a:hover,
+    .wild-card a:active {
+  color: #441;
+}
+
 .knob-statement {
   background-color: #444;
 }

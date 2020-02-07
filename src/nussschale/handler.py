@@ -2,6 +2,7 @@
 
 MIT License
 Copyright (c) 2017-2018 LordKorea
+Copyright (c) 2018 Arc676/Alessandro Vinciguerra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -325,13 +326,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                 assert isinstance(param.value, str)
                 return param.value
             else:
-                fp = param.file
-                fp.seek(0, 2)
-                size = fp.tell()
-                fp.seek(0)
-                nlog().log("File upload: '%s', %i bytes" % (param.filename,
-                                                            size))
-                return IOWrapper(param.file, param)
+                if param.filename == None:
+                    return param.value
+                else :
+                    fp = param.file
+                    fp.seek(0, 2)
+                    size = fp.tell()
+                    fp.seek(0)
+                    nlog().log("File upload: '%s', %i bytes" % (param.filename,
+                                                                size))
+                    return IOWrapper(param.file, param)
         else:
             raise ValueError("Unsupported parameter type")
 
