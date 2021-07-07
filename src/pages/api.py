@@ -287,7 +287,7 @@ def api_chat_send(ctx: EndpointContext) -> None:
     # Check the chat message for sanity
     if 0 < len(msg) < 200:
         # Send the message
-        match.send_message(part.nickname, msg)
+        match.send_message(part, msg)
         ctx.json_ok()
     else:
         raise HTTPException.forbidden(True, "invalid size")

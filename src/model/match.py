@@ -36,6 +36,7 @@ from html import escape
 from random import shuffle
 from threading import RLock
 from time import time
+from nussschale.nussschale import nconfig
 
 from model.multideck import MultiDeck
 from nussschale.util.locks import mutex, named_mutex
@@ -51,6 +52,8 @@ class Match:
     Class Attributes:
         frozen (bool): Whether matches are currently frozen, i.e. whether their
             state transitions are disabled.
+        afk_limit (int): Maximum number of rounds a participant can spend AFK
+            before they are kicked from the game.
     """
 
     # The minimum amount of players for a match
@@ -93,6 +96,9 @@ class Match:
 
     # Whether matches are currently frozen
     frozen = False
+
+    # Limit on number of AFK rounds before kicking players
+    afk_limit = 2
 
     @classmethod
     @named_mutex("_pool_lock")
@@ -227,6 +233,9 @@ class Match:
 
         # The chat of this match, tuples with type/message
         self._chat = [("SYSTEM", "<b>Match was created.</b>")]
+
+        # The limit on the number of AFK rounds before kicking players
+        self.afk_limit = nconfig().get("afk-limit", 2)
 
     def put_in_pool(self):
         """Puts this match into the match pool."""
@@ -412,6 +421,12 @@ class Match:
             self._timer = time() + pick_time
         elif self._state == "COOLDOWN":
             self._timer = time() + Match._TIMER_COOLDOWN
+            # Kick AFK players for doing nothing for two rounds
+            participants = list(self.get_participants(False))[:]
+            for part in participants:
+                if part.afkCount >= self.afk_limit:
+                    self.abandon_participant(part.id,
+                        "was kicked for being AFK for two rounds.")
         elif self._state == "ENDING":
             self._timer = time() + Match._TIMER_ENDING
 
@@ -457,6 +472,14 @@ class Match:
                 elif self._state == "CHOOSING":
                     self._set_state("PICKING")
                 elif self._state == "PICKING":
+                    # If no winner was picked, mark picker as AFK
+                    picker = None
+                    for part in self.get_participants(False):
+                        if part.picking:
+                            picker = part
+                            break
+                    assert picker is not None
+                    picker.increase_AFK()
                     self._chat.append(("SYSTEM",
                                        "<b>No winner was picked!</b>"))
                     self._set_state("COOLDOWN")
@@ -489,11 +512,13 @@ class Match:
                 del self._participants[pid]
 
     @mutex
-    def abandon_participant(self, pid):
+    def abandon_participant(self, pid, message="left."):
         """Removes the given participant from the match.
 
         Args:
             pid (str): The ID of the participant.
+            message (str): The message to send when the user leaves without
+                the nickname. Defaults to "left."
 
         Contract:
             This method locks the match's instance lock and the participant's
@@ -503,7 +528,7 @@ class Match:
             return
         nick = self._participants[pid].nickname
         self._chat.append(("SYSTEM",
-                           "<b>%s left.</b>" % nick))
+                           "<b>%s %s</b>" % (nick, message)))
         if self._participants[pid].picking:
             self.notify_picker_leave(pid)
         del self._participants[pid]
@@ -805,11 +830,11 @@ class Match:
         return res
 
     @mutex
-    def send_message(self, nick, msg):
+    def send_message(self, part, msg):
         """Sends a user message to the chat of this match.
 
         Args:
-            nick (str): The nickname of the user.
+            part (Participant): The user who sent the message.
             msg (str): The message that is sent to the chat.
 
         Contract:
@@ -818,7 +843,8 @@ class Match:
         msg = re.sub("(https?://\\S+)",
                      "<a href=\"\\1\" target=\"_blank\">\\1</a>",
                      msg)
-        self._chat.append(("USER", "<b>%s</b>: %s" % (nick, msg)))
+        self._chat.append(("USER", "<b>%s</b>: %s" % (part.nickname, msg)))
+        part.reset_AFK()
 
     @mutex
     def declare_round_winner(self, order):
@@ -836,6 +862,8 @@ class Match:
         winner = None
         for part in self.get_participants(False):
             if part.picking or part.choose_count() < gc:
+                if part.picking:
+                    part.reset_AFK()
                 continue
             if part.order == order:
                 winner = part
@@ -891,11 +919,13 @@ class Match:
         """
         n = 0
         for part in self.get_participants(False):
+            # Find players who haven't played
             if part.choose_count() > 0:
                 n += 1
-                if n == 2:
-                    return True
-        return False
+                part.reset_AFK()
+            elif not part.picking:
+                part.increase_AFK()
+        return n >= 2
 
     def _unchoose_incomplete(self):
         """Unchooses incomplete hands.

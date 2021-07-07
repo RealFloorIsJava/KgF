@@ -52,6 +52,7 @@ class Participant:
             occurring.
         order: The order key of the particpant, used for shuffling.
         spectator: Whether the participant is a spectator.
+        afkCount: The number of rounds the participant has spent AFK.
     """
 
     # The number of hand cards per type
@@ -59,6 +60,9 @@ class Participant:
 
     # The timeout timer after refreshing a participant, in seconds
     _PARTICIPANT_REFRESH_TIMER = 15
+
+    # Rounds spent AFK
+    afkCount = 0
 
     def __init__(self, id: str, nickname: str) -> None:
         """Constructor.
@@ -116,6 +120,24 @@ class Participant:
         """
         assert not self.spectator, "Trying to increase score for spectator"
         self.score += 1
+
+    @mutex
+    def increase_AFK(self) -> None:
+        """Increases AFK count by one.
+
+        Contract:
+            This method locks the particpant's lock.
+        """
+        self.afkCount += 1
+
+    @mutex
+    def reset_AFK(self) -> None:
+        """Reset the particpant's AFK count to zero.
+
+        Contract:
+            This method locks the particpant's lock.
+        """
+        self.afkCount = 0
 
     def refresh(self) -> None:
         """Refreshes the timeout timer of this participant."""
